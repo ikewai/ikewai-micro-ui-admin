@@ -2,7 +2,7 @@
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.1.3.
 
-This is an template angular application for authenticating to an Agave Tenant via an Agave Nodejs Login service.  
+This is an template angular application for authenticating to an Agave Tenant via an Agave Nodejs Login service (https://github.com/UH-CI/agave-login-api).  
 
 To configure this application to use your Nodejs Agave Login service you can copy the src/assets/config/config.deploy.json and save it as config.dev.json and modify it for you development environment.
 
