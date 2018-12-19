@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthenticationService } from './_services/authentication.service';
 import { User } from './_models/user';
 import { AppConfig } from './_services/config.service';
+import { MapComponent } from './map/map.component';
 
 @Component({
   selector: 'app',
