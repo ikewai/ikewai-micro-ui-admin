@@ -4,3 +4,17 @@
      [leafletDrawOptions]="drawOptions"
      (leafletDrawCreated)="onDrawCreated($event)">
 </div>
+<div *ngIf="metadata">
+<h2>My Metadata</h2>
+<table>
+  <tr>
+    <td>
+      <ul class="metadata">
+        <li *ngFor="let metadatum of metadata">
+          {{metadatum | json}} 
+        </li>
+      </ul>
+    </td>
+  </tr>
+</table>
+</div>

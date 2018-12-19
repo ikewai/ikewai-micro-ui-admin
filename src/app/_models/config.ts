@@ -12,7 +12,7 @@ export class IAppConfig {
     aad: {
         requireAuth: boolean;
         tenant: string;
-        clientId: string;
+        loginURL: string;
 
     };
     apiServer: {
