@@ -4,7 +4,7 @@ import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
 import {Observable, of } from 'rxjs';
 import { map, retry, catchError } from 'rxjs/operators';
-import { User } from '../_models/metadata'
+import { User } from '../_models/user'
 import {Metadata } from '../_models/metadata'
 import {latLng, LatLng, tileLayer,circle,polygon,icon} from 'leaflet';
 import * as L from 'leaflet';
@@ -38,7 +38,7 @@ export class MapComponent implements OnInit {
     console.log('Draw Created Event!');
     console.log(e)
     console.log(String(e.layer.toGeoJSON()))
-    var result = this.spatial.spatialSearch(e.layer.toGeoJSON().geometry).subscribe(metadata => this.metadata = metadata);
+    var result = this.spatial.spatialSearch(e.layer.toGeoJSON().geometry, 10, 0).subscribe(metadata => this.metadata = metadata);
 
 	}
 
@@ -70,31 +70,31 @@ export class MapComponent implements OnInit {
     }
  };
 
- spatialSearch(geometry: any){
+//  spatialSearch(geometry: any){
 
-    var query = "{'$and':[{'name':'Landuse'},{'value.name':'dataset12042018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry.geometry).replace(/"/g,'\'')+"}}}]}";
-    console.log(query)
-    let url = AppConfig.settings.aad.tenant+"/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
-       //.set("Authorization", "Bearer " + currentUser.access_token)
-    let head = new HttpHeaders()
-    .set("Content-Type", "application/x-www-form-urlencoded");
-    let options = {
-      headers: head
-    };
-console.log("stuff1")
-    this.http.get<any>(url, options).subscribe(responseData => console.log(responseData.result));
-    /*.pipe(
-     map((data) => {
-       console.log("more")
-       return data.result as Metadata[];
-     }),
-     catchError((e) => {
-       console.log()
-       return Observable.throw(new Error(e.message));
-     })
-   );*/
-   console.log("stuff2")
-   //return response;
-  }
+//     var query = "{'$and':[{'name':'Landuse'},{'value.name':'dataset12042018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry.geometry).replace(/"/g,'\'')+"}}}]}";
+//     console.log(query)
+//     let url = AppConfig.settings.aad.tenant+"/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
+//        //.set("Authorization", "Bearer " + currentUser.access_token)
+//     let head = new HttpHeaders()
+//     .set("Content-Type", "application/x-www-form-urlencoded");
+//     let options = {
+//       headers: head
+//     };
+// console.log("stuff1")
+//     this.http.get<any>(url, options).subscribe(responseData => console.log(responseData.result));
+//     /*.pipe(
+//      map((data) => {
+//        console.log("more")
+//        return data.result as Metadata[];
+//      }),
+//      catchError((e) => {
+//        console.log()
+//        return Observable.throw(new Error(e.message));
+//      })
+//    );*/
+//    console.log("stuff2")
+//    //return response;
+//   }
 
 }

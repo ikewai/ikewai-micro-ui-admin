@@ -16,14 +16,14 @@ export class SpatialService {
   }
 
 
-  spatialSearch(geometry: any): Observable<Metadata[]>{
+  spatialSearch(geometry: any, limit: number, offset: number): Observable<Metadata[]> {
 
     interface ResponseResults {
      result: any
     }
-     let query = "{'$and':[{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry).replace(/"/g,'\'')+"}}}]}";
+     let query = "{'$and':[{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(geometry).replace(/"/g,'\'') + "}}}]}";
      console.log(query)
-     let url = AppConfig.settings.aad.tenant+"/meta/v2/data?q="+encodeURI(query)+"&limit=1000&offset=0";
+     let url = AppConfig.settings.aad.tenant + "/meta/v2/data?q=" + encodeURI(query) + "&limit=" + limit.toString() + "&offset=" + offset.toString();
         //.set("Authorization", "Bearer " + currentUser.access_token)
      let head = new HttpHeaders()
      .set("Content-Type", "application/x-www-form-urlencoded");
