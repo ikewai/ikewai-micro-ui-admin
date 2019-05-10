@@ -38,7 +38,7 @@ export class MapComponent implements OnInit {
     console.log('Draw Created Event!');
     console.log(e)
     console.log(String(e.layer.toGeoJSON()))
-    var result = this.spatial.spatialSearch(e.layer.toGeoJSON().geometry, 10, 0).subscribe(metadata => this.metadata = metadata);
+    let result = this.spatial.spatialSearch(e.layer.toGeoJSON().geometry, 10, 0).subscribe(metadata => this.metadata = metadata);
 
 	}
 

@@ -16,34 +16,34 @@ export class SpatialService {
   }
 
 
-  spatialSearch(geometry: any, limit: number, offset: number): Observable<Metadata[]> {
+  spatialSearch(query: string, limit: number, offset: number): Promise<Metadata[]> {
+    //let query = "[{'$and':[{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(geometry).replace(/"/g,'\'') + "}}}]}, {$count: 'test'}]";
 
     interface ResponseResults {
      result: any
     }
-     let query = "{'$and':[{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(geometry).replace(/"/g,'\'') + "}}}]}";
-     console.log(query)
-     let url = AppConfig.settings.aad.tenant + "/meta/v2/data?q=" + encodeURI(query) + "&limit=" + limit.toString() + "&offset=" + offset.toString();
-        //.set("Authorization", "Bearer " + currentUser.access_token)
-     let head = new HttpHeaders()
-     .set("Content-Type", "application/x-www-form-urlencoded");
-     let options = {
-       headers: head
-     };
-     console.log("stuff")
+    console.log(query)
+    let url = AppConfig.settings.aad.tenant + "/meta/v2/data?q=" + encodeURI(query) + "&limit=" + limit.toString() + "&offset=" + offset.toString();
+      //.set("Authorization", "Bearer " + currentUser.access_token)
+    let head = new HttpHeaders()
+    .set("Content-Type", "application/x-www-form-urlencoded");
+    let options = {
+      headers: head
+    };
+    console.log("stuff")
 
 
     let response = this.http.get<any>(url, options)
      .pipe(
       retry(3),
       map((data) => {
-        console.log("more")
+        console.log("more");
         return data.result as Metadata[];
       }),
       catchError((e) => {
         return Observable.throw(new Error(e.message));
-      }),
+      })
     );
-    return response;
+    return response.toPromise();
    }
 }
