@@ -64,7 +64,7 @@ export class QueryHandlerService {
     
     while(!canceled && !complete) {
       
-      //inject true to cancel the current query when new query comes
+      //inject true to cancel the current query if new query comes
       canceled = yield this.spatial.spatialSearch(query, limit, offset);
 
       offset += limit;
@@ -83,6 +83,9 @@ export class QueryHandlerService {
     }
     
   }
+
+  //might want to handle multiple filters at a time
+  //separate this out into a class, have a collection based on a set of tracked filters, add dataPort back in to subscribe to outputs
 
   //add support for sorting and filters
 
@@ -106,10 +109,16 @@ export class QueryHandlerService {
     return null;
   }
 
+  
   next() {
-    this.queryState.lastReturned.then(() => {
-
+    if(this.tempData[this.queryState.query])
+    this.statusPort.subscribe((status) => {
+      status.
     });
+    this.queryState.lastReturned =  this.queryState.lastReturned.then(() => {
+      //
+    });
+    return this.queryState.lastReturned;
   }
 
   previous() {
@@ -133,9 +142,19 @@ export class QueryHandlerService {
     
     let queryHandle = qGen.next();
 
-    while(!queryHandle.done) {
+    let nextPromise = (generator) => {
+      return queryHandle.next();
+    }
+
+    let dataHandler = (data) => {
 
     }
+
+    let getCondition = (data) => {
+
+    }
+
+    this.recursivePromise(nextPromise);
 
 
     this.spatial.spatialSearch(query, limit, offset).toPromise().then((data) => {
@@ -153,8 +172,8 @@ export class QueryHandlerService {
     });
   }
 
-  recursivePromise(promise: Promise<any>, handler, condition) {
-    return promise.then(() => {
+  recursivePromise(getPromise: (data: any) => Promise<any>, handler: (data) => void, getCondition: (data: any) => boolean) {
+    return getPromise().then((data) => {
       handler();
       if(condition()) {
         this.recursivePromise(promise, handler, condition)
