@@ -30,7 +30,7 @@ export class SpatialService {
     let options = {
       headers: head
     };
-    console.log("stuff")
+    console.log("stuff");
 
 
     let response = this.http.get<any>(url, options)

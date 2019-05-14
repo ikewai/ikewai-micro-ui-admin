@@ -4,6 +4,7 @@ import { SpatialService } from './spatial.service';
 import { QueryCacheService } from './query-cache.service';
 import { Metadata } from '../_models/metadata';
 import { RequestStatus } from '../_models/requestStatus';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -14,8 +15,11 @@ export class QueryHandlerService {
   static readonly MIN_QUERY = 100;
   static readonly MAX_QUERY = 10000;
   static readonly MAX_RESULTS = 100000;
+  
 
   static readonly ENABLE_FAST_QUERY = true;
+
+  
 
   static readonly RAMP_FUNCT = QueryHandlerService.ENABLE_FAST_QUERY ? function *(start: number) {
     let acc = start;
@@ -65,7 +69,27 @@ export class QueryHandlerService {
     while(!canceled && !complete) {
       
       //inject true to cancel the current query if new query comes
-      canceled = yield this.spatial.spatialSearch(query, limit, offset);
+      canceled = yield this.spatial.spatialSearch(query, limit, offset).then((data) => {
+        let status: RequestStatus = {
+          status: 200,
+          loadedResults: offset + data.length,
+          finished: data.length == limit
+        }
+        return {
+          status: status,
+          data: data
+        };
+      }, (e: HttpErrorResponse) => {
+        let status: RequestStatus = {
+          status: e.status,
+          loadedResults: offset,
+          finished: false
+        }
+        return {
+          status: status,
+          data: null
+        }
+      });
 
       offset += limit;
 
@@ -131,19 +155,22 @@ export class QueryHandlerService {
     this.queryState.chunkSize = 
   }
 
-  private handleQuery(query: string) {
+  private handleQuery(query: string): void {
     //add cache check
     //set startPoint to the starting point for the request
     //have indicator in cache if data is complete
     let startPoint = 0;
 
     let complete = false;
-    let qGen = QueryHandlerService.query("0", 0);
+    if(complete) {
+      return;
+    }
+    let qGen = QueryHandlerService.query(query, startPoint);
     
     let queryHandle = qGen.next();
 
     let nextPromise = (generator) => {
-      return queryHandle.next();
+      return generator.next();
     }
 
     let dataHandler = (data) => {
@@ -154,26 +181,22 @@ export class QueryHandlerService {
 
     }
 
-    this.recursivePromise(nextPromise);
-
-
-    this.spatial.spatialSearch(query, limit, offset).toPromise().then((data) => {
-      this.dataPort.next(data);
-    })
-    .then(() => {
-      //want some way to indicate if there is a next page
-      if(this.forwardLookup) {
-        offset += this.pageSize;
-        //cache the next page
-        this.spatial.spatialSearch(query, limit, offset).toPromise().then((data) => {
-
-        })
+    let handler = (data: QueryResponse, generator: IterableIterator<any>) => {
+      this.statusPort.next(data.status);
+      //add data to cache
+      let next = generator.next();
+      if(next.done == true) {
+        throw new Error("An unexpected error has occured while handling the query: handler called after generator completed");
       }
-    });
+      if(typeof)
+    }
+
+    this.recursivePromise(nextPromise);
   }
 
-  recursivePromise(getPromise: (data: any) => Promise<any>, handler: (data) => void, getCondition: (data: any) => boolean) {
-    return getPromise().then((data) => {
+  recursivePromise(promise: Promise<any>, handler: (data) => , data: any) {
+    if()
+    return promise.then((data) => {
       handler();
       if(condition()) {
         this.recursivePromise(promise, handler, condition)
@@ -181,36 +204,14 @@ export class QueryHandlerService {
     });
   }
 
-  // //essentially the same as handleQuery, but just cache results, also need to store a list of lookups already being performed, so if next page requested before finish dont send query again
-  // private handleForwardLookup(query: string, page: number) {
-  //   let cachedData = this.cache.retreiveData(query, low, items);
-  //   if(cachedData.length < items) {
-  //     //request data
-
-  //     //cache data
-  //   }
-
-  //   let limit = this.pageSize;
-  //   let offset = page * this.pageSize;
-
-  //   this.spatial.spatialSearch(query, limit, offset).toPromise().then((data) => {
-  //     this.dataPort.next(data);
-  //   })
-  //   .then(() => {
-  //     //want some way to indicate if there is a next page
-  //     if(this.forwardLookup) {
-  //       offset += this.pageSize;
-  //       //cache the next page
-  //       this.spatial.spatialSearch(query, limit, offset).toPromise().then((data) => {
-
-  //       })
-  //     }
-  //   });
-  // }
-
   setPageSize(size: number) {
     this.pageSize = size;
 
   }
 
+}
+
+interface QueryResponse {
+  status: RequestStatus,
+  data: Metadata[]
 }
