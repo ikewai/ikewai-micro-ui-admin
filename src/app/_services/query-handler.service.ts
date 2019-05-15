@@ -5,6 +5,7 @@ import { QueryCacheService } from './query-cache.service';
 import { Metadata } from '../_models/metadata';
 import { RequestStatus } from '../_models/requestStatus';
 import { HttpErrorResponse } from '@angular/common/http';
+import { FilterHandle, Filter, FilterManagerService, MonitorEvent, MonitorCase } from './filter-manager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,21 +17,19 @@ export class QueryHandlerService {
   static readonly MAX_QUERY = 10000;
   static readonly MAX_RESULTS = 100000;
   
-
   static readonly ENABLE_FAST_QUERY = true;
 
-  
+  private dataPorts: {[handle in FilterHandle]: DataPort} = {};
 
   static readonly RAMP_FUNCT = QueryHandlerService.ENABLE_FAST_QUERY ? function *(start: number) {
     let acc = start;
-    let size = start;
+    let size = QueryHandlerService.MIN_QUERY;
     while(acc <= this.MAX_RESULTS) {
       yield size;
       size = Math.min(size * 2, QueryHandlerService.MAX_QUERY);
       acc += size;
     }
-  } :
-  function *(start) {
+  } : function *(start) {
     let acc = start;
     while(acc <= this.MAX_RESULTS) {
       yield 10000;
@@ -39,26 +38,43 @@ export class QueryHandlerService {
   };
   //static readonly
 
-  private queryState: {
-    query: string;
-    queryGen: IterableIterator<any>;
-    lastReturned: Promise<[number, number]>;
-    chunkSize: number;
+  queryState: {
+    query: string,
+    queryGen: IterableIterator<any>
   };
 
   statusPort = new Subject<RequestStatus>();
 
   //temporary data storage until cache implemented
   tempData: {[query: string]: Metadata[]} = {};
-
-
-  constructor(private spatial: SpatialService, private cache: QueryCacheService) {
-    this.queryState = null;
-    //this.pageSize = QueryHandlerService.DEFAULT_PAGE;
+  tempDataRetreive() {
+    
+  }
+  tempDataAdd(data: Metadata[]) {
+    console.log(data);
   }
 
-  static query = function *(query: string, startPoint: number) {
-    let ramp = this.RAMP_FUNCT(startPoint);
+
+
+  constructor(private spatial: SpatialService, private cache: QueryCacheService, private filterManager: FilterManagerService) {
+    this.queryState = {
+      query: null,
+      queryGen: null
+    };
+    filterManager.filterMonitor.subscribe((event: MonitorEvent) => {
+      switch(event.case) {
+        case MonitorCase.CREATED: {
+          this.dataPorts[event.handle] = new DataPort();
+        }
+        case MonitorCase.CREATED: {
+          this.dataPorts[event.handle] = new DataPort();
+        }
+      }
+    });
+  }
+
+  query = function *(query: string, startPoint: number) {
+    let ramp = QueryHandlerService.RAMP_FUNCT(startPoint);
     let rampState = ramp.next();
     let limit = rampState.value;
     let complete = rampState.done;
@@ -67,19 +83,23 @@ export class QueryHandlerService {
     let canceled = false;
     
     while(!canceled && !complete) {
-      
+      //console.log(this.spatial);
       //inject true to cancel the current query if new query comes
       canceled = yield this.spatial.spatialSearch(query, limit, offset).then((data) => {
+        console.log(data);
+        complete = data.length == limit;
         let status: RequestStatus = {
           status: 200,
           loadedResults: offset + data.length,
-          finished: data.length == limit
+          finished: complete
         }
         return {
           status: status,
           data: data
         };
       }, (e: HttpErrorResponse) => {
+        //errored out, set complete (shouldn't continue)
+        complete = true;
         let status: RequestStatus = {
           status: e.status,
           loadedResults: offset,
@@ -95,7 +115,7 @@ export class QueryHandlerService {
 
       rampState = ramp.next();
       limit = rampState.value;
-      complete = rampState.done;
+      complete = complete || rampState.done;
     }
     return complete;
   }
@@ -108,8 +128,8 @@ export class QueryHandlerService {
     
   }
 
-  //might want to handle multiple filters at a time
-  //separate this out into a class, have a collection based on a set of tracked filters, add dataPort back in to subscribe to outputs
+  //filters handled by filtermanager, filters should be registered here and data ports are handled there
+  //handle requests here, emit requests through filtermanager data ports
 
   //add support for sorting and filters
 
@@ -120,93 +140,109 @@ export class QueryHandlerService {
   //error if query errors out
   //assumes that any data from current query should be cached (overflow will be cut off if excessively large)
   //need to add overflow indicator to status
-  spatialSearch(geometry: any, firstEntry: number, range: number): Promise<Metadata[]> {
+  spatialSearch(geometry: any, firstEntry: number, range: number): void {
+    let query = "{'$and':[{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(geometry).replace(/"/g,'\'') + "}}}]}";
+    this.handleQuery(query);
+  }
 
-    if()
-
+  private handleQuery(query: string): void {
+    //if same as the currently tracked query ignore (it should already be doing its thing)
+    if(this.queryState.query == query) {
+      return;
+    }
+    //cancel the last query if still running
     this.cancelQuery();
-    this.queryState.query = "{'$and':[{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(geometry).replace(/"/g,'\'') + "}}}]}";
+
+    this.queryState.query = query;
+
+    //add cache check
+    //set startPoint to the starting point for the request
+    //have indicator in cache if data is complete
+
+    //for now clear data store (remove when cache implemented)
+    delete this.tempData[query];
+    let startPoint = 0;
+    let complete = false;
+
+    if(complete) {
+      return;
+    }
+
+    let qGen = this.query(query, startPoint);
+    this.queryState.queryGen = qGen;
     
-    this.handleQuery();
+    let queryHandle = qGen.next().value;
 
+    let handler = (response: QueryResponse): Promise<RequestStatus> => {
+      this.statusPort.next(response.status);
+      //add data to cache
+      let next = qGen.next();
+      if(next.done == true) {
+        throw new Error("An unexpected error has occured while handling the query: handler called after generator completed");
+      }
+      console.log(next.value);
+      //console.log(next.value instanceof Promise);
+      //console.log(next.value instanceof "Promise");
+      //generator complete or canceled
+      if(typeof next.value == "boolean") {
+        return new Promise((resolve) => {
+          resolve(response.status);
+        });
+      }
+      else {
+        //insert data into cache
+        this.tempDataAdd(response.data);
+        return this.recursivePromise(next.value, handler)
+      }
+    }
 
-    return null;
+    this.recursivePromise(queryHandle, handler).then((status) => {
+      console.log(status);
+    });
   }
 
+  private recursivePromise(promise: Promise<any>, handler: (data) => Promise<RequestStatus>): Promise<RequestStatus> {
+    return promise.then((data) => {
+      return handler(data);
+    });
+  }
+
+
+  seChunkSize(filterHandle: FilterHandle, chunkSize: number) {
+    let port = this.dataPorts[filterHandle];
+    if(port == undefined) {
+      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
+    }
+    port.chunkSize = chunkSize;
+  }
   
-  next() {
-    if(this.tempData[this.queryState.query])
-    this.statusPort.subscribe((status) => {
-      status.
+  next(filterHandle: FilterHandle) {
+    let port = this.dataPorts[filterHandle];
+    if(port == undefined) {
+      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
+    }
+    if(port.lastReturned == null) {
+      throw new Error("next called before stream initialized: requestData must be called before stateful next or previous to initialize stream state");
+    }
+    //don't try to get current request until last request is properly handled and returned to ensure ordering
+    let dataListener = port.lastReturned.then((last: [number, number]) => {
+      //need to handle boundary checking, etc (should the cache do this?)
+      let startPoint = last[1];
+      let range: [number, number] = [last[1], last[1] + port.chunkSize];
+      return range;
     });
-    this.queryState.lastReturned =  this.queryState.lastReturned.then(() => {
-      //
-    });
-    return this.queryState.lastReturned;
+    port.lastReturned = dataListener;
+    return dataListener;
   }
 
-  previous() {
+  previous(filterHandle: FilterHandle) {
 
   }
 
   //create method that has observable subscription
 
-  requestData(firstEntry: number, range: number) {
-    this.queryState.chunkSize = 
-  }
-
-  private handleQuery(query: string): void {
-    //add cache check
-    //set startPoint to the starting point for the request
-    //have indicator in cache if data is complete
-    let startPoint = 0;
-
-    let complete = false;
-    if(complete) {
-      return;
-    }
-    let qGen = QueryHandlerService.query(query, startPoint);
+  requestData(filterHandle: FilterHandle, firstEntry: number, chunkSize: number) {
     
-    let queryHandle = qGen.next();
-
-    let nextPromise = (generator) => {
-      return generator.next();
-    }
-
-    let dataHandler = (data) => {
-
-    }
-
-    let getCondition = (data) => {
-
-    }
-
-    let handler = (data: QueryResponse, generator: IterableIterator<any>) => {
-      this.statusPort.next(data.status);
-      //add data to cache
-      let next = generator.next();
-      if(next.done == true) {
-        throw new Error("An unexpected error has occured while handling the query: handler called after generator completed");
-      }
-      if(typeof)
-    }
-
-    this.recursivePromise(nextPromise);
-  }
-
-  recursivePromise(promise: Promise<any>, handler: (data) => , data: any) {
-    if()
-    return promise.then((data) => {
-      handler();
-      if(condition()) {
-        this.recursivePromise(promise, handler, condition)
-      }
-    });
-  }
-
-  setPageSize(size: number) {
-    this.pageSize = size;
-
   }
 
 }
@@ -214,4 +250,12 @@ export class QueryHandlerService {
 interface QueryResponse {
   status: RequestStatus,
   data: Metadata[]
+}
+
+//data port holds stateful information on position of last returned data, chunk size, etc and observer for subscribing to data stream of requested data on the filter
+class DataPort {
+  source: Subject<any>;
+  chunkSize: number;
+  //store last promise, wait until after this data is returned to get next chunk
+  lastReturned: Promise<[number, number]>;
 }

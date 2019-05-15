@@ -8,12 +8,12 @@ import { User } from '../_models/user'
 import {Metadata } from '../_models/metadata'
 import {latLng, LatLng, tileLayer,circle,polygon,icon} from 'leaflet';
 import * as L from 'leaflet';
-
-
-
 import { AppConfig } from '../_services/config.service';
 //import { AuthenticationService } from '../_services/authentication.service';
-import { SpatialService } from '../_services/spatial.service'
+//import { SpatialService } from '../_services/spatial.service'
+import { QueryHandlerService } from '../_services/query-handler.service';
+
+
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
@@ -24,7 +24,7 @@ export class MapComponent implements OnInit {
   metadata: Metadata[];
   selectedMetadata: Metadata;
   currentUser: User;
-  constructor(private http: HttpClient, private spatial: SpatialService) {
+  constructor(private http: HttpClient, private queryHandler: QueryHandlerService) {
     //currentUser: localStorage.getItem('currentUser')
   }
 
@@ -38,7 +38,7 @@ export class MapComponent implements OnInit {
     console.log('Draw Created Event!');
     console.log(e)
     console.log(String(e.layer.toGeoJSON()))
-    let result = this.spatial.spatialSearch(e.layer.toGeoJSON().geometry, 10, 0).subscribe(metadata => this.metadata = metadata);
+    let result = this.queryHandler.spatialSearch(e.layer.toGeoJSON().geometry, 10, 0);
 
 	}
 
