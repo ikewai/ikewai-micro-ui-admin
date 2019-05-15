@@ -50,8 +50,14 @@ export class QueryHandlerService {
   tempDataRetreive() {
     
   }
-  tempDataAdd(data: Metadata[]) {
-    console.log(data);
+  tempDataAdd(query: string, data: Metadata[]) {
+    //console.log(data);
+    if(this.tempData[query] == undefined) {
+      this.tempData[query] = data;
+    }
+    else {
+      this.tempData[query] = this.tempData[query].concat(data);
+    }
   }
 
 
@@ -86,8 +92,9 @@ export class QueryHandlerService {
       //console.log(this.spatial);
       //inject true to cancel the current query if new query comes
       canceled = yield this.spatial.spatialSearch(query, limit, offset).then((data) => {
-        console.log(data);
-        complete = data.length == limit;
+        console.log(data.length);
+        console.log(limit);
+        complete = data.length != limit;
         let status: RequestStatus = {
           status: 200,
           loadedResults: offset + data.length,
@@ -174,24 +181,27 @@ export class QueryHandlerService {
     let queryHandle = qGen.next().value;
 
     let handler = (response: QueryResponse): Promise<RequestStatus> => {
+      //insert data into cache
+      this.tempDataAdd(query, response.data);
       this.statusPort.next(response.status);
       //add data to cache
+      //returns done when returned, value will be completed flag
       let next = qGen.next();
-      if(next.done == true) {
+      console.log(next);
+      if(next.value == undefined) {
         throw new Error("An unexpected error has occured while handling the query: handler called after generator completed");
       }
       console.log(next.value);
       //console.log(next.value instanceof Promise);
       //console.log(next.value instanceof "Promise");
       //generator complete or canceled
-      if(typeof next.value == "boolean") {
+      if(next.done) {
+        console.log(this.tempData);
         return new Promise((resolve) => {
           resolve(response.status);
         });
       }
       else {
-        //insert data into cache
-        this.tempDataAdd(response.data);
         return this.recursivePromise(next.value, handler)
       }
     }
@@ -208,7 +218,7 @@ export class QueryHandlerService {
   }
 
 
-  seChunkSize(filterHandle: FilterHandle, chunkSize: number) {
+  setChunkSize(filterHandle: FilterHandle, chunkSize: number) {
     let port = this.dataPorts[filterHandle];
     if(port == undefined) {
       throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
