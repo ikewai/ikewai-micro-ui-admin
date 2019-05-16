@@ -45,11 +45,22 @@ export class QueryHandlerService {
 
   statusPort = new Subject<RequestStatus>();
 
+  //cache properties:
+  //cache should know if the set of data it has is complete
+  //cache should guarantee default query result ordering (generate and cache indexes for sorting)
+  //cache should always expell from the end of data, that is, if a data entry is present all previous data is in cache (simpler to restore if partial data cached)
+
   //temporary data storage until cache implemented
   tempData: {[query: string]: Metadata[]} = {};
-  tempDataRetreive() {
-    
+
+  tempDataRetreive(start: number, chunkSize: number): Promise<Metadata[]> {
+    let range = [start, null];
+
+    slice(range[0], range[1]);
+
+
   }
+
   tempDataAdd(query: string, data: Metadata[]) {
     //console.log(data);
     if(this.tempData[query] == undefined) {
@@ -72,8 +83,8 @@ export class QueryHandlerService {
         case MonitorCase.CREATED: {
           this.dataPorts[event.handle] = new DataPort();
         }
-        case MonitorCase.CREATED: {
-          this.dataPorts[event.handle] = new DataPort();
+        case MonitorCase.DESTROYED: {
+          delete this.dataPorts[event.handle];
         }
       }
     });
@@ -226,7 +237,7 @@ export class QueryHandlerService {
     port.chunkSize = chunkSize;
   }
   
-  next(filterHandle: FilterHandle) {
+  next(filterHandle: FilterHandle): Promise<Metadata[]> {
     let port = this.dataPorts[filterHandle];
     if(port == undefined) {
       throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
@@ -235,8 +246,12 @@ export class QueryHandlerService {
       throw new Error("next called before stream initialized: requestData must be called before stateful next or previous to initialize stream state");
     }
     //don't try to get current request until last request is properly handled and returned to ensure ordering
-    let dataListener = port.lastReturned.then((last: [number, number]) => {
-      //need to handle boundary checking, etc (should the cache do this?)
+    let dataListener = port.lastReturned.then((last: ChunkController) => {
+      //check if reached upper sentinel, return null if reached end of data
+      if(last.sentinels[1]) {
+        return null;
+      }
+
       let startPoint = last[1];
       let range: [number, number] = [last[1], last[1] + port.chunkSize];
       return range;
@@ -252,7 +267,7 @@ export class QueryHandlerService {
   //create method that has observable subscription
 
   requestData(filterHandle: FilterHandle, firstEntry: number, chunkSize: number) {
-    
+    this.tempDataRetreive
   }
 
 }
@@ -262,10 +277,17 @@ interface QueryResponse {
   data: Metadata[]
 }
 
+
+
 //data port holds stateful information on position of last returned data, chunk size, etc and observer for subscribing to data stream of requested data on the filter
-class DataPort {
-  source: Subject<any>;
+class DataPort<T> {
+  source: Subject<T>;
   chunkSize: number;
   //store last promise, wait until after this data is returned to get next chunk
-  lastReturned: Promise<[number, number]>;
+  lastReturned: Promise<ChunkController>;
+}
+
+interface ChunkController {
+  range: [number, number],
+  sentinels: [boolean, boolean]
 }
