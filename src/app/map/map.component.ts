@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
-import {Observable, of } from 'rxjs';
+import {Observable, of, BehaviorSubject } from 'rxjs';
 import { map, retry, catchError } from 'rxjs/operators';
 import { User } from '../_models/user'
 import {Metadata } from '../_models/metadata'
@@ -12,6 +12,7 @@ import { AppConfig } from '../_services/config.service';
 //import { AuthenticationService } from '../_services/authentication.service';
 //import { SpatialService } from '../_services/spatial.service'
 import { QueryHandlerService } from '../_services/query-handler.service';
+import { FilterHandle, FilterManagerService, Filter, FilterMode } from '../_services/filter-manager.service';
 
 
 @Component({
@@ -21,14 +22,32 @@ import { QueryHandlerService } from '../_services/query-handler.service';
 })
 export class MapComponent implements OnInit {
 
-  metadata: Metadata[];
+  static readonly DEAFAULT_RESULTS = 10;
+
+  //metadata = true;
   selectedMetadata: Metadata;
   currentUser: User;
-  constructor(private http: HttpClient, private queryHandler: QueryHandlerService) {
-    //currentUser: localStorage.getItem('currentUser')
+
+  defaultFilterSource: Observable<Metadata[]>;
+  defaultFilterHandle: FilterHandle;
+
+
+  constructor(private http: HttpClient, private queryHandler: QueryHandlerService, private filters: FilterManagerService) {
+    //currentUser: localStorage.getItem('currentUser');
+
+    
   }
+  
 
   ngOnInit() {
+    this.queryHandler.initFilterListener(this.filters.filterMonitor);
+    this.defaultFilterHandle = this.filters.registerFilter();
+    console.log(this.defaultFilterHandle);
+    this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
+    // this.defaultFilterSource.subscribe((data: Metadata[]) => {
+    //   console.log(data);
+    //   //this.testData = data;
+    // });
   }
 
   public onDrawCreated(e: any) {
@@ -38,8 +57,11 @@ export class MapComponent implements OnInit {
     console.log('Draw Created Event!');
     console.log(e)
     console.log(String(e.layer.toGeoJSON()))
-    let result = this.queryHandler.spatialSearch(e.layer.toGeoJSON().geometry, 10, 0);
-
+    this.queryHandler.spatialSearch(e.layer.toGeoJSON().geometry);
+    this.queryHandler.requestData(this.defaultFilterHandle, 0, MapComponent.DEAFAULT_RESULTS);
+    setTimeout(() => {
+      this.queryHandler.next(this.defaultFilterHandle);
+    }, 5000);
 	}
 
   options = {

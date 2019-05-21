@@ -4,13 +4,13 @@
      [leafletDrawOptions]="drawOptions"
      (leafletDrawCreated)="onDrawCreated($event)">
 </div>
-<div *ngIf="metadata">
+<div *ngIf="(defaultFilterSource | async) != null">
 <h2>My Metadata</h2>
 <table>
   <tr>
     <td>
       <ul class="metadata">
-        <li *ngFor="let metadatum of metadata">
+        <li *ngFor="let metadatum of defaultFilterSource | async">
           {{metadatum | json}} 
         </li>
       </ul>
