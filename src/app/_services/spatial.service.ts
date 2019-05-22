@@ -24,14 +24,14 @@ export class SpatialService {
     // }
     
     let url = AppConfig.settings.aad.tenant + "/meta/v2/data?q=" + encodeURI(query) + "&limit=" + limit.toString() + "&offset=" + offset.toString();
-    console.log(url);
+    //console.log(url);
     //.set("Authorization", "Bearer " + currentUser.access_token)
     let head = new HttpHeaders()
     .set("Content-Type", "application/x-www-form-urlencoded");
     let options = {
       headers: head
     };
-    console.log("stuff");
+    //console.log("stuff");
 
 
     let response = this.http.get<Metadata[]>(url, options)

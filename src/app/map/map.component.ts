@@ -42,7 +42,7 @@ export class MapComponent implements OnInit {
   ngOnInit() {
     this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
-    console.log(this.defaultFilterHandle);
+    //console.log(this.defaultFilterHandle);
     this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
     // this.defaultFilterSource.subscribe((data: Metadata[]) => {
     //   console.log(data);
@@ -58,10 +58,19 @@ export class MapComponent implements OnInit {
     console.log(e)
     console.log(String(e.layer.toGeoJSON()))
     this.queryHandler.spatialSearch(e.layer.toGeoJSON().geometry);
-    this.queryHandler.requestData(this.defaultFilterHandle, 0, MapComponent.DEAFAULT_RESULTS);
+    this.queryHandler.requestData(this.defaultFilterHandle, 0, MapComponent.DEAFAULT_RESULTS).then((data) => console.log(data));
     setTimeout(() => {
-      this.queryHandler.next(this.defaultFilterHandle);
-    }, 5000);
+      this.queryHandler.next(this.defaultFilterHandle).then((data) => console.log(data));
+      setTimeout(() => {
+        this.queryHandler.previous(this.defaultFilterHandle).then((data) => console.log(data));
+        this.queryHandler.previous(this.defaultFilterHandle).then((data) => console.log(data));
+        setTimeout(() => {
+          this.queryHandler.next(this.defaultFilterHandle).then((data) => console.log(data));
+          this.queryHandler.next(this.defaultFilterHandle).then((data) => console.log(data));
+        }, 2000);
+      }, 2000);
+    }, 2000);
+    
 	}
 
   options = {

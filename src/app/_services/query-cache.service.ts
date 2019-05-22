@@ -32,18 +32,18 @@ export class QueryCacheService {
     }
     let base = this.tempData[query];
     let extent = base.data.length;
-    console.log(extent);
+    //console.log(extent);
     //null indicates request is out of range
     if(extent < range[0]) {
       return null
     }
     extent = Math.min(extent, range[1]);
-
     return base.data.slice(range[0], extent);
   }
 
   //data should be in base query order
   addData(query: string, data: Metadata[], complete: boolean): void {
+    //console.log(data);
     let base = this.tempData[query];
     if(base == undefined) {
       this.tempData[query] = {

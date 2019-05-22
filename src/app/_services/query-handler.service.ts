@@ -5,6 +5,7 @@ import { QueryCacheService, PollStatus } from './query-cache.service';
 import { Metadata } from '../_models/metadata';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FilterHandle, Filter, FilterManagerService, MonitorEvent, MonitorCase } from './filter-manager.service';
+import { takeUntil } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -60,11 +61,11 @@ export class QueryHandlerService {
 
   initFilterListener(filterMonitor: Subject<MonitorEvent>) {
     filterMonitor.subscribe((event: MonitorEvent) => {
-      console.log(event);
+      //console.log(event);
       switch(event.case) {
         case MonitorCase.CREATED: {
           this.dataPorts[event.handle] = new DataPort();
-          console.log(this.dataPorts[0]);
+          //console.log(this.dataPorts[0]);
           break;
         }
         case MonitorCase.DESTROYED: {
@@ -77,8 +78,8 @@ export class QueryHandlerService {
 
   getFilterObserver(filterHandle: FilterHandle): Observable<Metadata[]> {
     let port = this.dataPorts[filterHandle];
-    console.log(filterHandle);
-    console.log(this.dataPorts);
+    //console.log(filterHandle);
+    //console.log(this.dataPorts);
     if(port == undefined) {
       throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
     }
@@ -249,54 +250,116 @@ export class QueryHandlerService {
 
       let range: [number, number] = [last[1], last[1] + port.chunkSize];
 
-      return new Promise<[number, number]>((resolve) => {
-        let sub = this.statusPort.subscribe((status) => {
+      return new Promise<ChunkState>((resolve) => {
+        let chunkData: ChunkState = {
+          last: last,
+          current: null
+        };
+        let subManager = new Subject();
+        this.statusPort
+        .pipe(takeUntil(subManager))
+        .subscribe((status) => {
           //error in query, return null, data will never be loaded unless retry
           if(status.status != 200) {
-            sub.unsubscribe();
-            return resolve(null);
+            subManager.next();
+            return resolve(chunkData);
           }
           let ready: PollStatus = this.cache.pollData(filterHandle, this.queryState.query, range);
           //if query ready resolve
           if(ready == PollStatus.READY) {
-            sub.unsubscribe();           
-            return resolve(range);
+            subManager.next();
+            chunkData.current = range;     
+            return resolve(chunkData);
           }
           //out of range, resolve with null
           else if(ready == PollStatus.INVALID) {
-            return resolve(null);
+            subManager.next();
+            return resolve(chunkData);
           }
           //not ready, wait for next set of data to arrive
-        });
+        }, () => {}, () => {console.log("complete")});
       });
     });
 
-    port.lastRequest = dataListener.then((range: [number, number]) => {
-      //if next data is null then keep same state
-      if(range == null) {
-        return port.lastRequest;
-      }
-      //otherwise assign to the new state
-      else {
-        return range;
-      }
+    port.lastRequest = dataListener.then((chunkData: ChunkState) => {
+      //if next data is null then keep same state otherwise assign to the new state
+      return chunkData.current == null ? chunkData.last : chunkData.current;
     });
-    return dataListener.then((range: [number, number]) => {
+    return dataListener.then((chunkData: ChunkState) => {
       //if null just return null to user, otherwise return data retreived from chunk range and push to source
       let data = null
-      if(range == null) {
-        data = this.cache.retreiveData(filterHandle, this.queryState.query, range);
+      if(chunkData.current != null) {
+        data = this.cache.retreiveData(filterHandle, this.queryState.query, chunkData.current);
         port.source.next(data);
       }
       return data;
     });
   }
 
-  previous(filterHandle: FilterHandle) {
+  previous(filterHandle: FilterHandle): Promise<Metadata[]> {
+    let port = this.dataPorts[filterHandle];
+    if(port == undefined) {
+      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
+    }
+    if(port.lastRequest == null) {
+      throw new Error("next called before stream initialized: requestData must be called before stateful next or previous to initialize stream state");
+    }
+    //don't try to get current request until last request is properly handled and returned to ensure ordering
+    let dataListener = port.lastRequest.then((last: [number, number]) => {
+      let chunkData: ChunkState = {
+        last: last,
+        current: null
+      };
+      //if already at 0 lower bound return null
+      if(last[0] == 0) {
+        return chunkData;
+      }
+      //if chunk size doesn't fit properly and lower bound less than 0, realign to 0
+      let lower = Math.max(last[0] - port.chunkSize, 0);
+      let upper = lower + port.chunkSize;
+      let range: [number, number] = [lower, upper];
 
+      return new Promise<ChunkState>((resolve) => {
+        let subManager = new Subject();
+        this.statusPort
+        .pipe(takeUntil(subManager))
+        .subscribe((status) => {
+          //error in query, return null, data will never be loaded unless retry
+          if(status.status != 200) {
+            subManager.next();
+            return resolve(chunkData);
+          }
+          let ready: PollStatus = this.cache.pollData(filterHandle, this.queryState.query, range);
+          //if query ready resolve
+          if(ready == PollStatus.READY) {
+            subManager.next();
+            chunkData.current = range;     
+            return resolve(chunkData);
+          }
+          //out of range, resolve with null
+          else if(ready == PollStatus.INVALID) {
+            subManager.next();
+            return resolve(chunkData);
+          }
+          //not ready, wait for next set of data to arrive
+        }, () => {}, () => {console.log("complete")});
+      });
+    });
+
+    port.lastRequest = dataListener.then((chunkData: ChunkState) => {
+      //if next data is null then keep same state otherwise assign to the new state
+      return chunkData.current == null ? chunkData.last : chunkData.current;
+    });
+    return dataListener.then((chunkData: ChunkState) => {
+      //if null just return null to user, otherwise return data retreived from chunk range and push to source
+      let data = null
+      if(chunkData.current != null) {
+        data = this.cache.retreiveData(filterHandle, this.queryState.query, chunkData.current);
+        port.source.next(data);
+      }
+      return data;
+    });
   }
-
-  //create method that has observable subscription
 
   requestData(filterHandle: FilterHandle, firstEntry: number, chunkSize: number): Promise<Metadata[]> {
     let port = this.dataPorts[filterHandle];
@@ -311,39 +374,43 @@ export class QueryHandlerService {
       let range: [number, number] = [firstEntry, firstEntry + chunkSize];
       port.chunkSize = chunkSize;
 
-      return new Promise<ChunkController>((resolve) => {
-        let chunkData: ChunkController = {
+      return new Promise<ChunkState>((resolve) => {
+        let chunkData: ChunkState = {
           last: last,
           current: null
         };
-        let sub = this.statusPort.subscribe((status) => {
+        let subManager = new Subject();
+        this.statusPort
+        .pipe(takeUntil(subManager))
+        .subscribe((status) => {
           console.log(status);
           //error in query, return null, data will never be loaded unless retry
           if(status.status != 200) {
-            sub.unsubscribe();
+            subManager.next();
             return resolve(chunkData);
           }
           let ready: PollStatus = this.cache.pollData(filterHandle, this.queryState.query, range);
           //if query ready resolve
           if(ready == PollStatus.READY) {
-            sub.unsubscribe();
+            subManager.next();
             chunkData.current = range; 
             return resolve(chunkData);
           }
           //out of range, resolve with null
           else if(ready == PollStatus.INVALID) {
+            subManager.next();
             return resolve(chunkData);
           }
           //not ready, wait for next set of data to arrive
-        });
+        }, () => {}, () => {console.log("complete")});
       });
     });
 
-    port.lastRequest = dataListener.then((chunkData: ChunkController) => {
+    port.lastRequest = dataListener.then((chunkData: ChunkState) => {
       //if next data is null then keep same state otherwise assign to the new state
       return chunkData.current == null ? chunkData.last : chunkData.current;
     });
-    return dataListener.then((chunkData: ChunkController) => {
+    return dataListener.then((chunkData: ChunkState) => {
       //if null just return null to user, otherwise return data retreived from chunk range and push to source
       let data = null
       if(chunkData.current != null) {
@@ -376,7 +443,7 @@ class DataPort {
   }
 }
 
-interface ChunkController {
+interface ChunkState {
   last: [number, number],
   current: [number, number]
 }
