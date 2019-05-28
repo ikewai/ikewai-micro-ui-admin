@@ -1,8 +1,9 @@
-<div leaflet style="height: 400px;width:800px"
+<div leaflet style="height: 400px;width:100%"
      leafletDraw
      [leafletOptions]="options"
      [leafletDrawOptions]="drawOptions"
-     (leafletDrawCreated)="onDrawCreated($event)">
+     (leafletDrawCreated)="onDrawCreated($event)"
+     (leafletMapReady)="onMapReady($event)">
 </div>
 <div *ngIf="(defaultFilterSource | async) != null">
 <h2>My Metadata</h2>

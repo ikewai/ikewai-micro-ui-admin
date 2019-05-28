@@ -1,5 +1,5 @@
 export class Metadata {
   uuid: string;
-  value: [];
+  value: any;
   name: string;
 }

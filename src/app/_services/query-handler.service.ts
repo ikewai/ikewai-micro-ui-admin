@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable, Subject, BehaviorSubject } from 'rxjs';
+import { Observable, Subject, BehaviorSubject, merge } from 'rxjs';
 import { SpatialService } from './spatial.service';
 import { QueryCacheService, PollStatus } from './query-cache.service';
 import { Metadata } from '../_models/metadata';
@@ -41,19 +41,19 @@ export class QueryHandlerService {
   queryState: {
     query: string,
     queryGen: IterableIterator<any>
+    masterDataSubController: Subject<void>
   };
 
   //should only fire after data has been cached
   statusPort: BehaviorSubject<RequestStatus>;
-
-  
 
 
 
   constructor(private spatial: SpatialService, private cache: QueryCacheService) {
     this.queryState = {
       query: null,
-      queryGen: null
+      queryGen: null,
+      masterDataSubController: new Subject()
     };
     this.statusPort = new BehaviorSubject<RequestStatus>(null);
     this.dataPorts = {};
@@ -138,7 +138,7 @@ export class QueryHandlerService {
       //inject signal to cancel into query generator, shouldn't matter if already complete
       this.queryState.queryGen.next(true);
     }
-    
+    this.queryState.masterDataSubController.next();
   }
 
   //filters handled by filtermanager, filters should be registered here and data ports are handled there
@@ -237,7 +237,8 @@ export class QueryHandlerService {
     port.chunkSize = chunkSize;
   }
   
-  next(filterHandle: FilterHandle): Promise<Metadata[]> {
+  //switch to return range from promise
+  next(filterHandle: FilterHandle): Promise<[number, number]> {
     let port = this.dataPorts[filterHandle];
     if(port == undefined) {
       throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
@@ -247,121 +248,43 @@ export class QueryHandlerService {
     }
     //don't try to get current request until last request is properly handled and returned to ensure ordering
     let dataListener = port.lastRequest.then((last: [number, number]) => {
-
       let range: [number, number] = [last[1], last[1] + port.chunkSize];
 
-      return new Promise<ChunkState>((resolve) => {
-        let chunkData: ChunkState = {
+      return this.generateChunkRetreivalPromise(filterHandle, last, range);
+    });
+
+    return this.generateResultAndSetState(filterHandle, port, dataListener);
+  }
+
+  previous(filterHandle: FilterHandle): Promise<[number, number]> {
+    let port = this.dataPorts[filterHandle];
+    if(port == undefined) {
+      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
+    }
+    if(port.lastRequest == null) {
+      throw new Error("next called before stream initialized: requestData must be called before stateful next or previous to initialize stream state");
+    }
+    //don't try to get current request until last request is properly handled and returned to ensure ordering
+    let dataListener = port.lastRequest.then((last: [number, number]) => {
+      //if already at 0 lower bound just ignore and return null for current
+      if(last[0] == 0) {
+        return {
           last: last,
           current: null
         };
-        let subManager = new Subject();
-        this.statusPort
-        .pipe(takeUntil(subManager))
-        .subscribe((status) => {
-          //error in query, return null, data will never be loaded unless retry
-          if(status.status != 200) {
-            subManager.next();
-            return resolve(chunkData);
-          }
-          let ready: PollStatus = this.cache.pollData(filterHandle, this.queryState.query, range);
-          //if query ready resolve
-          if(ready == PollStatus.READY) {
-            subManager.next();
-            chunkData.current = range;     
-            return resolve(chunkData);
-          }
-          //out of range, resolve with null
-          else if(ready == PollStatus.INVALID) {
-            subManager.next();
-            return resolve(chunkData);
-          }
-          //not ready, wait for next set of data to arrive
-        }, () => {}, () => {console.log("complete")});
-      });
-    });
-
-    port.lastRequest = dataListener.then((chunkData: ChunkState) => {
-      //if next data is null then keep same state otherwise assign to the new state
-      return chunkData.current == null ? chunkData.last : chunkData.current;
-    });
-    return dataListener.then((chunkData: ChunkState) => {
-      //if null just return null to user, otherwise return data retreived from chunk range and push to source
-      let data = null
-      if(chunkData.current != null) {
-        data = this.cache.retreiveData(filterHandle, this.queryState.query, chunkData.current);
-        port.source.next(data);
-      }
-      return data;
-    });
-  }
-
-  previous(filterHandle: FilterHandle): Promise<Metadata[]> {
-    let port = this.dataPorts[filterHandle];
-    if(port == undefined) {
-      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
-    }
-    if(port.lastRequest == null) {
-      throw new Error("next called before stream initialized: requestData must be called before stateful next or previous to initialize stream state");
-    }
-    //don't try to get current request until last request is properly handled and returned to ensure ordering
-    let dataListener = port.lastRequest.then((last: [number, number]) => {
-      let chunkData: ChunkState = {
-        last: last,
-        current: null
-      };
-      //if already at 0 lower bound return null
-      if(last[0] == 0) {
-        return chunkData;
       }
       //if chunk size doesn't fit properly and lower bound less than 0, realign to 0
       let lower = Math.max(last[0] - port.chunkSize, 0);
       let upper = lower + port.chunkSize;
       let range: [number, number] = [lower, upper];
 
-      return new Promise<ChunkState>((resolve) => {
-        let subManager = new Subject();
-        this.statusPort
-        .pipe(takeUntil(subManager))
-        .subscribe((status) => {
-          //error in query, return null, data will never be loaded unless retry
-          if(status.status != 200) {
-            subManager.next();
-            return resolve(chunkData);
-          }
-          let ready: PollStatus = this.cache.pollData(filterHandle, this.queryState.query, range);
-          //if query ready resolve
-          if(ready == PollStatus.READY) {
-            subManager.next();
-            chunkData.current = range;     
-            return resolve(chunkData);
-          }
-          //out of range, resolve with null
-          else if(ready == PollStatus.INVALID) {
-            subManager.next();
-            return resolve(chunkData);
-          }
-          //not ready, wait for next set of data to arrive
-        }, () => {}, () => {console.log("complete")});
-      });
+      return this.generateChunkRetreivalPromise(filterHandle, last, range);
     });
 
-    port.lastRequest = dataListener.then((chunkData: ChunkState) => {
-      //if next data is null then keep same state otherwise assign to the new state
-      return chunkData.current == null ? chunkData.last : chunkData.current;
-    });
-    return dataListener.then((chunkData: ChunkState) => {
-      //if null just return null to user, otherwise return data retreived from chunk range and push to source
-      let data = null
-      if(chunkData.current != null) {
-        data = this.cache.retreiveData(filterHandle, this.queryState.query, chunkData.current);
-        port.source.next(data);
-      }
-      return data;
-    });
+    return this.generateResultAndSetState(filterHandle, port, dataListener);
   }
 
-  requestData(filterHandle: FilterHandle, firstEntry: number, chunkSize: number): Promise<Metadata[]> {
+  requestData(filterHandle: FilterHandle, firstEntry: number, chunkSize: number): Promise<[number, number]> {
     let port = this.dataPorts[filterHandle];
     if(port == undefined) {
       throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
@@ -374,65 +297,102 @@ export class QueryHandlerService {
       let range: [number, number] = [firstEntry, firstEntry + chunkSize];
       port.chunkSize = chunkSize;
 
-      return new Promise<ChunkState>((resolve) => {
-        let chunkData: ChunkState = {
-          last: last,
-          current: null
-        };
-        let subManager = new Subject();
-        this.statusPort
-        .pipe(takeUntil(subManager))
-        .subscribe((status) => {
-          console.log(status);
-          //error in query, return null, data will never be loaded unless retry
-          if(status.status != 200) {
-            subManager.next();
-            return resolve(chunkData);
-          }
-          let ready: PollStatus = this.cache.pollData(filterHandle, this.queryState.query, range);
-          //if query ready resolve
-          if(ready == PollStatus.READY) {
-            subManager.next();
-            chunkData.current = range; 
-            return resolve(chunkData);
-          }
-          //out of range, resolve with null
-          else if(ready == PollStatus.INVALID) {
-            subManager.next();
-            return resolve(chunkData);
-          }
-          //not ready, wait for next set of data to arrive
-        }, () => {}, () => {console.log("complete")});
-      });
+      return this.generateChunkRetreivalPromise(filterHandle, last, range);
     });
 
-    port.lastRequest = dataListener.then((chunkData: ChunkState) => {
-      //if next data is null then keep same state otherwise assign to the new state
-      return chunkData.current == null ? chunkData.last : chunkData.current;
-    });
-    return dataListener.then((chunkData: ChunkState) => {
-      //if null just return null to user, otherwise return data retreived from chunk range and push to source
-      let data = null
-      if(chunkData.current != null) {
-        data = this.cache.retreiveData(filterHandle, this.queryState.query, chunkData.current);
-        port.source.next(data);
-      }
-      return data;
+    return this.generateResultAndSetState(filterHandle, port, dataListener);
+  }
+
+  generateChunkRetreivalPromise(filterHandle: FilterHandle, last: [number, number], current: [number, number]): Promise<ChunkController> {
+    let chunkData: ChunkController = {
+      last: last,
+      current: null
+    };
+
+    return new Promise<ChunkController>((resolve) => {
+      let subManager = new Subject();
+      this.statusPort
+      //make submanager global, store chunkdata outside and resolve in complete method so can be canceled
+      .pipe(takeUntil(merge(subManager, this.queryState.masterDataSubController)))
+      .subscribe((status) => {
+        //error in query, return null, data will never be loaded unless retry
+        if(status.status != 200) {
+          subManager.next();
+        }
+        let ready: PollStatus = this.cache.pollData(filterHandle, this.queryState.query, current);
+        //if query ready resolve
+        if(ready == PollStatus.READY) {
+          subManager.next();
+          chunkData.current = current;     
+        }
+        //out of range, resolve with null
+        else if(ready == PollStatus.INVALID) {
+          subManager.next();
+        }
+        //not ready, wait for next set of data to arrive
+      },
+      null,
+      () => {
+        console.log("complete");
+        resolve(chunkData);
+      });
     });
   }
 
+  generateResultAndSetState(filterHandle: FilterHandle, port: DataPort, dataListener: Promise<ChunkController>): Promise<[number, number]> {
+    port.lastRequest = dataListener.then((chunkData: ChunkController) => {
+      //if next data is null then keep same state otherwise assign to the new state
+      return chunkData.current == null ? chunkData.last : chunkData.current;
+    });
+    return dataListener.then((chunkData: ChunkController) => {
+      //if null just return null to user, otherwise push data retreived from chunk range and return range
+      if(chunkData.current != null) {
+        let data = this.cache.retreiveData(filterHandle, this.queryState.query, chunkData.current);
+        port.source.next(data);
+      }
+      return chunkData.current;
+    });
+  }
+
+  //returns all data as received through observable
+  //need to push all previous data when initially subscribed, shouldn't push to all subscriptions, so tracked for each call separately rather than from respective data port (don't want to push data cumulatively)
+  getDataStreamObserver(filterHandle: FilterHandle): Observable<Metadata[]> {
+    //subscribe to status port and request data already available, then ranges after every tiem received
+    let source = new Subject<Metadata[]>();
+    let subManager = new Subject();
+    let last = 0;
+    this.statusPort
+    .pipe(takeUntil(merge(subManager, this.queryState.masterDataSubController)))
+    .subscribe((status: RequestStatus) => {
+      if(status.loadedResults > 0) {
+        //how to handle query errors?
+        let data = this.cache.retreiveData(filterHandle, this.queryState.query, [last, null]);
+        source.next(data);
+      }
+      
+    },
+    null,
+    () => {
+      source.complete();
+    });
+    return source.asObservable();
+  }
+
+  //getDataCountObserver(filterHandle: FilterHandle)
+
 }
+
+
 
 interface QueryResponse {
   status: RequestStatus,
   data: Metadata[]
 }
 
-
-
 //data port holds stateful information on position of last returned data, chunk size, etc and observer for subscribing to data stream of requested data on the filter
 class DataPort {
   source: BehaviorSubject<Metadata[]>;
+  count: BehaviorSubject<number>;
   chunkSize: number;
   //store last promise, wait until after this data is returned to get next chunk
   lastRequest: Promise<[number, number]>;
@@ -443,7 +403,7 @@ class DataPort {
   }
 }
 
-interface ChunkState {
+interface ChunkController {
   last: [number, number],
   current: [number, number]
 }

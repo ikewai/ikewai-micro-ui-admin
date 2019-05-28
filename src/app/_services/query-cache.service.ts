@@ -24,14 +24,18 @@ export class QueryCacheService {
   //range [lower, upper)
   //should return in filter order/conditions (not implemented)
   retreiveData(filterHandle: FilterHandle, query: string, range: [number, number]): Metadata[] {
+    let base = this.tempData[query];
+    let extent = base.data.length;
+    if(range[1] == null) {
+      range[1] = extent;
+    }
     if(range[0] < 0 || range[1] < 0) {
       throw new Error("Invalid range: values should be greater than 0");
     }
     if(range[0] > range[1]) {
       throw new Error("Invalid range: upper bound greater than lower bound, range should be ordered [lower_bound, upper_bound]");
     }
-    let base = this.tempData[query];
-    let extent = base.data.length;
+    
     //console.log(extent);
     //null indicates request is out of range
     if(extent < range[0]) {
