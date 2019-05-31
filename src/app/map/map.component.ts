@@ -6,7 +6,7 @@ import {Observable, of, BehaviorSubject } from 'rxjs';
 import { map, retry, catchError } from 'rxjs/operators';
 import { User } from '../_models/user'
 import {Metadata } from '../_models/metadata'
-import {latLng, LatLng, tileLayer,circle,polygon,icon} from 'leaflet';
+import {latLng, tileLayer, Marker, icon} from 'leaflet';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { AppConfig } from '../_services/config.service';
@@ -39,19 +39,67 @@ export class MapComponent implements OnInit, AfterViewInit {
     waterQualitySites: L.FeatureGroup
   }
 
+  options = {
+    layers: [
+      tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' })
+    ],
+    zoom: 5,
+    center: latLng(21.289373, -157.917480)
+  };
+
+  drawOptions = {
+    position: 'topright',
+    draw: {
+       polyline: false,
+       circle: false,
+       marker: false,
+       circlemarker: false
+    }
+ };
+
   onMapReady(map: L.Map) {
     this.map = map;
 
+    let iconCreateFunction = (group: string): (cluster: any) => L.DivIcon => {
+     
+      return (cluster: any) => {
+        let childCount = cluster.getChildCount();
+        let markerClass = "marker-cluster ";
+        let clusterSize = "marker-cluster-"
+        if(childCount < 10) {
+          clusterSize += "small";
+        } 
+        else if(childCount < 100) {
+          clusterSize += "medium";
+        } 
+        else {
+          clusterSize += "large";
+        }
+        markerClass += clusterSize + "-" + group;
+
+        return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', 
+        className: markerClass, iconSize: new L.Point(40, 40)});
+      }
+    };
+
     this.dataGroups = {
-      sites: new L.MarkerClusterGroup(),
-      wells: new L.MarkerClusterGroup(),
-      waterQualitySites: new L.MarkerClusterGroup()
-    }
-    console.log(this.dataGroups.sites);
+      sites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("sites")}),
+      wells: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("wells")}),
+      waterQualitySites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("waterQualitySites")})
+    };
+
+    let controlGroups: any = {};
 
     Object.keys(this.dataGroups).forEach((key) => {
-      this.dataGroups[key].addTo(this.map);
+      let dataGroup = this.dataGroups[key];
+      dataGroup.addTo(this.map);
+      console.log(key);
+      controlGroups[GroupLabelMap[key]] = dataGroup;
     });
+
+    console.log(controlGroups);
+
+    L.control.layers(null, controlGroups).addTo(this.map);
     
     //testing
     // this.defaultFilterSource.subscribe((data: Metadata[]) => {
@@ -92,6 +140,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     //   console.log(data);
     //   //this.testData = data;
     // });
+    //set marker images to generated image location to work around 404 bug
+    Marker.prototype.options.icon.options.iconUrl = "assets/marker-icon.png";
+    Marker.prototype.options.icon.options.shadowUrl = "assets/marker-shadow.png";
   }
 
   public onDrawCreated(e: any) {
@@ -133,34 +184,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     
 	}
 
-  options = {
-    layers: [
-      tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' })
-    ],
-    zoom: 5,
-    center: latLng(21.289373, -157.917480)
-  };
-
-  drawOptions = {
-    position: 'topright',
-    draw: {
-       marker: {
-          icon: L.icon({
-              iconSize: [ 25, 41 ],
-              iconAnchor: [ 13, 41 ],
-              iconUrl: 'assets/marker-icon.png',
-              shadowUrl: 'assets/marker-shadow.png'
-          })
-       },
-       polyline: false,
-       circle: {
-           shapeOptions: {
-               color: '#aaaaaa'
-           }
-       }
-    }
- };
-
 //  spatialSearch(geometry: any){
 
 //     var query = "{'$and':[{'name':'Landuse'},{'value.name':'dataset12042018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry.geometry).replace(/"/g,'\'')+"}}}]}";
@@ -197,7 +220,7 @@ enum NameGroupMap {
 }
 
 enum GroupLabelMap {
-  waterQualitySites = " Water Quality Sites",
+  waterQualitySites = "Water Quality Sites",
   sites = "Sites",
   wells = "Wells"
 }

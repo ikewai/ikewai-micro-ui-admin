@@ -65,6 +65,8 @@ export class QueryCacheService {
   //should check based on filter data (not implemented)
   pollData(filterHandle: FilterHandle, query: string, range: [number, number]): PollStatus {
     let base = this.tempData[query];
+    //console.log(base);
+    //console.log(this.tempData);
     if(base == undefined) {
       return PollStatus.NOT_READY;
     }

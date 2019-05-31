@@ -111,6 +111,7 @@ export class QueryHandlerService {
           data: data
         };
       }, (e: HttpErrorResponse) => {
+        console.log(e);
         //errored out, set complete (shouldn't continue)
         complete = true;
         let status: RequestStatus = {
@@ -129,6 +130,10 @@ export class QueryHandlerService {
       rampState = ramp.next();
       limit = rampState.value;
       complete = complete || rampState.done;
+    }
+    //if cancelled emit extra value for canceller to consume;
+    if(canceled) {
+      yield true;
     }
     return complete;
   }
@@ -196,9 +201,15 @@ export class QueryHandlerService {
     let queryHandle = qGen.next().value;
 
     let handler = (response: QueryResponse): Promise<RequestStatus> => {
-      //insert data into cache
-      this.cache.addData(query, response.data, response.status.finished);
-      this.statusPort.next(response.status);
+      //query failed cancel query
+      if(response.data == null) {
+        this.cancelQuery()
+      }
+      else {
+        //insert data into cache
+        this.cache.addData(query, response.data, response.status.finished);
+        this.statusPort.next(response.status);
+      }
       //add data to cache
       //returns done when returned, value will be completed flag
       let next = qGen.next();
@@ -314,11 +325,12 @@ export class QueryHandlerService {
       this.statusPort
       //make submanager global, store chunkdata outside and resolve in complete method so can be canceled
       .pipe(takeUntil(merge(subManager, this.queryState.masterDataSubController)))
-      .subscribe((status) => {
-        //error in query, return null, data will never be loaded unless retry
-        if(status.status != 200) {
-          subManager.next();
-        }
+      .subscribe((status: RequestStatus) => {
+        //cancellation should be accomplished by query cancellation pushing to masterDataSubController
+        // //error in query, return null, data will never be loaded unless retry
+        // if(status.status != 200) {
+        //   subManager.next();
+        // }
         let ready: PollStatus = this.cache.pollData(filterHandle, this.queryState.query, current);
         //if query ready resolve
         if(ready == PollStatus.READY) {
