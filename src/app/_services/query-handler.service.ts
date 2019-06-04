@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
 import { Observable, Subject, BehaviorSubject, merge } from 'rxjs';
 import { SpatialService } from './spatial.service';
-import { QueryCacheService, PollStatus } from './query-cache.service';
+import { QueryCacheService, PollStatus, IndexMetadataMap } from './query-cache.service';
 import { Metadata } from '../_models/metadata';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FilterHandle, Filter, FilterManagerService, MonitorEvent, MonitorCase } from './filter-manager.service';
 import { takeUntil } from 'rxjs/operators';
+
+export { IndexMetadataMap } from './query-cache.service';
 
 @Injectable({
   providedIn: 'root'
@@ -49,7 +51,7 @@ export class QueryHandlerService {
 
 
 
-  constructor(private spatial: SpatialService, private cache: QueryCacheService) {
+  constructor(private spatial: SpatialService, private cache: QueryCacheService, private filters: FilterManagerService) {
     this.queryState = {
       query: null,
       queryGen: null,
@@ -57,9 +59,10 @@ export class QueryHandlerService {
     };
     this.statusPort = new BehaviorSubject<RequestStatus>(null);
     this.dataPorts = {};
+    this.initFilterListener(filters.filterMonitor);
   }
 
-  initFilterListener(filterMonitor: Subject<MonitorEvent>) {
+  initFilterListener(filterMonitor: Observable<MonitorEvent>) {
     filterMonitor.subscribe((event: MonitorEvent) => {
       //console.log(event);
       switch(event.case) {
@@ -238,15 +241,6 @@ export class QueryHandlerService {
       return handler(data);
     });
   }
-
-
-  setChunkSize(filterHandle: FilterHandle, chunkSize: number) {
-    let port = this.dataPorts[filterHandle];
-    if(port == undefined) {
-      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
-    }
-    port.chunkSize = chunkSize;
-  }
   
   //switch to return range from promise
   next(filterHandle: FilterHandle): Promise<[number, number]> {
@@ -284,7 +278,7 @@ export class QueryHandlerService {
           current: null
         };
       }
-      //if chunk size doesn't fit properly and lower bound less than 0, realign to 0
+      //if chunk size doesn't fit properly and lower bound less than 0, realign to 0 (failsafe, should never actually happen since requestData should align)
       let lower = Math.max(last[0] - port.chunkSize, 0);
       let upper = lower + port.chunkSize;
       let range: [number, number] = [lower, upper];
@@ -295,7 +289,7 @@ export class QueryHandlerService {
     return this.generateResultAndSetState(filterHandle, port, dataListener);
   }
 
-  requestData(filterHandle: FilterHandle, firstEntry: number, chunkSize: number): Promise<[number, number]> {
+  requestData(filterHandle: FilterHandle, entry: number, chunkSize?: number): Promise<[number, number]> {
     let port = this.dataPorts[filterHandle];
     if(port == undefined) {
       throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
@@ -303,9 +297,15 @@ export class QueryHandlerService {
     
     let previous: Promise<any> = port.lastRequest == null ? Promise.resolve() : port.lastRequest;
 
+    if(chunkSize == undefined) {
+      chunkSize = port.chunkSize
+    }
+
+    let first = Math.floor(entry / chunkSize) * chunkSize;
+
     //don't try to get current request until last request is properly handled and returned to ensure ordering
     let dataListener = previous.then((last: [number, number]) => {
-      let range: [number, number] = [firstEntry, firstEntry + chunkSize];
+      let range: [number, number] = [first, entry + chunkSize];
       port.chunkSize = chunkSize;
 
       return this.generateChunkRetreivalPromise(filterHandle, last, range);
@@ -368,7 +368,7 @@ export class QueryHandlerService {
 
   //returns all data as received through observable
   //need to push all previous data when initially subscribed, shouldn't push to all subscriptions, so tracked for each call separately rather than from respective data port (don't want to push data cumulatively)
-  getDataStreamObserver(filterHandle: FilterHandle): Observable<Metadata[]> {
+  getDataStreamObserver(filterHandle: FilterHandle): Observable<IndexMetadataMap> {
     //subscribe to status port and request data already available, then ranges after every tiem received
     let source = new Subject<Metadata[]>();
     let subManager = new Subject();
@@ -393,6 +393,8 @@ export class QueryHandlerService {
   //getDataCountObserver(filterHandle: FilterHandle)
 
 }
+
+
 
 
 

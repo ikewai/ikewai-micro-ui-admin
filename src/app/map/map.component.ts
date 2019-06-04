@@ -12,7 +12,7 @@ import 'leaflet.markercluster';
 import { AppConfig } from '../_services/config.service';
 //import { AuthenticationService } from '../_services/authentication.service';
 //import { SpatialService } from '../_services/spatial.service'
-import { QueryHandlerService } from '../_services/query-handler.service';
+import { QueryHandlerService, IndexMetadataMap } from '../_services/query-handler.service';
 import { FilterHandle, FilterManagerService, Filter, FilterMode } from '../_services/filter-manager.service';
 
 @Component({
@@ -132,7 +132,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
-    this.queryHandler.initFilterListener(this.filters.filterMonitor);
+    //should change this to get observable from filter manager
+    //this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
     //console.log(this.defaultFilterHandle);
     this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
@@ -165,16 +166,25 @@ export class MapComponent implements OnInit, AfterViewInit {
     //   }, 2000);
     // }, 2000);
     
-    this.queryHandler.getDataStreamObserver(this.defaultFilterHandle).subscribe((data) => {
+    this.queryHandler.getDataStreamObserver(this.defaultFilterHandle).subscribe((data: IndexMetadataMap) => {
       if(data == null) {
         return;
       }
-      //console.log(data);
+      //console.log(data);  
+      let indices = Object.keys(data);
+      console.log(indices);
       let i;
-      for(i = 0; i < data.length; i++) {
-        let datum = data[i];
+      for(i = 0; i < indices.length; i++) {
+        let index = indices[i];
+        let datum = data[index];
         //console.log(datum.value.loc);
-        let geojson = L.geoJSON(datum.value.loc);
+        let geojson = L.geoJSON(datum.value.loc, {
+          onEachFeature: (feature, layer) => {
+            layer.bindPopup(datum.toString + "<br>" + "<a href ng-click='gotoEntry(" + index + ")'>test</a>");
+          }
+        })
+        
+        //
         let group = NameGroupMap[datum.name];
         //console.log(datum.name);
         // console.log(this.dataGroups[group]);

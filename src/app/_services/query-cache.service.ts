@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
-import { CacheData, Page } from '../_models/cacheData';
 import { Metadata } from '../_models/metadata';
-import { FilterHandle } from './filter-manager.service';
+import { FilterHandle, MonitorEvent, MonitorCase, Filter } from './filter-manager.service';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class QueryCacheService {
 
+  //time before query cleared from cache in ms
+  static readonly TIMEOUT = 1000 * 60 * 5;
 
   //cache properties:
   //cache should know if the set of data it has is complete
@@ -16,6 +18,7 @@ export class QueryCacheService {
 
   //temporary data storage until cache implemented
   tempData: {[query: string]: {complete: boolean, data: Metadata[]}} = {};
+  data: QueryMap;
 
   clearData(query: string): void {
     delete this.tempData[query];
@@ -43,6 +46,10 @@ export class QueryCacheService {
     }
     extent = Math.min(extent, range[1]);
     return base.data.slice(range[0], extent);
+  }
+
+  getDataByIndex(index: number[]) {
+
   }
 
   //data should be in base query order
@@ -111,9 +118,33 @@ export class QueryCacheService {
   //   this.cache[query].cachePage(pnum, data);
   // }
 
+  setQueryTimeout(query: string): void {
+    let data = this.data[query];
+    data.timeout = setTimeout(this.timeoutHandler(query), QueryCacheService.TIMEOUT);
+  }
+
+  timeoutHandler(query: string): () => void {
+    return () => {
+      delete this.data[query];
+    }
+  }
+
+  clearQueryTimeout(query: string): void {
+    let data = this.data[query];
+    clearTimeout(data.timeout);
+    data.timeout = null;
+  }
+
+  resetQueryTimeout(query: string): void {
+    this.clearQueryTimeout(query);
+    this.setQueryTimeout(query);
+  }
 
   
 }
+
+//get rid of pages, just make removal policy all or nothing, makes it easier with indexes
+//can just use index length to tell if have a given set of values based on filter rather than determining if all indexed data is in the cache
 
 interface QueryMap { [query: string]: CacheData };
 
@@ -124,7 +155,72 @@ export enum PollStatus {
   INVALID = 2
 }
 
-// export interface PollResult {
-//   status: PollStatus,
-//   complete: boolean
-// }
+//filterhandle -> index (number[])
+//data
+interface CacheStorage<T> {
+
+}
+
+//filter is a FilterHandle, can't use aliases in index signature for some reason
+interface FilterIndexMap { [filter: number]: number[] };
+
+export interface IndexMetadataMap { [index: number]: Metadata }
+
+class CacheData {
+  data: Metadata[];
+  indices: FilterIndexMap;
+  complete: boolean;
+  timeout: any;
+
+  
+
+  // requestData(pnum: number): Page {
+  //   if(this.data[pnum] == undefined) {
+  //     return null;
+  //   }
+  //   else {
+  //     let page = this.data[pnum];
+  //     clearTimeout(page.timeoutHandler);
+  //     page.timeoutHandler = setTimeout(this.timeoutHandler.bind(null, pnum), this.timeout);
+  //     return page;
+  //   }
+    
+  // }
+
+  // cachePage(pnum: number, page: Page) {
+  //   if(page.getData().length != this.pSize) {
+  //     //the only time a partial page should exist
+  //     throw new Error("Invalid page size");
+  //   }
+  //   else {
+  //     //register timeout handler
+  //     page.timeoutHandler = setTimeout(this.timeoutHandler.bind(null, pnum), this.timeout);
+  //     this.data[pnum] = 
+  //   }
+  // }
+
+  // private timeoutHandler(pnum: number) {
+  //   delete this.data[pnum];
+  //   this.dataMonitor.next(Object.keys(this.data).length);
+  // }
+  
+}
+
+//each query has private index generator
+//keep list of dirty filters
+//each cached query needs a list of dirty filters
+//when filter modified
+
+//create own filters with updates and add to modification list instead of simple dirty list, apply new filter, null out
+class IndexGenerator {
+
+  constructor(filterMonitor: Observable<MonitorEvent>, QueryMap) {
+    filterMonitor.subscribe()
+  }
+
+  reconcileFilters(changes: {[handle: number]: Filter}) {
+
+  }
+}
+
+
