@@ -2,11 +2,11 @@ import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
-import {Observable, of, BehaviorSubject } from 'rxjs';
+import { Observable, of, BehaviorSubject } from 'rxjs';
 import { map, retry, catchError } from 'rxjs/operators';
 import { User } from '../_models/user'
-import {Metadata } from '../_models/metadata'
-import {latLng, tileLayer, Marker, icon} from 'leaflet';
+import { Metadata } from '../_models/metadata'
+import { latLng, tileLayer, Marker, icon } from 'leaflet';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
 import { AppConfig } from '../_services/config.service';
@@ -144,6 +144,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     //set marker images to generated image location to work around 404 bug
     Marker.prototype.options.icon.options.iconUrl = "assets/marker-icon.png";
     Marker.prototype.options.icon.options.shadowUrl = "assets/marker-shadow.png";
+    Marker.prototype.options.icon.options.iconRetinaUrl = "assets/marker-icon-2x.png";
   }
 
   public onDrawCreated(e: any) {
@@ -172,7 +173,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
       //console.log(data);  
       let indices = Object.keys(data);
-      console.log(indices);
       let i;
       for(i = 0; i < indices.length; i++) {
         let index = indices[i];
@@ -180,7 +180,12 @@ export class MapComponent implements OnInit, AfterViewInit {
         //console.log(datum.value.loc);
         let geojson = L.geoJSON(datum.value.loc, {
           onEachFeature: (feature, layer) => {
-            layer.bindPopup(datum.toString + "<br>" + "<a href ng-click='gotoEntry(" + index + ")'>test</a>");
+            let linkDiv = L.DomUtil.create("div", "entry-link");
+            linkDiv.innerText = "test";
+            let popup: L.Popup = new L.Popup();
+            popup.setContent("a<br>" + linkDiv.outerHTML);
+            //datum + "<br>" + linkDiv
+            layer.bindPopup(popup);
           }
         })
         
@@ -192,7 +197,14 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
     });
     
-	}
+  }
+
+  
+  
+  gotoEntry(index: number) {
+    //event.stopPropagation();
+    console.log("test");
+  }
 
 //  spatialSearch(geometry: any){
 

@@ -83,3 +83,10 @@
 ::ng-deep .marker-cluster-large-waterQualitySites div {
     background-color: rgba(0,68,27, 0.8) !important;
 }
+
+::ng-deep .entry-link {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+    z-index: 10000;
+}
