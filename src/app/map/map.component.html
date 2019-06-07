@@ -7,13 +7,12 @@
 </div>
 <div *ngIf="(defaultFilterSource | async) != null">
 <h2>My Metadata</h2>
-<p class='entry-link' (click)='gotoEntry(2)'>test</p>
 <table>
   <tr>
     <td>
       <ul class="metadata">
         <li *ngFor="let metadatum of defaultFilterSource | async">
-          {{metadatum | json}} 
+          <span #entries>{{metadatum | json}}</span>>
         </li>
       </ul>
     </td>

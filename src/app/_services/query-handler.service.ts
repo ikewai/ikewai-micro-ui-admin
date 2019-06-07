@@ -300,12 +300,13 @@ export class QueryHandlerService {
     if(chunkSize == undefined) {
       chunkSize = port.chunkSize
     }
+    console.log(chunkSize);
 
     let first = Math.floor(entry / chunkSize) * chunkSize;
 
     //don't try to get current request until last request is properly handled and returned to ensure ordering
     let dataListener = previous.then((last: [number, number]) => {
-      let range: [number, number] = [first, entry + chunkSize];
+      let range: [number, number] = [first, first + chunkSize];
       port.chunkSize = chunkSize;
 
       return this.generateChunkRetreivalPromise(filterHandle, last, range);
@@ -360,7 +361,7 @@ export class QueryHandlerService {
       //if null just return null to user, otherwise push data retreived from chunk range and return range
       if(chunkData.current != null) {
         let data = this.cache.retreiveData(filterHandle, this.queryState.query, chunkData.current);
-        port.source.next(data);
+        port.source.next(Object.values(data));
       }
       return chunkData.current;
     });
@@ -370,18 +371,20 @@ export class QueryHandlerService {
   //need to push all previous data when initially subscribed, shouldn't push to all subscriptions, so tracked for each call separately rather than from respective data port (don't want to push data cumulatively)
   getDataStreamObserver(filterHandle: FilterHandle): Observable<IndexMetadataMap> {
     //subscribe to status port and request data already available, then ranges after every tiem received
-    let source = new Subject<Metadata[]>();
+    let source = new Subject<IndexMetadataMap>();
     let subManager = new Subject();
     let last = 0;
     this.statusPort
     .pipe(takeUntil(merge(subManager, this.queryState.masterDataSubController)))
     .subscribe((status: RequestStatus) => {
       if(status.loadedResults > 0) {
+        console.log(last, status.loadedResults)
         //how to handle query errors?
         let data = this.cache.retreiveData(filterHandle, this.queryState.query, [last, null]);
+        last += Object.keys(data).length;
+        
         source.next(data);
       }
-      
     },
     null,
     () => {

@@ -119,7 +119,7 @@ export class Filter {
       });
     }
     let sortFunct = (data: any[]) => {
-      return data.sort(this.sorter == null ? undefined : this.sorter);
+      return this.sorter == null ? data : data.sort(this.sorter);
     }
     let allFunct = (data: any[]) => {
       let condFilter = condFunct(data);

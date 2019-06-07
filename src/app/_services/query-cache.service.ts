@@ -26,7 +26,7 @@ export class QueryCacheService {
 
   //range [lower, upper)
   //should return in filter order/conditions (not implemented)
-  retreiveData(filterHandle: FilterHandle, query: string, range: [number, number]): Metadata[] {
+  retreiveData(filterHandle: FilterHandle, query: string, range: [number, number]): IndexMetadataMap {
     let base = this.tempData[query];
     let extent = base.data.length;
     if(range[1] == null) {
@@ -45,7 +45,12 @@ export class QueryCacheService {
       return null
     }
     extent = Math.min(extent, range[1]);
-    return base.data.slice(range[0], extent);
+    let data: IndexMetadataMap = {};
+    let i;
+    for(i = range[0]; i < extent; i++) {
+      data[i] = base.data[i];
+    }
+    return data;
   }
 
   getDataByIndex(index: number[]) {

@@ -1,5 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Component, OnInit, ViewChild, AfterViewInit, ViewChildren, QueryList, ElementRef, Renderer2 } from '@angular/core';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
 import { Observable, of, BehaviorSubject } from 'rxjs';
@@ -9,6 +8,7 @@ import { Metadata } from '../_models/metadata'
 import { latLng, tileLayer, Marker, icon } from 'leaflet';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
+//import 'leaflet.pm/dist/leaflet.pm.min.js';
 import { AppConfig } from '../_services/config.service';
 //import { AuthenticationService } from '../_services/authentication.service';
 //import { SpatialService } from '../_services/spatial.service'
@@ -24,6 +24,10 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   static readonly DEFAULT_RESULTS = 10;
 
+  @ViewChildren("entries") entries: QueryList<ElementRef>;
+  
+  highlightEntries: ElementRef[] = [];
+
   //metadata = true;
   selectedMetadata: Metadata;
   currentUser: User;
@@ -31,7 +35,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   defaultFilterSource: Observable<Metadata[]>;
   defaultFilterHandle: FilterHandle;
 
-  map: L.Map;
+  map: any;
 
   dataGroups: {
     sites: L.FeatureGroup,
@@ -47,6 +51,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     center: latLng(21.289373, -157.917480)
   };
 
+  drawnItems: L.FeatureGroup = new L.FeatureGroup;
+
   drawOptions = {
     position: 'topright',
     draw: {
@@ -54,7 +60,10 @@ export class MapComponent implements OnInit, AfterViewInit {
        circle: false,
        marker: false,
        circlemarker: false
-    }
+    },
+    edit: {
+      featureGroup: this.drawnItems
+  }
  };
 
   onMapReady(map: L.Map) {
@@ -97,9 +106,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       controlGroups[GroupLabelMap[key]] = dataGroup;
     });
 
-    console.log(controlGroups);
-
     L.control.layers(null, controlGroups).addTo(this.map);
+    this.drawnItems.addTo(this.map);
     
     //testing
     // this.defaultFilterSource.subscribe((data: Metadata[]) => {
@@ -120,7 +128,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
 
-  constructor(private http: HttpClient, private queryHandler: QueryHandlerService, private filters: FilterManagerService) {
+  constructor(private renderer: Renderer2, private queryHandler: QueryHandlerService, private filters: FilterManagerService) {
     //currentUser: localStorage.getItem('currentUser');
 
     
@@ -149,10 +157,18 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public onDrawCreated(e: any) {
 
-		// tslint:disable-next-line:no-console
+    // tslint:disable-next-line:no-console
+    
 
     console.log('Draw Created Event!');
-    console.log(e);
+    this.drawnItems.clearLayers();
+    this.drawnItems.addLayer(e.layer);
+    
+    Object.keys(this.dataGroups).forEach((key) => {
+      let dataGroup = this.dataGroups[key];
+      dataGroup.clearLayers();
+    });
+
     this.queryHandler.spatialSearch(e.layer.toGeoJSON().geometry);
     this.queryHandler.requestData(this.defaultFilterHandle, 0, MapComponent.DEFAULT_RESULTS).then((data) => console.log(data));
     // setTimeout(() => {
@@ -175,15 +191,32 @@ export class MapComponent implements OnInit, AfterViewInit {
       let indices = Object.keys(data);
       let i;
       for(i = 0; i < indices.length; i++) {
-        let index = indices[i];
+        let index = Number(indices[i]);
         let datum = data[index];
         //console.log(datum.value.loc);
         let geojson = L.geoJSON(datum.value.loc, {
           onEachFeature: (feature, layer) => {
-            let linkDiv = L.DomUtil.create("div", "entry-link");
-            linkDiv.innerText = "test";
+            let wrapper = L.DomUtil.create("div")
+            let details = L.DomUtil.create("div");
+            let goto = L.DomUtil.create("span", "entry-link");
+            
+            details.innerText = JSON.stringify(datum.value);
+            goto.innerText = "Go to Entry";
+
             let popup: L.Popup = new L.Popup();
-            popup.setContent("a<br>" + linkDiv.outerHTML);
+
+            wrapper.append(details);
+            wrapper.append(goto);
+
+            let linkDiv = wrapper.getElementsByClassName("entry-link");
+
+            let gotoWrapper = () => {
+              this.gotoEntry(index);
+            }
+            linkDiv[0].addEventListener("click", gotoWrapper);
+            popup.setContent(wrapper);
+
+            
             //datum + "<br>" + linkDiv
             layer.bindPopup(popup);
           }
@@ -203,7 +236,28 @@ export class MapComponent implements OnInit, AfterViewInit {
   
   gotoEntry(index: number) {
     //event.stopPropagation();
-    console.log("test");
+    this.queryHandler.requestData(this.defaultFilterHandle, index).then((range: [number, number]) => {
+      //yield control to allow observable to update entry list
+      setTimeout(() => {
+        // console.log(index);
+        // console.log(range);
+        //determine position of data on page
+        let entriesArr = this.entries.toArray();
+        console.log(entriesArr);
+        let pos = index - range[0];
+        //remove highlighting from already highlighted entries
+        let i;
+        for(i = 0; i < this.highlightEntries.length; i++) {
+          this.renderer.removeClass(this.highlightEntries[i].nativeElement, "highlight");
+        }
+        //reset list of highlighted entries
+        this.highlightEntries = [];
+        this.highlightEntries.push(entriesArr[pos]);
+        //highlight the selected entry
+        this.renderer.addClass(entriesArr[pos].nativeElement, "highlight");
+      }, 0);
+      
+    });
   }
 
 //  spatialSearch(geometry: any){

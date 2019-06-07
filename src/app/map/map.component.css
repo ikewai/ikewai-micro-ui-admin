@@ -85,8 +85,12 @@
 }
 
 ::ng-deep .entry-link {
-    color: blue;
+    color: #0000EE;
     text-decoration: underline;
     cursor: pointer;
     z-index: 10000;
+}
+
+.highlight {
+    background-color: #ccff00;
 }
