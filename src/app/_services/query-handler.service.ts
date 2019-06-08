@@ -377,7 +377,7 @@ export class QueryHandlerService {
     this.statusPort
     .pipe(takeUntil(merge(subManager, this.queryState.masterDataSubController)))
     .subscribe((status: RequestStatus) => {
-      if(status.loadedResults > 0) {
+      if(status != null && status.loadedResults > 0) {
         console.log(last, status.loadedResults)
         //how to handle query errors?
         let data = this.cache.retreiveData(filterHandle, this.queryState.query, [last, null]);

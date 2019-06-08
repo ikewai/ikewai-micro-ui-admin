@@ -35,7 +35,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   defaultFilterSource: Observable<Metadata[]>;
   defaultFilterHandle: FilterHandle;
 
-  map: any;
+  map: L.Map;
 
   dataGroups: {
     sites: L.FeatureGroup,
@@ -43,18 +43,19 @@ export class MapComponent implements OnInit, AfterViewInit {
     waterQualitySites: L.FeatureGroup
   }
 
-  options = {
+  options: L.MapOptions = {
     layers: [
       tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' })
     ],
-    zoom: 5,
-    center: latLng(21.289373, -157.917480)
+    zoom: 6,
+    center: latLng(20.5, -157.917480),
+    attributionControl: false
   };
 
   drawnItems: L.FeatureGroup = new L.FeatureGroup;
 
   drawOptions = {
-    position: 'topright',
+    position: 'topleft',
     draw: {
        polyline: false,
        circle: false,
@@ -66,8 +67,40 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
  };
 
+ controlOptions = {
+  attributionControl: false
+ };
+
   onMapReady(map: L.Map) {
     this.map = map;
+
+    let legendControl: L.Control = new L.Control({position: "bottomleft"});
+    legendControl.onAdd = (map) => {
+      let legend = L.DomUtil.create("div", "legend");
+      legend.innerHTML = '<div class="grid">'
+      +'<div class="bl">Color Legend</div>'
+      +'<div class="ht">Cluster Size</div>'
+      +'<div class="hl">Site Type</div>'
+      +'<div class="s1">2-9</div>'
+      +'<div class="s2">10-100</div>'
+      +'<div class="s3">100+</div>'
+      +'<div class="t1">Well</div>'
+      +'<div class="t2">Site</div>'
+      +'<div class="t3">Water Quality Site</div>'
+    
+      +'<div class="c1"><div class="color-circle color-1"></div></div>'
+      +'<div class="c2"><div class="color-circle color-2"></div></div>'
+      +'<div class="c3"><div class="color-circle color-3"></div></div>'
+      +'<div class="c4"><div class="color-circle color-4"></div></div>'
+      +'<div class="c5"><div class="color-circle color-5"></div></div>'
+      +'<div class="c6"><div class="color-circle color-6"></div></div>'
+      +'<div class="c7"><div class="color-circle color-7"></div></div>'
+      +'<div class="c8"><div class="color-circle color-8"></div></div>'
+      +'<div class="c9"><div class="color-circle color-9"></div></div>'
+      +'</div>'
+      return legend;
+    }
+    legendControl.addTo(this.map);
 
     let iconCreateFunction = (group: string): (cluster: any) => L.DivIcon => {
      
@@ -150,9 +183,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     //   //this.testData = data;
     // });
     //set marker images to generated image location to work around 404 bug
-    Marker.prototype.options.icon.options.iconUrl = "assets/marker-icon.png";
-    Marker.prototype.options.icon.options.shadowUrl = "assets/marker-shadow.png";
-    Marker.prototype.options.icon.options.iconRetinaUrl = "assets/marker-icon-2x.png";
+    // Marker.prototype.options.icon.options.iconUrl = "assets/markers/marker-icon-red.png";
+    // Marker.prototype.options.icon.options.shadowUrl = "assets/marker-shadow.png";
+    // Marker.prototype.options.icon.options.iconRetinaUrl = "assets/marker-icon-2x.png";
   }
 
   public onDrawCreated(e: any) {
@@ -187,14 +220,23 @@ export class MapComponent implements OnInit, AfterViewInit {
       if(data == null) {
         return;
       }
-      //console.log(data);  
+      //console.log(data);
+      
+
+      
       let indices = Object.keys(data);
       let i;
       for(i = 0; i < indices.length; i++) {
         let index = Number(indices[i]);
         let datum = data[index];
+        let group = NameGroupMap[datum.name];
         //console.log(datum.value.loc);
         let geojson = L.geoJSON(datum.value.loc, {
+          style: this.getStyleByGroup(group),
+          pointToLayer: (feature, latlng) => {
+            let icon = this.getIconByGroup(group);
+            return L.marker(latlng, {icon: icon});
+          },
           onEachFeature: (feature, layer) => {
             let wrapper = L.DomUtil.create("div")
             let details = L.DomUtil.create("div");
@@ -215,21 +257,83 @@ export class MapComponent implements OnInit, AfterViewInit {
             }
             linkDiv[0].addEventListener("click", gotoWrapper);
             popup.setContent(wrapper);
-
-            
-            //datum + "<br>" + linkDiv
             layer.bindPopup(popup);
+            this.dataGroups[group].addLayer(layer);
           }
-        })
+          
+        });
         
         //
-        let group = NameGroupMap[datum.name];
+        
         //console.log(datum.name);
         // console.log(this.dataGroups[group]);
-        this.dataGroups[group].addLayer(geojson);
+        //console.log(geojson);
+        
       }
     });
     
+  }
+
+  getStyleByGroup(group: string): L.PathOptions {
+    let style: L.PathOptions;
+    switch(group) {
+      case "waterQualitySites": {
+        style = {
+          "color": "#238B45",
+          "weight": 3,
+          "opacity": 0.3
+        };
+        break;
+      }
+      case "sites": {
+        style = {
+          "color": "#CB181D",
+          "weight": 3,
+          "opacity": 0.3
+        };
+        break;
+      }
+      case "wells": {
+        style = {
+          "color": "#2171B5",
+          "weight": 3,
+          "opacity": 0.3
+        };
+        break;
+      }
+    }
+    return style;
+  }
+
+  private getIconByGroup(group: string): L.Icon {
+    let icon: L.Icon;
+    switch(group) {
+      case "waterQualitySites": {
+        icon = new L.Icon({
+          iconUrl: 'assets/markers/marker-icon-green.png',
+          iconRetinaUrl: 'assets/markers/marker-icon-2x-green.png',
+          shadowUrl: "assets/marker-shadow.png"
+        });
+        break;
+      }
+      case "sites": {
+        icon = new L.Icon({
+          iconUrl: 'assets/markers/marker-icon-red.png',
+          iconRetinaUrl: 'assets/markers/marker-icon-2x-red.png',
+          shadowUrl: "assets/marker-shadow.png"
+        });
+        break;
+      }
+      case "wells": {
+        icon = new L.Icon({
+          iconUrl: 'assets/marker-icon.png',
+          iconRetinaUrl: 'assets/marker-icon-2x.png',
+          shadowUrl: "assets/marker-shadow.png"
+        });
+        break;
+      }
+    }
+    return icon;
   }
 
   

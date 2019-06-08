@@ -1,10 +1,33 @@
-<div leaflet style="height: 400px;width:100%"
+<div leaflet class="map"
      leafletDraw
      [leafletOptions]="options"
      [leafletDrawOptions]="drawOptions"
      (leafletDrawCreated)="onDrawCreated($event)"
      (leafletMapReady)="onMapReady($event)">
 </div>
+
+<!-- <div class="grid">
+  <div class="bl">Color Legend</div>
+  <div class="ht">Cluster Size</div>
+  <div class="hl">Site Type</div>  
+  <div class="s1">1-9</div>
+  <div class="s2">10-100</div>
+  <div class="s3">100+</div>  
+  <div class="t1">Well</div>
+  <div class="t2">Site</div>
+  <div class="t3">Water Quality Site</div>
+
+  <div class="c1"><div class="color-circle color-1"></div></div>
+  <div class="c2"><div class="color-circle color-2"></div></div>
+  <div class="c3"><div class="color-circle color-3"></div></div>
+  <div class="c4"><div class="color-circle color-4"></div></div>
+  <div class="c5"><div class="color-circle color-5"></div></div>
+  <div class="c6"><div class="color-circle color-6"></div></div>
+  <div class="c7"><div class="color-circle color-7"></div></div>
+  <div class="c8"><div class="color-circle color-8"></div></div>
+  <div class="c9"><div class="color-circle color-9"></div></div>
+</div> -->
+
 <div *ngIf="(defaultFilterSource | async) != null">
 <h2>My Metadata</h2>
 <table>

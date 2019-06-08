@@ -1,4 +1,9 @@
 
+.map {
+    width: 110%;
+    height: 500px;
+}
+
 ::ng-deep .marker-cluster-small-sites {
     background-color: rgba(252,146,114, 0.8) !important;
     color: white !important;
@@ -93,4 +98,155 @@
 
 .highlight {
     background-color: #ccff00;
+}
+
+::ng-deep .grid {
+    display: grid;
+    grid-template-areas:
+    "bl bl bl ht ht ht ht"
+    "bl bl bl s1 s2 s2 s3"
+    "hl t1 t1 c1 c2 c2 c3"
+    "hl t2 t2 c4 c5 c5 c6"
+    "hl t3 t3 c7 c8 c8 c9";
+    grid-gap: 1px;
+    padding: 5px 20px 5px 5px;
+    width: 200px;
+    height: 125px;
+    border-radius: 10%;
+    /* grid-auto-rows: 6%;
+    grid-auto-columns: 8%; */
+    grid-auto-rows: 16%;
+    grid-auto-columns: 14%;
+    background-color: rgba(0, 0, 0, 0.15);
+    text-shadow: -1px 0 5px white, 0 1px 5px white,
+    1px 0 5px white, 0 -1px 5px white;
+    font-weight: bold;
+    color: black;
+}
+
+::ng-deep .grid > div {
+    /* background-color: rgba(255, 255, 255, 0.8); */
+    text-align: center;
+    line-height: 12px;
+    padding: 0px;
+    font-size: 14px;
+    /* width: 70px;
+    height: 70px; */
+}
+
+::ng-deep .color-circle {
+    border-radius: 50%;
+    height: 14px;
+    width: 14px;
+    margin: 0 auto;
+    box-shadow: -1px 0 5px white, 0 1px 5px white,
+    1px 0 5px white, 0 -1px 5px white;
+}
+
+::ng-deep .color-1 {
+    background-color: rgba(107, 174, 214,1);
+}
+::ng-deep .color-2 {
+    background-color: rgba(33, 113, 181, 1);
+}
+::ng-deep .color-3 {
+    background-color: rgba(8, 48, 107, 1)
+}
+::ng-deep .color-4 {
+    background-color: rgba(251,106,74, 1);
+}
+::ng-deep .color-5 {
+    background-color: rgba(203,24,29, 1);
+}
+::ng-deep .color-6 {
+    background-color: rgba(103,0,13, 1);
+}
+::ng-deep .color-7 {
+    background-color: rgba(116,196,118, 1);
+}
+::ng-deep .color-8 {
+    background-color: rgba(35,139,69, 1);
+}
+::ng-deep .color-9 {
+    background-color: rgba(0,68,27, 1);
+}
+
+::ng-deep .bl {
+    grid-area: bl;
+    font-size: 16px !important;
+    text-shadow: -1px 0 5px black, 0 1px 5px black,
+    1px 0 5px black, 0 -1px 5px black !important;
+    color: white !important;
+}
+
+::ng-deep .ht {
+    grid-area: ht;
+}
+
+::ng-deep .hl {
+    grid-area: hl;
+    writing-mode: vertical-rl;
+}
+
+::ng-deep .t1 {
+    grid-area: t1;
+}
+
+::ng-deep .t2 {
+    grid-area: t2;
+}
+
+::ng-deep .t3 {
+    grid-area: t3;
+}
+
+::ng-deep .s1 {
+    grid-area: s1;
+}
+
+::ng-deep .s2 {
+    grid-area: s2;
+}
+
+::ng-deep .s3 {
+    grid-area: s3;
+}
+
+::ng-deep .c1 {
+    grid-area: c1;
+}
+
+::ng-deep .c2 {
+    grid-area: c2;
+}
+
+::ng-deep .c3 {
+    grid-area: c3;
+}
+
+::ng-deep .c4 {
+    grid-area: c4;
+}
+
+::ng-deep .c5 {
+    grid-area: c5;
+}
+
+::ng-deep .c6 {
+    grid-area: c6;
+}
+
+::ng-deep .c7 {
+    grid-area: c7;
+    margin-top: 15px;
+}
+
+::ng-deep .c8 {
+    grid-area: c8;
+    margin-top: 15px;
+}
+
+::ng-deep .c9 {
+    grid-area: c9;
+    margin-top: 15px;
 }
