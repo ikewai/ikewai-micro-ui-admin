@@ -12,7 +12,7 @@ import 'leaflet.markercluster';
 import { AppConfig } from '../_services/config.service';
 //import { AuthenticationService } from '../_services/authentication.service';
 //import { SpatialService } from '../_services/spatial.service'
-import { QueryHandlerService, IndexMetadataMap } from '../_services/query-handler.service';
+import { QueryHandlerService, QueryController, QueryResponse } from '../_services/query-handler.service';
 import { FilterHandle, FilterManagerService, Filter, FilterMode } from '../_services/filter-manager.service';
 
 @Component({
@@ -177,7 +177,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     //this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
     //console.log(this.defaultFilterHandle);
-    this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
+    //this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
     // this.defaultFilterSource.subscribe((data: Metadata[]) => {
     //   console.log(data);
     //   //this.testData = data;
@@ -202,8 +202,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       dataGroup.clearLayers();
     });
 
-    this.queryHandler.spatialSearch(e.layer.toGeoJSON().geometry);
-    this.queryHandler.requestData(this.defaultFilterHandle, 0, MapComponent.DEFAULT_RESULTS).then((data) => console.log(data));
+    let dataStream: QueryController = this.queryHandler.spatialSearch([e.layer.toGeoJSON()]);
+    //this.queryHandler.requestData(this.defaultFilterHandle, 0, MapComponent.DEFAULT_RESULTS).then((data) => console.log(data));
     // setTimeout(() => {
     //   this.queryHandler.next(this.defaultFilterHandle).then((data) => console.log(data));
     //   setTimeout(() => {
@@ -216,7 +216,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     //   }, 2000);
     // }, 2000);
     
-    this.queryHandler.getDataStreamObserver(this.defaultFilterHandle).subscribe((data: IndexMetadataMap) => {
+    //this.queryHandler.getDataStreamObserver(this.defaultFilterHandle).subscribe((data: IndexMetadataMap) => {
+    dataStream.getQueryObserver().subscribe((data: any) => {
+      data = data.data;
       if(data == null) {
         return;
       }
@@ -253,7 +255,8 @@ export class MapComponent implements OnInit, AfterViewInit {
             let linkDiv = wrapper.getElementsByClassName("entry-link");
 
             let gotoWrapper = () => {
-              this.gotoEntry(index);
+              console.log("click");
+              //this.gotoEntry(index);
             }
             linkDiv[0].addEventListener("click", gotoWrapper);
             popup.setContent(wrapper);
@@ -271,6 +274,11 @@ export class MapComponent implements OnInit, AfterViewInit {
         
       }
     });
+
+    // setTimeout(() => {
+    //   dataStream.cancel();
+    // }, 2000);
+    
     
   }
 
@@ -340,28 +348,28 @@ export class MapComponent implements OnInit, AfterViewInit {
   
   gotoEntry(index: number) {
     //event.stopPropagation();
-    this.queryHandler.requestData(this.defaultFilterHandle, index).then((range: [number, number]) => {
-      //yield control to allow observable to update entry list
-      setTimeout(() => {
-        // console.log(index);
-        // console.log(range);
-        //determine position of data on page
-        let entriesArr = this.entries.toArray();
-        console.log(entriesArr);
-        let pos = index - range[0];
-        //remove highlighting from already highlighted entries
-        let i;
-        for(i = 0; i < this.highlightEntries.length; i++) {
-          this.renderer.removeClass(this.highlightEntries[i].nativeElement, "highlight");
-        }
-        //reset list of highlighted entries
-        this.highlightEntries = [];
-        this.highlightEntries.push(entriesArr[pos]);
-        //highlight the selected entry
-        this.renderer.addClass(entriesArr[pos].nativeElement, "highlight");
-      }, 0);
+    // this.queryHandler.requestData(this.defaultFilterHandle, index).then((range: [number, number]) => {
+    //   //yield control to allow observable to update entry list
+    //   setTimeout(() => {
+    //     // console.log(index);
+    //     // console.log(range);
+    //     //determine position of data on page
+    //     let entriesArr = this.entries.toArray();
+    //     console.log(entriesArr);
+    //     let pos = index - range[0];
+    //     //remove highlighting from already highlighted entries
+    //     let i;
+    //     for(i = 0; i < this.highlightEntries.length; i++) {
+    //       this.renderer.removeClass(this.highlightEntries[i].nativeElement, "highlight");
+    //     }
+    //     //reset list of highlighted entries
+    //     this.highlightEntries = [];
+    //     this.highlightEntries.push(entriesArr[pos]);
+    //     //highlight the selected entry
+    //     this.renderer.addClass(entriesArr[pos].nativeElement, "highlight");
+    //   }, 0);
       
-    });
+    // });
   }
 
 //  spatialSearch(geometry: any){

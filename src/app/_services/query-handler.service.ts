@@ -1,13 +1,12 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Output } from '@angular/core';
 import { Observable, Subject, BehaviorSubject, merge } from 'rxjs';
 import { SpatialService } from './spatial.service';
-import { QueryCacheService, PollStatus, IndexMetadataMap } from './query-cache.service';
+import { QueryCacheService, DataRange, CacheEntryOptions, InsertData } from './query-cache.service';
 import { Metadata } from '../_models/metadata';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FilterHandle, Filter, FilterManagerService, MonitorEvent, MonitorCase } from './filter-manager.service';
 import { takeUntil } from 'rxjs/operators';
-
-export { IndexMetadataMap } from './query-cache.service';
+//import { HandleGenerator } from "../_models/handleGenerator"
 
 @Injectable({
   providedIn: 'root'
@@ -16,12 +15,11 @@ export class QueryHandlerService {
 
   //static readonly DEFAULT_PAGE = 10;
   static readonly MIN_QUERY = 100;
-  static readonly MAX_QUERY = 10000;
+  //limit to half API max, seems to be more responsive if not maxing out
+  static readonly MAX_QUERY = 5000;
   static readonly MAX_RESULTS = 100000;
   
   static readonly ENABLE_FAST_QUERY = true;
-
-  private dataPorts: {[handle in FilterHandle]: DataPort};
 
   static readonly RAMP_FUNCT = QueryHandlerService.ENABLE_FAST_QUERY ? function *(start: number) {
     let acc = start;
@@ -38,56 +36,40 @@ export class QueryHandlerService {
       acc += 10000;
     }
   };
-  //static readonly
 
-  queryState: {
-    query: string,
-    queryGen: IterableIterator<any>
-    masterDataSubController: Subject<void>
-  };
-
-  //should only fire after data has been cached
-  statusPort: BehaviorSubject<RequestStatus>;
-
-
+  //allows duplicate queries to use same data source instead of resubmitting query
+  querySubjectMap: QuerySubjectMap;
 
   constructor(private spatial: SpatialService, private cache: QueryCacheService, private filters: FilterManagerService) {
-    this.queryState = {
-      query: null,
-      queryGen: null,
-      masterDataSubController: new Subject()
-    };
-    this.statusPort = new BehaviorSubject<RequestStatus>(null);
-    this.dataPorts = {};
-    this.initFilterListener(filters.filterMonitor);
+    this.querySubjectMap = {};
   }
 
-  initFilterListener(filterMonitor: Observable<MonitorEvent>) {
-    filterMonitor.subscribe((event: MonitorEvent) => {
-      //console.log(event);
-      switch(event.case) {
-        case MonitorCase.CREATED: {
-          this.dataPorts[event.handle] = new DataPort();
-          //console.log(this.dataPorts[0]);
-          break;
-        }
-        case MonitorCase.DESTROYED: {
-          delete this.dataPorts[event.handle];
-          break;
-        }
-      }
-    });
-  }
+  // initFilterListener(filterMonitor: Observable<MonitorEvent>) {
+  //   filterMonitor.subscribe((event: MonitorEvent) => {
+  //     //console.log(event);
+  //     switch(event.case) {
+  //       case MonitorCase.CREATED: {
+  //         this.dataPorts[event.handle] = new DataPort();
+  //         //console.log(this.dataPorts[0]);
+  //         break;
+  //       }
+  //       case MonitorCase.DESTROYED: {
+  //         delete this.dataPorts[event.handle];
+  //         break;
+  //       }
+  //     }
+  //   });
+  // }
 
-  getFilterObserver(filterHandle: FilterHandle): Observable<Metadata[]> {
-    let port = this.dataPorts[filterHandle];
-    //console.log(filterHandle);
-    //console.log(this.dataPorts);
-    if(port == undefined) {
-      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
-    }
-    return port.source.asObservable();
-  }
+  // getFilterObserver(filterHandle: FilterHandle): Observable<Metadata[]> {
+  //   let port = this.dataPorts[filterHandle];
+  //   //console.log(filterHandle);
+  //   //console.log(this.dataPorts);
+  //   if(port == undefined) {
+  //     throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
+  //   }
+  //   return port.source.asObservable();
+  // }
 
 
   private query = function *(query: string, startPoint: number) {
@@ -102,10 +84,12 @@ export class QueryHandlerService {
     while(!canceled && !complete) {
       //console.log(this.spatial);
       //inject true to cancel the current query if new query comes
-      canceled = yield this.spatial.spatialSearch(query, limit, offset).then((data) => {
+      canceled = yield this.spatial.search(query, limit, offset).then((data) => {
+        //if less data returned than requested, then the query should be complete
         complete = data.length != limit;
         let status: RequestStatus = {
           status: 200,
+          error: false,
           loadedResults: offset + data.length,
           finished: complete
         }
@@ -119,6 +103,8 @@ export class QueryHandlerService {
         complete = true;
         let status: RequestStatus = {
           status: e.status,
+          error: true,
+          message: e.message,
           loadedResults: offset,
           finished: false
         }
@@ -141,13 +127,37 @@ export class QueryHandlerService {
     return complete;
   }
 
-  private cancelQuery() {
-    if(this.queryState.queryGen != null) {
-      //inject signal to cancel into query generator, shouldn't matter if already complete
-      this.queryState.queryGen.next(true);
-    }
-    this.queryState.masterDataSubController.next();
-  }
+  // private cancelQuery() {
+  //   if(this.queryState.queryGen != null) {
+  //     //inject signal to cancel into query generator, shouldn't matter if already complete
+  //     this.queryState.queryGen.next(true);
+  //   }
+  //   this.queryState.masterDataSubController.next();
+  // }
+
+  
+
+  // //extension searches only garentee up to QueryHandlerService.MAX_QUERY results (may be able to return more if query broken up)
+  // //assumed that extension queries are limited
+  // //no filtering support, results cached with specified ttl or 5 minutes if not specified
+  // valueSearchExtension(keys: string[], options?: HeuristicOptions) {
+  //   let query = "";
+  //   if(options != undefined) {
+  //     let low = Math.max(0, options.rootIndex - options.searchRange);
+  //   }
+    
+  //   this.spatial.search(query, QueryHandlerService.MAX_QUERY, 0) {
+
+  //   }
+  // }
+
+  // spatialSearchExtension(geometry: any, options?: HeuristicOptions) {
+
+  // }
+
+  // handleExtensionQuery() {
+
+  // }
 
   //filters handled by filtermanager, filters should be registered here and data ports are handled there
   //handle requests here, emit requests through filtermanager data ports
@@ -161,272 +171,397 @@ export class QueryHandlerService {
   //error if query errors out
   //assumes that any data from current query should be cached (overflow will be cut off if excessively large)
   //need to add overflow indicator to status
-  spatialSearch(geometry: any): void {
-    let query = "{'$and':[{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(geometry).replace(/"/g,'\'') + "}}}]}";
-    this.handleQuery(query);
+
+  // cancelQuery(handle: QueryHandle): boolean {
+  //   let subjects = this.subjectMap[handle];
+  //   let canceled = false;
+  //   if(subjects != undefined) {
+  //     let i;
+  //     for(i = 0; i < subjects.length; i++) {
+  //       subjects[i].complete();
+  //     }
+  //     canceled = true;
+  //   }
+  //   return canceled;
+  // }
+
+  valueSearch(keys: string[]): void {
+    throw new Error("valueSearch not implemented");
   }
 
-  private handleQuery(query: string): void {
-    //if same as the currently tracked query ignore (it should already be doing its thing)
-    if(this.queryState.query == query) {
-      return;
+  //!!! doesn't work with multiple queries as is, each query will report when it's finished and its own internal accumulator
+  //!!! should subscribe to each subquery, then rebroadcast as a single query
+  //should also go back to having a central cancel subject for each query unit that subqueries listen to to make cancelation more streamlined
+
+  //handle features separately to optimize cache catches for subset queries
+  spatialSearch(features: any[]): QueryController {
+    // let res: QueryResults = {
+    //   handle: this.handleGen.getHandle(),
+    //   dataStream: new Observable<QueryResponse>()
+    // };
+    let subjects = [];
+    let i;
+    for(i = 0; i < features.length; i++) {
+      //need to do something to handle too long queries
+      let query = "{'$and':[{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(features[i].geometry).replace(/"/g,'\'') + "}}}]}";
+      subjects.push(this.handleQuery(query));
     }
-    //cancel the last query if still running
-    this.cancelQuery();
     
+    return new QueryController(subjects);
+  }
 
-    this.queryState.query = query;
-
-    //add cache check
-    //set startPoint to the starting point for the request
-    //have indicator in cache if data is complete
-
-    //for now clear data store (remove when cache fully implemented)
-    this.cache.clearData(query);
-    this.cache
-    let startPoint = 0;
-    let complete = false;
-
-    //intialize status for current query
-    this.statusPort.next({
-      status: 200,
-      loadedResults: startPoint,
-      finished: complete
-    });
-
-    if(complete) {
-      return;
+  //deal with case where same query running multiple times before complete
+  private handleQuery(query: string): BehaviorSubject<QueryResponse> {
+    let dataStream = new BehaviorSubject<QueryResponse>({status: null, data: []});
+    let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+    let offset;
+    let complete;
+    if(stored == null) {
+      offset = 0;
+      complete = false;
+      //no entry so create entry
+      this.cache.createEntry<Metadata>(query);
+    }
+    else {
+      //issue with retreival, should always pull from first item with no specified range
+      if(stored.range[0] != 0) {
+        throw new Error("Unexpected error occured in cache retreival: data retreived did not start at 0");
+      }
+      offset = stored.range[1];
+      complete = stored.complete;
+      let response: QueryResponse = {
+        status: {
+          status: 200,
+          error: false,
+          loadedResults: stored.data.length,
+          finished: stored.complete
+        },
+        data: stored.data
+      }
+      dataStream.next(response);
     }
 
-    let qGen = this.query(query, startPoint);
-    this.queryState.queryGen = qGen;
+    //if cache has all the data already no need to execute a query
+    if(!complete) {
+      let dataController = this.querySubjectMap[query];
+      //check if query already executing
+      if(dataController == undefined) {
+        dataController = {
+          data: this.requestDriver(query, offset),
+          observers: 0
+        };
+        this.querySubjectMap[query] = dataController;
+      }
+
+      //increment the number of observers
+      dataController.observers++;
+      //indicate if query completed
+      let complete = false;
+
+      //mirror dataController's data to this instance's dataStream
+      let controllerSub = dataController.data.subscribe((data: QueryResponse) => {
+        dataStream.next(data);
+      }, (error: any) => {
+        complete = true;
+        //is this the right syntax? Documentation is weird, shouldn't ever happen anyway
+        dataStream.error(error);
+      }, () => {
+        complete = true;
+        dataStream.complete();
+      });
+
+      let cleanup = () => {
+        //if canceled or errored then unsubscribe, otherwise no need
+        if(!complete) {
+          controllerSub.unsubscribe();
+        }
+        
+        if(--dataController.observers == 0) {
+          //if canceled or errored and last observer, cancel the query's data stream (no need to get the rest of the data, no one's using it)
+          //if complete then the data stream has already been completed/errored out
+          if(!complete) {
+            dataController.data.complete();
+          }
+          //no more observers, delete mapping
+          delete this.querySubjectMap[query];
+        }
+        
+      }
+      
+      //when dataStream completes or errors out run cleanup
+      dataStream.subscribe(null, cleanup, cleanup);
+
+    }
     
+    return dataStream;
+  }
+
+  //drives database request for query
+  //assumes that cache data timeout set to a sufficiently long time so data doesn't expire during retreival (and that timeout reset conditions are set reasonably so data before offset isn't removed)
+  //if these conditions aren't met then the cache will throw an error on insertion (if preceding data has been cleared)
+  private requestDriver(query: string, offset: number): Subject<QueryResponse> {
+    let dataStream = new Subject<QueryResponse>();
+    let qGen = this.query(query, offset);
+      
     let queryHandle = qGen.next().value;
+    let cancel = () => {
+      qGen.next(true);
+    }
+    //query may be cancelled by calling complete() on dataStream, listen for this and cancel
+    let canceller = dataStream.subscribe(null, null, cancel);
 
-    let handler = (response: QueryResponse): Promise<RequestStatus> => {
-      //query failed cancel query
-      if(response.data == null) {
-        this.cancelQuery()
+    let completeDataStream = () => {
+      //unsubscribe from canceller so not trying to cancel completed query
+      canceller.unsubscribe();
+      //complete dataStream
+      dataStream.complete();
+    }
+
+    //if hasnt been started start the query driver and listen in
+    //query driver only ends if no more listeners
+
+    let handler = (response: QueryResponse): void => {
+      //query succeeded, cache data and continue
+      if(!response.status.error) {
+        //insert data into cache\
+        let data: InsertData<Metadata> = {
+          data: response.data,
+          complete: response.status.finished
+        }
+        this.cache.setData(query, data, offset);
+        offset += data.data.length;
+        let next = qGen.next();
+        if(next.value == undefined) {
+          throw new Error("An unexpected error has occured while handling the query: handler called after generator completed");
+        }
+        //generator complete or canceled
+        if(next.done) {
+          //if completed, push data
+          if(next.value) {
+            dataStream.next(response);
+            completeDataStream();
+          }
+          //if canceled then don't push data, subject has been completed
+        }
+        //otherwise still more data to be had, push data and keep going
+        else {
+          //push data to stream
+          dataStream.next(response);
+          //execute next subquery
+          this.recursivePromise(next.value, handler);
+        }
       }
+      //query failed
       else {
-        //insert data into cache
-        this.cache.addData(query, response.data, response.status.finished);
-        this.statusPort.next(response.status);
-      }
-      //add data to cache
-      //returns done when returned, value will be completed flag
-      let next = qGen.next();
-      if(next.value == undefined) {
-        throw new Error("An unexpected error has occured while handling the query: handler called after generator completed");
-      }
-      //generator complete or canceled
-      if(next.done) {
-        return new Promise((resolve) => {
-          resolve(response.status);
-        });
-      }
-      else {
-        return this.recursivePromise(next.value, handler)
+        //get next generator value to check if dataStream has already been canceled
+        let next = qGen.next();
+        if(next.value == undefined) {
+          throw new Error("An unexpected error has occured while handling the query: handler called after generator completed");
+        }
+        //generator has not completed or it has completed but not been canceled, push error to dataStream and complete
+        if(!next.done || next.value) {
+          dataStream.next(response);
+          completeDataStream();
+        }
+        //otherwise dataStream has been canceled already, just ignore and exit 
       }
     }
 
     this.recursivePromise(queryHandle, handler);
-    // .then((status) => {
-    //   console.log(status);
-    // });
+
+    return dataStream;
   }
 
-  private recursivePromise(promise: Promise<any>, handler: (data) => Promise<RequestStatus>): Promise<RequestStatus> {
-    return promise.then((data) => {
-      return handler(data);
+  private recursivePromise(promise: Promise<any>, handler: (data) => void): void {
+    promise.then((data) => {
+      handler(data);
     });
   }
   
-  //switch to return range from promise
-  next(filterHandle: FilterHandle): Promise<[number, number]> {
-    let port = this.dataPorts[filterHandle];
-    if(port == undefined) {
-      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
-    }
-    if(port.lastRequest == null) {
-      throw new Error("next called before stream initialized: requestData must be called before stateful next or previous to initialize stream state");
-    }
-    //don't try to get current request until last request is properly handled and returned to ensure ordering
-    let dataListener = port.lastRequest.then((last: [number, number]) => {
-      let range: [number, number] = [last[1], last[1] + port.chunkSize];
 
-      return this.generateChunkRetreivalPromise(filterHandle, last, range);
-    });
 
-    return this.generateResultAndSetState(filterHandle, port, dataListener);
-  }
-
-  previous(filterHandle: FilterHandle): Promise<[number, number]> {
-    let port = this.dataPorts[filterHandle];
-    if(port == undefined) {
-      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
-    }
-    if(port.lastRequest == null) {
-      throw new Error("next called before stream initialized: requestData must be called before stateful next or previous to initialize stream state");
-    }
-    //don't try to get current request until last request is properly handled and returned to ensure ordering
-    let dataListener = port.lastRequest.then((last: [number, number]) => {
-      //if already at 0 lower bound just ignore and return null for current
-      if(last[0] == 0) {
-        return {
-          last: last,
-          current: null
-        };
-      }
-      //if chunk size doesn't fit properly and lower bound less than 0, realign to 0 (failsafe, should never actually happen since requestData should align)
-      let lower = Math.max(last[0] - port.chunkSize, 0);
-      let upper = lower + port.chunkSize;
-      let range: [number, number] = [lower, upper];
-
-      return this.generateChunkRetreivalPromise(filterHandle, last, range);
-    });
-
-    return this.generateResultAndSetState(filterHandle, port, dataListener);
-  }
-
-  requestData(filterHandle: FilterHandle, entry: number, chunkSize?: number): Promise<[number, number]> {
-    let port = this.dataPorts[filterHandle];
-    if(port == undefined) {
-      throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
-    }
-    
-    let previous: Promise<any> = port.lastRequest == null ? Promise.resolve() : port.lastRequest;
-
-    if(chunkSize == undefined) {
-      chunkSize = port.chunkSize
-    }
-    console.log(chunkSize);
-
-    let first = Math.floor(entry / chunkSize) * chunkSize;
-
-    //don't try to get current request until last request is properly handled and returned to ensure ordering
-    let dataListener = previous.then((last: [number, number]) => {
-      let range: [number, number] = [first, first + chunkSize];
-      port.chunkSize = chunkSize;
-
-      return this.generateChunkRetreivalPromise(filterHandle, last, range);
-    });
-
-    return this.generateResultAndSetState(filterHandle, port, dataListener);
-  }
-
-  generateChunkRetreivalPromise(filterHandle: FilterHandle, last: [number, number], current: [number, number]): Promise<ChunkController> {
-    let chunkData: ChunkController = {
-      last: last,
-      current: null
-    };
-
-    return new Promise<ChunkController>((resolve) => {
-      let subManager = new Subject();
-      this.statusPort
-      //make submanager global, store chunkdata outside and resolve in complete method so can be canceled
-      .pipe(takeUntil(merge(subManager, this.queryState.masterDataSubController)))
-      .subscribe((status: RequestStatus) => {
-        //cancellation should be accomplished by query cancellation pushing to masterDataSubController
-        // //error in query, return null, data will never be loaded unless retry
-        // if(status.status != 200) {
-        //   subManager.next();
-        // }
-        let ready: PollStatus = this.cache.pollData(filterHandle, this.queryState.query, current);
-        //if query ready resolve
-        if(ready == PollStatus.READY) {
-          subManager.next();
-          chunkData.current = current;     
-        }
-        //out of range, resolve with null
-        else if(ready == PollStatus.INVALID) {
-          subManager.next();
-        }
-        //not ready, wait for next set of data to arrive
-      },
-      null,
-      () => {
-        console.log("complete");
-        resolve(chunkData);
-      });
-    });
-  }
-
-  generateResultAndSetState(filterHandle: FilterHandle, port: DataPort, dataListener: Promise<ChunkController>): Promise<[number, number]> {
-    port.lastRequest = dataListener.then((chunkData: ChunkController) => {
-      //if next data is null then keep same state otherwise assign to the new state
-      return chunkData.current == null ? chunkData.last : chunkData.current;
-    });
-    return dataListener.then((chunkData: ChunkController) => {
-      //if null just return null to user, otherwise push data retreived from chunk range and return range
-      if(chunkData.current != null) {
-        let data = this.cache.retreiveData(filterHandle, this.queryState.query, chunkData.current);
-        port.source.next(Object.values(data));
-      }
-      return chunkData.current;
-    });
-  }
-
-  //returns all data as received through observable
-  //need to push all previous data when initially subscribed, shouldn't push to all subscriptions, so tracked for each call separately rather than from respective data port (don't want to push data cumulatively)
-  getDataStreamObserver(filterHandle: FilterHandle): Observable<IndexMetadataMap> {
-    //subscribe to status port and request data already available, then ranges after every tiem received
-    let source = new Subject<IndexMetadataMap>();
-    let subManager = new Subject();
-    let last = 0;
-    this.statusPort
-    .pipe(takeUntil(merge(subManager, this.queryState.masterDataSubController)))
-    .subscribe((status: RequestStatus) => {
-      if(status != null && status.loadedResults > 0) {
-        console.log(last, status.loadedResults)
-        //how to handle query errors?
-        let data = this.cache.retreiveData(filterHandle, this.queryState.query, [last, null]);
-        last += Object.keys(data).length;
+//   //returns all data as received through observable
+//   //need to push all previous data when initially subscribed, shouldn't push to all subscriptions, so tracked for each call separately rather than from respective data port (don't want to push data cumulatively)
+//   getDataStreamObserver(filterHandle: FilterHandle): Observable<IndexMetadataMap> {
+//     //subscribe to status port and request data already available, then ranges after every tiem received
+//     let source = new Subject<IndexMetadataMap>();
+//     let subManager = new Subject();
+//     let last = 0;
+//     this.statusPort
+//     .pipe(takeUntil(merge(subManager, this.queryState.masterDataSubController)))
+//     .subscribe((status: RequestStatus) => {
+//       if(status != null && status.loadedResults > 0) {
+//         console.log(last, status.loadedResults)
+//         //how to handle query errors?
+//         let data = this.cache.retreiveData(filterHandle, this.queryState.query, [last, null]);
+//         last += Object.keys(data).length;
         
-        source.next(data);
-      }
-    },
-    null,
-    () => {
-      source.complete();
-    });
-    return source.asObservable();
-  }
+//         source.next(data);
+//       }
+//     },
+//     null,
+//     () => {
+//       source.complete();
+//     });
+//     return source.asObservable();
+//   }
 
-  //getDataCountObserver(filterHandle: FilterHandle)
+//   //getDataCountObserver(filterHandle: FilterHandle)
 
 }
 
 
+// interface QueryInfo {
+//   query: string,
+//   queryGen: IterableIterator<any>
+// }
 
+// interface SubjectMap {
+//   [handle: number]: BehaviorSubject<QueryResults>[]
+// }
 
+// class QueryController {
+//   private driverQuery: QueryInfo;
+//   private extensionQueries: QueryInfo[];
+//   private masterSubController: Subject<void>;
 
-interface QueryResponse {
+//   constructor() {
+//     this.driverQuery = null;
+//     this.extensionQueries = [];
+//     this.masterSubController = new Subject();
+//   }
+
+//   extend(query: QueryInfo) {
+//     this.extensionQueries.push(query);
+//   }
+
+//   getMasterSubController(): Observable<void> {
+//     return this.masterSubController.asObservable();
+//   }
+
+//   private cancel() {
+//     [this.driverQuery, ...this.extensionQueries].forEach((query) => {
+//       query.queryGen.next(true);
+//     });
+//     this.masterSubController.next();
+//   }
+// }
+
+interface DataObserverController {
+  data: Subject<QueryResponse>
+  observers: number
+}
+
+interface QuerySubjectMap {
+  [query: string]: DataObserverController
+}
+
+export class QueryController {
+  private querySubjects: BehaviorSubject<QueryResponse>[];
+  private queryOutput: Subject<QueryResponse>;
+
+  constructor(querySubjects: BehaviorSubject<QueryResponse>[]) {
+    this.querySubjects = querySubjects;
+    this.queryOutput = new Subject<QueryResponse>();
+    let completed = 0;
+    let loadedResults = 0
+    let i;
+    for(i = 0; i < querySubjects.length; i++) {
+      querySubjects[i].subscribe((response: QueryResponse) => {
+        //ignore initial value pushed if no cache data
+        if(response.status != null) {
+          if(response.data != null) {
+            loadedResults += response.data.length;
+          }
+          let outStatus: RequestStatus = {
+            status: response.status.status,
+            error: response.status.error,
+            message: response.status.message,
+            loadedResults: loadedResults,
+            finished: false
+          };
+          let outResponse: QueryResponse = {
+            status: outStatus,
+            data: response.data
+          };
+          
+          if(response.status.finished) {
+            completed++;
+          }
+          //if all completed set query status to finished
+          if(completed == querySubjects.length) {
+            outStatus.finished = true;
+          }
+          this.queryOutput.next(outResponse);
+          //check if failed and cancel query if it did (stop if any part of query fails)
+          if(response.status.error) {
+            this.cancel();
+          }
+        }
+      }, () => {
+        //something went wrong, throw error in output and cancel query
+        this.queryOutput.error("An error has occurred while retreiving data");
+        //remove this subscription from subscription list since already completed (stop cleanup from being performed on cancel)
+        this.querySubjects[i] = null;
+        this.cancel();
+      }, () => {
+        //remove this subscription from subscription list since already completed (stop cleanup from being performed on cancel)
+        this.querySubjects[i] = null;
+      });
+    }
+  }
+
+  getQueryObserver(): Observable<QueryResponse> {
+    return this.queryOutput.asObservable();
+  }
+  
+  cancel() {
+    let i;
+    for(i = 0; i < this.querySubjects.length; i++) {
+      let sub = this.querySubjects[i];
+      //if null then already completed, complete any still running subscriptions
+      if(sub != null) {
+        sub.complete();
+      }
+    }
+    //complete output stream
+    this.queryOutput.complete();
+  }
+}
+
+// export interface HeuristicOptions {
+//   rootIndex: number,
+//   searchRange: number
+// }
+
+export interface QueryResponse {
   status: RequestStatus,
   data: Metadata[]
 }
 
-//data port holds stateful information on position of last returned data, chunk size, etc and observer for subscribing to data stream of requested data on the filter
-class DataPort {
-  source: BehaviorSubject<Metadata[]>;
-  count: BehaviorSubject<number>;
-  chunkSize: number;
-  //store last promise, wait until after this data is returned to get next chunk
-  lastRequest: Promise<[number, number]>;
+// //data port holds stateful information on position of last returned data, chunk size, etc and observer for subscribing to data stream of requested data on the filter
+// class DataPort {
+//   source: BehaviorSubject<Metadata[]>;
+//   count: BehaviorSubject<number>;
+//   chunkSize: number;
+//   //store last promise, wait until after this data is returned to get next chunk
+//   lastRequest: Promise<[number, number]>;
 
-  constructor() {
-    this.source = new BehaviorSubject<Metadata[]>(null);
-    this.lastRequest = null;
-  }
-}
+//   constructor() {
+//     this.source = new BehaviorSubject<Metadata[]>(null);
+//     this.lastRequest = null;
+//   }
+// }
 
-interface ChunkController {
-  last: [number, number],
-  current: [number, number]
-}
+// interface ChunkController {
+//   last: [number, number],
+//   current: [number, number]
+// }
 
 export interface RequestStatus {
   status: number;
+  error: boolean;
+  message?: string;
   loadedResults: number;
   finished: boolean;
 }
