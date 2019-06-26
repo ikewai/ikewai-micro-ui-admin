@@ -29,7 +29,7 @@ export class DataController {
     constructor(defaultChunkSize: number) {
         this.state = {
             chunkSize: defaultChunkSize,
-            lastReturned: null
+            lastRequest: null
         };
     }
 
@@ -38,8 +38,8 @@ export class DataController {
     }
 
     //stateless data request
-    requestDataRange() {
-
+    requestDataRange(filter: Filter, range: [number, number]) {
+        let data = this.data.slice(lower, upper);
     }
 
     //data manager shouldn't care about future changes, only its current state
@@ -56,15 +56,20 @@ export class DataController {
         }
         let lower = Math.floor(entry / chunkSize);
         let upper = lower + chunkSize;
-        let data = this.data.slice(lower, upper);
-        this.state.lastRequest
+        let data = this.requestDataRange(filter, [lower, upper]);
+        this.state.lastRequest = Promise.resolve([lower, lower + data.length]);
         //for now no sorting/indexing, so return an immediately resolved promise
         return Promise.resolve(data);
     }
 
-    //switch to return range from promise
-    next(filterHandle: FilterHandle): Promise<Metadata> {
-        
+
+    next(filter: Filter): Promise<Metadata> {
+        if(this.state.lastRequest == null) {
+            throw new Error("next called before stream initialized: requestData must be called before stateful next or previous to initialize data position");
+        }
+        this.state.lastRequest.then((range: [number, number]) => {
+
+        });
     }
 
     previous(filterHandle: FilterHandle): Promise<[number, number]> {
@@ -95,14 +100,26 @@ export class DataController {
         return this.generateResultAndSetState(filterHandle, port, dataListener);
     }
 
-    
+    //use filter manager to define a set of sorters and their sorting functions globally
+    //should only have one sorting function defined for each sorted element
+    private sorterToString(sortTag: string[], delim?: string): string {
+        if(delim == undefined) {
+            delim = String.fromCharCode(0xff);
+        }
+        let s = "";
+        let i: number;
+        for(i = 0; i < sortTag.length; i++) {
+            s += sortTag[i] + delim;
+        }
+        return s;
+    }
     
 
 }
 
 interface OutputState {
     chunkSize: number,
-    lastRequest: [number, number]
+    lastRequest: Promise<[number, number]>
 }
 
 class IndexManager {
