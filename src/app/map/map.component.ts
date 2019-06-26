@@ -227,7 +227,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       
       let indices = Object.keys(data);
-      let i;
+      let i: number;
       for(i = 0; i < indices.length; i++) {
         let index = Number(indices[i]);
         let datum = data[index];
