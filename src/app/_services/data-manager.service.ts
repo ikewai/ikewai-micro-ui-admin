@@ -3,6 +3,7 @@ import { RequestStatus, QueryResponse } from './query-handler.service';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { Metadata } from "../_models/metadata";
 import { Filter } from "./filter-manager.service"
+import { Meta } from '@angular/platform-browser';
 
 @Injectable({
   providedIn: 'root'
@@ -11,9 +12,9 @@ export class DataManagerService {
 
     constructor() { }
 
-    registerDataStream(stream: Observable<QueryResponse>): DataController {
-        return new DataController(stream);
-    }
+    //registerDataStream(stream: Observable<QueryResponse>): DataController {
+    //    return new DataController(stream);
+    //}
 
 
 }
@@ -38,8 +39,10 @@ export class DataController {
     }
 
     //stateless data request
-    requestDataRange(filter: Filter, range: [number, number]) {
-        let data = this.data.slice(lower, upper);
+    requestDataRange(filter: Filter, range: [number, number]): Metadata[] {
+        
+        let data = this.data.slice(range[0], range[-1]);
+        return data;
     }
 
     //data manager shouldn't care about future changes, only its current state
@@ -54,12 +57,13 @@ export class DataController {
         if(chunkSize == undefined) {
             chunkSize = this.state.chunkSize;
         }
+        var local_data: Metadata[];
         let lower = Math.floor(entry / chunkSize);
         let upper = lower + chunkSize;
-        let data = this.requestDataRange(filter, [lower, upper]);
-        this.state.lastRequest = Promise.resolve([lower, lower + data.length]);
+        local_data = this.requestDataRange(filter, [lower, upper]);
+        //this.state.lastRequest = Promise.resolve([lower, lower + local_data.length]);
         //for now no sorting/indexing, so return an immediately resolved promise
-        return Promise.resolve(data);
+        return Promise.resolve(local_data);
     }
 
 
@@ -68,8 +72,9 @@ export class DataController {
             throw new Error("next called before stream initialized: requestData must be called before stateful next or previous to initialize data position");
         }
         this.state.lastRequest.then((range: [number, number]) => {
-
+            
         });
+       // return;
     }
 
     previous(filterHandle: FilterHandle): Promise<[number, number]> {
