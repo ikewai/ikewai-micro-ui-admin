@@ -31,10 +31,10 @@
       <div class="c9"><div class="color-circle color-9"></div></div>
     </div> -->
 
-    <div *ngIf="metadata.length > 0" class="pull-right">
-    <h2>Results</h2>
-    <div style="overflow: auto; height:500px; width: 100%">
-    <table>
+    <div *ngIf="metadata.length > 0">
+    <h5>Results</h5>
+    <div style="overflow: auto; height:500px;" class="table-responsive">
+    <table class="table">
       <tr>
           <th>Name</th>
           <th>Type</th>
@@ -42,27 +42,23 @@
       </tr>
       <tr *ngFor="let metadatum of metadata">
           <td width="40%">
-            <span #entries>{{metadatum.value.name | json}}</span>
-            <span #entries>{{metadatum.value.station_name | json}}</span>
-            <span #entries>{{metadatum.value.well_name | json}}</span>
+            <span #entries>{{metadatum.value.name}}</span>
+            <span #entries>{{metadatum.value.station_name}}</span>
+            <span #entries>{{metadatum.value.well_name}}</span>
           </td>
           <td>
-              <span #entries>{{metadatum.name | json}}</span>
+              <span #entries>{{metadatum.name}}</span>
           </td>
-          <td widht="20%">
+          <td width="20%">
               <span *ngIf="metadatum.name == 'Water_Quality_Site'">
                   <a class="btn btn-success" href='https://www.waterqualitydata.us/Result/search?siteid={{metadatum.value.MonitoringLocationIdentifier}}&mimeType=csv&zip=yes&sorted=no' target="_blank" > Download</a>
               </span>
-            <ul *ngIf="metadatum.name == 'Well'">
-                <li *ngFor="let link of metadatum._links.associationIds ">
-                      <span *ngIf="link.href.indexOf('ikewai-annotated') !== -1">
-                        {{link.href | json}}
-                      
-                      <button (click)="downloadClick(link.href)">Download</button>
-                    </span> 
-                  </li>
-                </ul>
-            </td>
+            <div *ngIf="metadatum.name == 'Well'">
+                <span *ngFor="let link of metadatum._links.associationIds ">
+                  <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success" (click)="downloadClick(link.href)">Download {{link.href.split('/').slice(-1)[0]}}</a>
+                </span>
+            </div>
+          </td>
         </tr>
       </table>
       </div>
