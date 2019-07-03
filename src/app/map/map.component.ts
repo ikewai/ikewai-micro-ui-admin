@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild, AfterViewInit, ViewChildren, QueryList, ElementRef, Renderer2 } from '@angular/core';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
-import { Observable, of, BehaviorSubject } from 'rxjs';
+import { Observable, of, BehaviorSubject,throwError } from 'rxjs';
 import { map, retry, catchError } from 'rxjs/operators';
 import { User } from '../_models/user'
 import { Metadata } from '../_models/metadata'
@@ -14,6 +14,8 @@ import { AppConfig } from '../_services/config.service';
 //import { SpatialService } from '../_services/spatial.service'
 import { QueryHandlerService, QueryController, QueryResponse } from '../_services/query-handler.service';
 import { FilterHandle, FilterManagerService, Filter, FilterMode } from '../_services/filter-manager.service';
+import { mapToExpression } from '@angular/compiler/src/render3/view/util';
+import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular/common/http';
 
 @Component({
   selector: 'app-map',
@@ -28,9 +30,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   
   highlightEntries: ElementRef[] = [];
 
-  //metadata = true;
+  metadata: Metadata[];
   selectedMetadata: Metadata;
   currentUser: User;
+  result: Array<Object>;
 
   defaultFilterSource: Observable<Metadata[]>;
   defaultFilterHandle: FilterHandle;
@@ -45,7 +48,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   options: L.MapOptions = {
     layers: [
-      tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' })
+      //tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' })
+      tileLayer('http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}', { maxZoom: 18, attribution: '...' })
     ],
     zoom: 6,
     center: latLng(20.5, -157.917480),
@@ -72,6 +76,7 @@ export class MapComponent implements OnInit, AfterViewInit {
  };
 
   onMapReady(map: L.Map) {
+    this.metadata =[];
     this.map = map;
 
     let legendControl: L.Control = new L.Control({position: "bottomleft"});
@@ -161,12 +166,38 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
 
-  constructor(private renderer: Renderer2, private queryHandler: QueryHandlerService, private filters: FilterManagerService) {
+  constructor(private renderer: Renderer2, private queryHandler: QueryHandlerService, private filters: FilterManagerService, private http: HttpClient) {
     //currentUser: localStorage.getItem('currentUser');
 
     
   }
-  
+
+  downloadClick(metadatum_href){
+      this.createPostit(metadatum_href)
+      
+  }
+  createPostit(file_url): Observable<any>{
+    let url = AppConfig.settings.aad.tenant + "/postits/v2/?url=" + encodeURI(file_url) + "&method=GET&lifetime=600&maxUses=1";
+    let head = new HttpHeaders()
+    .set("Content-Type", "application/x-www-form-urlencoded");
+    let bodyString = JSON.stringify({});
+    let params: HttpParams = new HttpParams()
+    .append("method", "POST")
+    let options = {
+      headers: head,
+      observe: <any>"response",
+      //params: params
+    };
+    console.log(url);
+
+    return this.http.post<any>(url,{}, options).pipe(map((response: any) => response)).subscribe(result => { 
+      this.result =result
+      console.log(result.body.result._links.self.href)
+      window.open(result.body.result._links.self.href, "_blank");
+      
+    }
+      );
+  }
   ngAfterViewInit() {
     //this.map = this.mapElement.nativeElement
     
@@ -176,6 +207,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     //should change this to get observable from filter manager
     //this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
+    
+   
     //console.log(this.defaultFilterHandle);
     //this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
     // this.defaultFilterSource.subscribe((data: Metadata[]) => {
@@ -192,11 +225,12 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     // tslint:disable-next-line:no-console
     
-
+    this.metadata= [];
     console.log('Draw Created Event!');
     this.drawnItems.clearLayers();
     this.drawnItems.addLayer(e.layer);
-    
+    let bounds = e.layer.getBounds();
+    this.map.fitBounds(bounds);
     Object.keys(this.dataGroups).forEach((key) => {
       let dataGroup = this.dataGroups[key];
       dataGroup.clearLayers();
@@ -217,8 +251,11 @@ export class MapComponent implements OnInit, AfterViewInit {
     // }, 2000);
     
     //this.queryHandler.getDataStreamObserver(this.defaultFilterHandle).subscribe((data: IndexMetadataMap) => {
+      
     dataStream.getQueryObserver().subscribe((data: any) => {
       data = data.data;
+      //data;
+
       if(data == null) {
         return;
       }
@@ -231,47 +268,55 @@ export class MapComponent implements OnInit, AfterViewInit {
       for(i = 0; i < indices.length; i++) {
         let index = Number(indices[i]);
         let datum = data[index];
-        let group = NameGroupMap[datum.name];
-        //console.log(datum.value.loc);
-        let geojson = L.geoJSON(datum.value.loc, {
-          style: this.getStyleByGroup(group),
-          pointToLayer: (feature, latlng) => {
-            let icon = this.getIconByGroup(group);
-            return L.marker(latlng, {icon: icon});
-          },
-          onEachFeature: (feature, layer) => {
-            let wrapper = L.DomUtil.create("div")
-            let details = L.DomUtil.create("div");
-            let goto = L.DomUtil.create("span", "entry-link");
-            
-            details.innerText = JSON.stringify(datum.value);
-            goto.innerText = "Go to Entry";
+        if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0) || datum._links.associationIds.length > 0){
+          this.metadata.push(datum)
+          let group = NameGroupMap[datum.name];
+          //console.log(datum.value.loc);
+          let geojson = L.geoJSON(datum.value.loc, {
+            style: this.getStyleByGroup(group),
+            pointToLayer: (feature, latlng) => {
+              let icon = this.getIconByGroup(group);
+              return L.marker(latlng, {icon: icon});
+            },
+            onEachFeature: (feature, layer) => {
+              let header = L.DomUtil.create("h6")
+              let wrapper = L.DomUtil.create("div")
+              let details = L.DomUtil.create("div");
+              let goto = L.DomUtil.create("span", "entry-link");
+              
+              //details.innerText = JSON.stringify(datum.value);
+              header.innerText=datum.name.replace(/_/g, ' ');
+              details.innerHTML = datum.value.description+"<br/>Latitude: "+datum.value.latitude+"<br/>Longitude: "+datum.value.longitude;
+              goto.innerText = "Go to Entry";
 
-            let popup: L.Popup = new L.Popup();
+              let popup: L.Popup = new L.Popup();
+              wrapper.append(header)
+              wrapper.append(details);
+              wrapper.append(goto);
 
-            wrapper.append(details);
-            wrapper.append(goto);
+              let linkDiv = wrapper.getElementsByClassName("entry-link");
 
-            let linkDiv = wrapper.getElementsByClassName("entry-link");
-
-            let gotoWrapper = () => {
-              console.log("click");
-              //this.gotoEntry(index);
+              let gotoWrapper = () => {
+                console.log("click");
+                //this.gotoEntry(index);
+              }
+              linkDiv[0].addEventListener("click", gotoWrapper);
+              popup.setContent(wrapper);
+              layer.bindPopup(popup);
+              if(this.dataGroups[group] != undefined) {
+                this.dataGroups[group].addLayer(layer);
+              }
             }
-            linkDiv[0].addEventListener("click", gotoWrapper);
-            popup.setContent(wrapper);
-            layer.bindPopup(popup);
-            this.dataGroups[group].addLayer(layer);
-          }
+            
+          });
           
-        });
-        
-        //
-        
-        //console.log(datum.name);
-        // console.log(this.dataGroups[group]);
-        //console.log(geojson);
-        
+          //
+          
+          //console.log(datum.name);
+          // console.log(this.dataGroups[group]);
+          //console.log(geojson);
+          
+        }
       }
     });
 

@@ -1,44 +1,71 @@
-<div leaflet class="map"
-     leafletDraw
-     [leafletOptions]="options"
-     [leafletDrawOptions]="drawOptions"
-     (leafletDrawCreated)="onDrawCreated($event)"
-     (leafletMapReady)="onMapReady($event)">
-</div>
+<div class="row">
+    <div class="col-md-7">
+      <div leaflet class="map pull-left"
+        leafletDraw
+        [leafletOptions]="options"
+        [leafletDrawOptions]="drawOptions"
+        (leafletDrawCreated)="onDrawCreated($event)"
+        (leafletMapReady)="onMapReady($event)" >
+      </div>
+    </div>
+    <div class="col-md-5">
+    <!-- <div class="grid">
+      <div class="bl">Color Legend</div>
+      <div class="ht">Cluster Size</div>
+      <div class="hl">Site Type</div>  
+      <div class="s1">1-9</div>
+      <div class="s2">10-100</div>
+      <div class="s3">100+</div>  
+      <div class="t1">Well</div>
+      <div class="t2">Site</div>
+      <div class="t3">Water Quality Site</div>
 
-<!-- <div class="grid">
-  <div class="bl">Color Legend</div>
-  <div class="ht">Cluster Size</div>
-  <div class="hl">Site Type</div>  
-  <div class="s1">1-9</div>
-  <div class="s2">10-100</div>
-  <div class="s3">100+</div>  
-  <div class="t1">Well</div>
-  <div class="t2">Site</div>
-  <div class="t3">Water Quality Site</div>
+      <div class="c1"><div class="color-circle color-1"></div></div>
+      <div class="c2"><div class="color-circle color-2"></div></div>
+      <div class="c3"><div class="color-circle color-3"></div></div>
+      <div class="c4"><div class="color-circle color-4"></div></div>
+      <div class="c5"><div class="color-circle color-5"></div></div>
+      <div class="c6"><div class="color-circle color-6"></div></div>
+      <div class="c7"><div class="color-circle color-7"></div></div>
+      <div class="c8"><div class="color-circle color-8"></div></div>
+      <div class="c9"><div class="color-circle color-9"></div></div>
+    </div> -->
 
-  <div class="c1"><div class="color-circle color-1"></div></div>
-  <div class="c2"><div class="color-circle color-2"></div></div>
-  <div class="c3"><div class="color-circle color-3"></div></div>
-  <div class="c4"><div class="color-circle color-4"></div></div>
-  <div class="c5"><div class="color-circle color-5"></div></div>
-  <div class="c6"><div class="color-circle color-6"></div></div>
-  <div class="c7"><div class="color-circle color-7"></div></div>
-  <div class="c8"><div class="color-circle color-8"></div></div>
-  <div class="c9"><div class="color-circle color-9"></div></div>
-</div> -->
+    <div *ngIf="metadata.length > 0" class="pull-right">
+    <h2>Results</h2>
+    <div style="overflow: auto; height:500px; width: 100%">
+    <table>
+      <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Actions</th>
+      </tr>
+      <tr *ngFor="let metadatum of metadata">
+          <td width="40%">
+            <span #entries>{{metadatum.value.name | json}}</span>
+            <span #entries>{{metadatum.value.station_name | json}}</span>
+            <span #entries>{{metadatum.value.well_name | json}}</span>
+          </td>
+          <td>
+              <span #entries>{{metadatum.name | json}}</span>
+          </td>
+          <td widht="20%">
+              <span *ngIf="metadatum.name == 'Water_Quality_Site'">
+                  <a class="btn btn-success" href='https://www.waterqualitydata.us/Result/search?siteid={{metadatum.value.MonitoringLocationIdentifier}}&mimeType=csv&zip=yes&sorted=no' target="_blank" > Download</a>
+              </span>
+            <ul *ngIf="metadatum.name == 'Well'">
+                <li *ngFor="let link of metadatum._links.associationIds ">
+                      <span *ngIf="link.href.indexOf('ikewai-annotated') !== -1">
+                        {{link.href | json}}
+                      
+                      <button (click)="downloadClick(link.href)">Download</button>
+                    </span> 
+                  </li>
+                </ul>
+            </td>
+        </tr>
+      </table>
+      </div>
+      </div>
+    </div>
 
-<div *ngIf="(defaultFilterSource | async) != null">
-<h2>My Metadata</h2>
-<table>
-  <tr>
-    <td>
-      <ul class="metadata">
-        <li *ngFor="let metadatum of defaultFilterSource | async">
-          <span #entries>{{metadatum | json}}</span>>
-        </li>
-      </ul>
-    </td>
-  </tr>
-</table>
-</div>
