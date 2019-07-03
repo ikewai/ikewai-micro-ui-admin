@@ -51,7 +51,7 @@
           </td>
           <td width="20%">
               <span *ngIf="metadatum.name == 'Water_Quality_Site'">
-                  <a class="btn btn-success" href='https://www.waterqualitydata.us/Result/search?siteid={{metadatum.value.MonitoringLocationIdentifier}}&mimeType=csv&zip=yes&sorted=no' target="_blank" > Download</a>
+                  <a class="btn btn-success" href='https://www.waterqualitydata.us/Result/search?siteid={{metadatum.value.MonitoringLocationIdentifier}}&mimeType=csv&zip=yes&sorted=no' target="_blank" > Download {{metadatum.value.resultCount}} Measurements</a>
               </span>
             <div *ngIf="metadatum.name == 'Well'">
                 <span *ngFor="let link of metadatum._links.associationIds ">
