@@ -74,10 +74,10 @@ export class DataController {
         this.state.lastRequest.then((range: [number, number]) => {
             
         });
-       // return;
+        return;
     }
 
-    previous(filterHandle: FilterHandle): Promise<[number, number]> {
+   /* previous(filterHandle: FilterHandle): Promise<[number, number]> {
         let port = this.dataPorts[filterHandle];
         if(port == undefined) {
         throw new Error("Invalid filter handle: the filter handle does not have an associated data port");
@@ -103,7 +103,7 @@ export class DataController {
         });
 
         return this.generateResultAndSetState(filterHandle, port, dataListener);
-    }
+   }*/
 
     //use filter manager to define a set of sorters and their sorting functions globally
     //should only have one sorting function defined for each sorted element
