@@ -173,7 +173,12 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   downloadClick(metadatum_href){
-      this.createPostit(metadatum_href)
+      this.createPostit(metadatum_href).subscribe(result => { 
+        this.result =result
+        console.log(result.body.result._links.self.href)
+        window.open(result.body.result._links.self.href, "_blank");
+        
+      })
       
   }
   createPostit(file_url): Observable<any>{
@@ -190,13 +195,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     };
     console.log(url);
 
-    return this.http.post<any>(url,{}, options).pipe(map((response: any) => response)).subscribe(result => { 
-      this.result =result
-      console.log(result.body.result._links.self.href)
-      window.open(result.body.result._links.self.href, "_blank");
-      
-    }
-      );
+    return this.http.post<any>(url,{}, options).pipe(map((response: any) => response))
   }
   ngAfterViewInit() {
     //this.map = this.mapElement.nativeElement
