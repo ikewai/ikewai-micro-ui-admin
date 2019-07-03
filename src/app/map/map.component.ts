@@ -281,16 +281,29 @@ export class MapComponent implements OnInit, AfterViewInit {
               let header = L.DomUtil.create("h6")
               let wrapper = L.DomUtil.create("div")
               let details = L.DomUtil.create("div");
+              let download = L.DomUtil.create("div")
               let goto = L.DomUtil.create("span", "entry-link");
               
               //details.innerText = JSON.stringify(datum.value);
               header.innerText=datum.name.replace(/_/g, ' ');
               details.innerHTML = datum.value.description+"<br/>Latitude: "+datum.value.latitude+"<br/>Longitude: "+datum.value.longitude;
+              if(datum.name == "Water_Quality_Site"){
+                download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
+              }
+              if(datum.name == "Well"){
+                let j:number;
+                for(j = 0; j < datum._links.associationIds.length; j++) {
+                  if(datum._links.associationIds[j].href.indexOf('ikewai-annotated')!== -1){
+                    download.innerHTML ='<a href="#" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
+                  }
+                }
+              }
               goto.innerText = "Go to Entry";
 
               let popup: L.Popup = new L.Popup();
               wrapper.append(header)
               wrapper.append(details);
+              wrapper.append(download);
               wrapper.append(goto);
 
               let linkDiv = wrapper.getElementsByClassName("entry-link");
