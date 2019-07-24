@@ -12,10 +12,10 @@
     <!-- <div class="grid">
       <div class="bl">Color Legend</div>
       <div class="ht">Cluster Size</div>
-      <div class="hl">Site Type</div>  
+      <div class="hl">Site Type</div>
       <div class="s1">1-9</div>
       <div class="s2">10-100</div>
-      <div class="s3">100+</div>  
+      <div class="s3">100+</div>
       <div class="t1">Well</div>
       <div class="t2">Site</div>
       <div class="t3">Water Quality Site</div>
@@ -33,22 +33,20 @@
 
     <div *ngIf="metadata.length > 0">
     <h5>Results</h5>
+    <input class="form" type="text" (keyup)='tableSearch($event.target.value)' placeholder="Search Well Names">
     <div style="overflow: auto; height:500px;" class="table-responsive">
     <table class="table">
       <tr>
           <th>Name</th>
-          <th>Type</th>
-          <th>Actions</th>
+          <th>Files</th>
       </tr>
-      <tr *ngFor="let metadatum of metadata">
+      <tr *ngFor="let metadatum of filterData">
           <td width="40%">
             <span #entries>{{metadatum.value.name}}</span>
             <span #entries>{{metadatum.value.station_name}}</span>
             <span #entries>{{metadatum.value.well_name}}</span>
           </td>
-          <td>
-              <span #entries>{{metadatum.name}}</span>
-          </td>
+
           <td width="20%">
               <span *ngIf="metadatum.name == 'Water_Quality_Site'">
                   <a class="btn btn-success" href='https://www.waterqualitydata.us/Result/search?siteid={{metadatum.value.MonitoringLocationIdentifier}}&mimeType=csv&zip=yes&sorted=no' target="_blank" > Download {{metadatum.value.resultCount}} Measurements</a>
@@ -64,4 +62,3 @@
       </div>
       </div>
     </div>
-

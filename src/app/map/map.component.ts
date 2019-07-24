@@ -27,10 +27,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   static readonly DEFAULT_RESULTS = 10;
 
   @ViewChildren("entries") entries: QueryList<ElementRef>;
-  
+
   highlightEntries: ElementRef[] = [];
 
   metadata: Metadata[];
+  filterData: Metadata[];
   selectedMetadata: Metadata;
   currentUser: User;
   result: Array<Object>;
@@ -83,48 +84,42 @@ export class MapComponent implements OnInit, AfterViewInit {
     legendControl.onAdd = (map) => {
       let legend = L.DomUtil.create("div", "legend");
       legend.innerHTML = '<div class="grid">'
-      +'<div class="bl">Color Legend</div>'
+      +'<div class="bl">Legend</div>'
       +'<div class="ht">Cluster Size</div>'
-      +'<div class="hl">Site Type</div>'
+
       +'<div class="s1">2-9</div>'
       +'<div class="s2">10-100</div>'
       +'<div class="s3">100+</div>'
       +'<div class="t1">Well</div>'
-      +'<div class="t2">Site</div>'
-      +'<div class="t3">Water Quality Site</div>'
-    
+
+
       +'<div class="c1"><div class="color-circle color-1"></div></div>'
       +'<div class="c2"><div class="color-circle color-2"></div></div>'
       +'<div class="c3"><div class="color-circle color-3"></div></div>'
-      +'<div class="c4"><div class="color-circle color-4"></div></div>'
-      +'<div class="c5"><div class="color-circle color-5"></div></div>'
-      +'<div class="c6"><div class="color-circle color-6"></div></div>'
-      +'<div class="c7"><div class="color-circle color-7"></div></div>'
-      +'<div class="c8"><div class="color-circle color-8"></div></div>'
-      +'<div class="c9"><div class="color-circle color-9"></div></div>'
+
       +'</div>'
       return legend;
     }
     legendControl.addTo(this.map);
 
     let iconCreateFunction = (group: string): (cluster: any) => L.DivIcon => {
-     
+
       return (cluster: any) => {
         let childCount = cluster.getChildCount();
         let markerClass = "marker-cluster ";
         let clusterSize = "marker-cluster-"
         if(childCount < 10) {
           clusterSize += "small";
-        } 
+        }
         else if(childCount < 100) {
           clusterSize += "medium";
-        } 
+        }
         else {
           clusterSize += "large";
         }
         markerClass += clusterSize + "-" + group;
 
-        return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>', 
+        return new L.DivIcon({ html: '<div><span>' + childCount + '</span></div>',
         className: markerClass, iconSize: new L.Point(40, 40)});
       }
     };
@@ -146,7 +141,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     L.control.layers(null, controlGroups).addTo(this.map);
     this.drawnItems.addTo(this.map);
-    
+
     //testing
     // this.defaultFilterSource.subscribe((data: Metadata[]) => {
     //   if(data == null) {
@@ -169,17 +164,17 @@ export class MapComponent implements OnInit, AfterViewInit {
   constructor(private renderer: Renderer2, private queryHandler: QueryHandlerService, private filters: FilterManagerService, private http: HttpClient) {
     //currentUser: localStorage.getItem('currentUser');
 
-    
+
   }
 
   downloadClick(metadatum_href){
-      this.createPostit(metadatum_href).subscribe(result => { 
+      this.createPostit(metadatum_href).subscribe(result => {
         this.result =result
         console.log(result.body.result._links.self.href)
         window.open(result.body.result._links.self.href, "_blank");
-        
+
       })
-      
+
   }
   createPostit(file_url): Observable<any>{
     let url = AppConfig.settings.aad.tenant + "/postits/v2/?url=" + encodeURI(file_url) + "&method=GET&lifetime=600&maxUses=1";
@@ -197,17 +192,28 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     return this.http.post<any>(url,{}, options).pipe(map((response: any) => response))
   }
+
+  tableSearch(term: string) {
+    if(!term) {
+      this.filterData = this.metadata;
+    } else {
+      this.filterData = this.metadata.filter(x =>
+         x.value.well_name.trim().toLowerCase().includes(term.trim().toLowerCase())
+      );
+    }
+  }
+
   ngAfterViewInit() {
     //this.map = this.mapElement.nativeElement
-    
+
   }
 
   ngOnInit() {
     //should change this to get observable from filter manager
     //this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
-    
-   
+
+
     //console.log(this.defaultFilterHandle);
     //this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
     // this.defaultFilterSource.subscribe((data: Metadata[]) => {
@@ -223,7 +229,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   public onDrawCreated(e: any) {
 
     // tslint:disable-next-line:no-console
-    
+
     this.metadata= [];
     console.log('Draw Created Event!');
     this.drawnItems.clearLayers();
@@ -248,9 +254,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     //     }, 2000);
     //   }, 2000);
     // }, 2000);
-    
+
     //this.queryHandler.getDataStreamObserver(this.defaultFilterHandle).subscribe((data: IndexMetadataMap) => {
-      
+
     dataStream.getQueryObserver().subscribe((data: any) => {
       data = data.data;
       //data;
@@ -259,15 +265,15 @@ export class MapComponent implements OnInit, AfterViewInit {
         return;
       }
       //console.log(data);
-      
 
-      
+
+
       let indices = Object.keys(data);
       let i: number;
       for(i = 0; i < indices.length; i++) {
         let index = Number(indices[i]);
         let datum = data[index];
-        if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0) || datum._links.associationIds.length > 0){
+      //  if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0)) || datum._links.associationIds.length > 0){
           this.metadata.push(datum)
           let group = NameGroupMap[datum.name];
           //console.log(datum.value.loc);
@@ -283,7 +289,7 @@ export class MapComponent implements OnInit, AfterViewInit {
               let details = L.DomUtil.create("div");
               let download = L.DomUtil.create("div")
               let goto = L.DomUtil.create("span", "entry-link");
-              
+
               //details.innerText = JSON.stringify(datum.value);
               header.innerText=datum.name.replace(/_/g, ' ');
               details.innerHTML = datum.value.description+"<br/>Latitude: "+datum.value.latitude+"<br/>Longitude: "+datum.value.longitude;
@@ -294,7 +300,7 @@ export class MapComponent implements OnInit, AfterViewInit {
                 let j:number;
                 for(j = 0; j < datum._links.associationIds.length; j++) {
                   if(datum._links.associationIds[j].href.indexOf('ikewai-annotated')!== -1){
-                    download.innerHTML ='<a href="#" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
+                    download.innerHTML ='<a href="javascript:void(0);" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
                   }
                 }
               }
@@ -319,24 +325,24 @@ export class MapComponent implements OnInit, AfterViewInit {
                 this.dataGroups[group].addLayer(layer);
               }
             }
-            
+
           });
-          
+          this.filterData = this.metadata;
           //
-          
+
           //console.log(datum.name);
           // console.log(this.dataGroups[group]);
           //console.log(geojson);
-          
-        }
+
+//        }
       }
     });
 
     // setTimeout(() => {
     //   dataStream.cancel();
     // }, 2000);
-    
-    
+
+
   }
 
   getStyleByGroup(group: string): L.PathOptions {
@@ -401,8 +407,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     return icon;
   }
 
-  
-  
+
+
   gotoEntry(index: number) {
     //event.stopPropagation();
     // this.queryHandler.requestData(this.defaultFilterHandle, index).then((range: [number, number]) => {
@@ -425,7 +431,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     //     //highlight the selected entry
     //     this.renderer.addClass(entriesArr[pos].nativeElement, "highlight");
     //   }, 0);
-      
+
     // });
   }
 

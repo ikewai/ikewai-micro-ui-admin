@@ -18,7 +18,7 @@ export class QueryHandlerService {
   //limit to half API max, seems to be more responsive if not maxing out
   static readonly MAX_QUERY = 5000;
   static readonly MAX_RESULTS = 100000;
-  
+
   static readonly ENABLE_FAST_QUERY = true;
 
   static readonly RAMP_FUNCT = QueryHandlerService.ENABLE_FAST_QUERY ? function *(start: number) {
@@ -80,7 +80,7 @@ export class QueryHandlerService {
 
     let offset = startPoint;
     let canceled = false;
-    
+
     while(!canceled && !complete) {
       //console.log(this.spatial);
       //inject true to cancel the current query if new query comes
@@ -135,7 +135,7 @@ export class QueryHandlerService {
   //   this.queryState.masterDataSubController.next();
   // }
 
-  
+
 
   // //extension searches only garentee up to QueryHandlerService.MAX_QUERY results (may be able to return more if query broken up)
   // //assumed that extension queries are limited
@@ -145,7 +145,7 @@ export class QueryHandlerService {
   //   if(options != undefined) {
   //     let low = Math.max(0, options.rootIndex - options.searchRange);
   //   }
-    
+
   //   this.spatial.search(query, QueryHandlerService.MAX_QUERY, 0) {
 
   //   }
@@ -203,10 +203,10 @@ export class QueryHandlerService {
     let i;
     for(i = 0; i < features.length; i++) {
       //need to do something to handle too long queries
-      let query = "{'$and':[{'name':{'$in':['Site','Well','Water_Quality_Site']}},{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(features[i].geometry).replace(/"/g,'\'') + "}}}]}";
+      let query = "{'$and':[{'name':{'$in':['Well']}},{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(features[i].geometry).replace(/"/g,'\'') + "}}}]}";
       subjects.push(this.handleQuery(query));
     }
-    
+
     return new QueryController(subjects);
   }
 
@@ -275,7 +275,7 @@ export class QueryHandlerService {
         if(!complete) {
           controllerSub.unsubscribe();
         }
-        
+
         if(--dataController.observers == 0) {
           //if canceled or errored and last observer, cancel the query's data stream (no need to get the rest of the data, no one's using it)
           //if complete then the data stream has already been completed/errored out
@@ -285,14 +285,14 @@ export class QueryHandlerService {
           //no more observers, delete mapping
           delete this.querySubjectMap[query];
         }
-        
+
       }
-      
+
       //when dataStream completes or errors out run cleanup
       dataStream.subscribe(null, cleanup, cleanup);
 
     }
-    
+
     return dataStream;
   }
 
@@ -302,7 +302,7 @@ export class QueryHandlerService {
   private requestDriver(query: string, offset: number): Subject<QueryResponse> {
     let dataStream = new Subject<QueryResponse>();
     let qGen = this.query(query, offset);
-      
+
     let queryHandle = qGen.next().value;
     let cancel = () => {
       qGen.next(true);
@@ -363,7 +363,7 @@ export class QueryHandlerService {
           dataStream.next(response);
           completeDataStream();
         }
-        //otherwise dataStream has been canceled already, just ignore and exit 
+        //otherwise dataStream has been canceled already, just ignore and exit
       }
     }
 
@@ -377,7 +377,7 @@ export class QueryHandlerService {
       handler(data);
     });
   }
-  
+
 
 
 //   //returns all data as received through observable
@@ -395,7 +395,7 @@ export class QueryHandlerService {
 //         //how to handle query errors?
 //         let data = this.cache.retreiveData(filterHandle, this.queryState.query, [last, null]);
 //         last += Object.keys(data).length;
-        
+
 //         source.next(data);
 //       }
 //     },
@@ -484,7 +484,7 @@ export class QueryController {
             status: outStatus,
             data: response.data
           };
-          
+
           if(response.status.finished) {
             completed++;
           }
@@ -514,7 +514,7 @@ export class QueryController {
   getQueryObserver(): Observable<QueryResponse> {
     return this.queryOutput.asObservable();
   }
-  
+
   cancel() {
     let i;
     for(i = 0; i < this.querySubjects.length; i++) {
