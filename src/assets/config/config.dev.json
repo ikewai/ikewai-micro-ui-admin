@@ -11,8 +11,9 @@
     },
     "aad": {
     "requireAuth": true,
-    "tenant": "https://agaveauth.its.hawaii.edu",
-    "loginURL": "https://ikewai-dev.its.hawaii.edu:8000/login"
+    "tenant": "https://ikeauth.its.hawaii.edu",
+    "loginURL": "https://ikewai-dev.its.hawaii.edu:8000/login",
+    "accessToken": "a448d5376b956dcc5589516ddefcf7bc"
     },
     "apiServer": {
     "agaveChords": "http://localhost:4000"
