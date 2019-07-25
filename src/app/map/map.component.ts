@@ -198,7 +198,9 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.filterData = this.metadata;
     } else {
       this.filterData = this.metadata.filter(x =>
-         x.value.well_name.trim().toLowerCase().includes(term.trim().toLowerCase())
+         x.value.forEach(obj => {
+          obj.trim().toLowerCase().includes(term.trim().toLowerCase())
+         })
       );
     }
   }
