@@ -90,12 +90,12 @@ export class MapComponent implements OnInit, AfterViewInit {
       +'<div class="s1">2-9</div>'
       +'<div class="s2">10-100</div>'
       +'<div class="s3">100+</div>'
-      +'<div class="t1">Well</div>'
+      +'<div class="t1">Water Quality Site</div>'
 
 
-      +'<div class="c1"><div class="color-circle color-1"></div></div>'
-      +'<div class="c2"><div class="color-circle color-2"></div></div>'
-      +'<div class="c3"><div class="color-circle color-3"></div></div>'
+      +'<div class="c1"><div class="color-circle color-7"></div></div>'
+      +'<div class="c2"><div class="color-circle color-8"></div></div>'
+      +'<div class="c3"><div class="color-circle color-9"></div></div>'
 
       +'</div>'
       return legend;
