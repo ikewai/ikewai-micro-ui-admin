@@ -39,13 +39,13 @@
       <tr>
           <th>ID</th>
           <th>Name</th>
-          <th>Drilled</th>
+          <th>Provider</th>
           <th>Lat,Long</th>
           <th>Files</th>
       </tr>
       <tr *ngFor="let metadatum of filterData">
           <td >
-              {{metadatum.value.wid}}
+              {{metadatum.value.wid}}{{metadatum.value.MonitoringLocationIdentifier}}
           </td>
           <td width="40%">
             <span #entries>{{metadatum.value.name}}</span>
@@ -53,14 +53,16 @@
             <span #entries>{{metadatum.value.well_name}}</span>
           </td>
           <td >
-              {{metadatum.value.yr_drilled}}
+            <span *ngIf="metadatum.name == 'Well'">
+              {{metadatum.value.yr_drilled}}</span>
+              <span *ngIf="metadatum.name == 'Water_Quality_Site'">{{metadatum.value.ProviderName}}</span>
           </td>
           <td >
               {{metadatum.value.latitude}},
                   {{metadatum.value.longitude}}
           </td>
           <td width="20%">
-              <span *ngIf="metadatum.name == 'Water_Quality_Site'">
+              <span *ngIf="metadatum.name == 'Water_Quality_Site' && metadatum.value.resultCount > 0">
                   <a class="btn btn-success" href='https://www.waterqualitydata.us/Result/search?siteid={{metadatum.value.MonitoringLocationIdentifier}}&mimeType=csv&zip=yes&sorted=no' target="_blank" > Download {{metadatum.value.resultCount}} Measurements</a>
               </span>
             <div *ngIf="metadatum.name == 'Well'">
