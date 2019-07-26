@@ -32,8 +32,8 @@
     </div> -->
 
     <div *ngIf="metadata.length > 0">
-    <h5>Results</h5>
-    <input class="form" type="text" (keyup)='tableSearch($event.target.value)' placeholder="Search Well Names">
+    <h5>Results {{filterData.length}}</h5>
+    <input class="form" type="text" (keyup)='tableSearch($event.target.value)' placeholder="Filter Results">
     <div style="overflow: auto; height:500px;" class="table-responsive">
     <table class="table">
       <tr>

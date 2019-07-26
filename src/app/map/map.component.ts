@@ -198,9 +198,15 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.filterData = this.metadata;
     } else {
       this.filterData = this.metadata.filter(x =>
-         x.value.forEach(obj => {
-          obj.trim().toLowerCase().includes(term.trim().toLowerCase())
-         })
+        {for(var obj in x.value){
+          if(x.value[obj] != null){
+            if(typeof(x.value[obj]) == "string"){
+              if(x.value[obj].trim().toLowerCase().includes(term.trim().toLowerCase())){
+                return true;
+              }
+            }
+          }
+        }}
       );
     }
   }
