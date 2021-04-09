@@ -126,8 +126,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     };
 
     this.dataGroups = {
-      sites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("sites")}),
-      wells: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("wells")}),
+      sites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("sites"), disableClusteringAtZoom:4}),
+      wells: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("wells"), disableClusteringAtZoom:12}),
       waterQualitySites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("waterQualitySites")})
     };
 
@@ -510,7 +510,8 @@ export class MapComponent implements OnInit, AfterViewInit {
         icon = new L.Icon({
           iconUrl: 'assets/marker-icon.png',
           iconRetinaUrl: 'assets/marker-icon-2x.png',
-          shadowUrl: "assets/marker-shadow.png"
+          //shadowUrl: "assets/marker-shadow.png",
+          iconSize:[15,25]
         });
         break;
       }
