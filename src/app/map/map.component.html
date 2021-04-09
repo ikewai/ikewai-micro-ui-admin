@@ -1,12 +1,13 @@
+<div class="container-fluid">
 <div class="row">
     <div class="col-md-6">
       <div leaflet class="map pull-left"
         [leafletOptions]="options"
-        (leafletMapMove)="onMove($event)"
+        (leafletMapMoveEnd)="onMove($event)"
         (leafletMapReady)="onMapReady($event)" >
       </div>
     </div>
-    <div class="col-md-5">
+    <div class="col-md-6">
     <!-- <div class="grid">
       <div class="bl">Color Legend</div>
       <div class="ht">Cluster Size</div>
@@ -29,7 +30,7 @@
       <div class="c9"><div class="color-circle color-9"></div></div>
     </div> -->
 
-    <div *ngIf="metadata.length > 0">
+    <div *ngIf="metadata.length > 0" >
     <h5>Results {{filterData.length}}</h5>
     <input class="form" type="text" (keyup)='tableSearch($event.target.value)' placeholder="Filter Results">
     <div style="overflow: auto; height:500px;" class="table-responsive">
@@ -74,3 +75,4 @@
       </div>
       </div>
     </div>
+</div>

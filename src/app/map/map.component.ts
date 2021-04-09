@@ -242,6 +242,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public findData() {
     this.metadata= [];
+    this.filterData=[];
     let bounds =  this.map.getBounds();//  e.layer.getBounds();
     let box = {
               "type": "Feature",
