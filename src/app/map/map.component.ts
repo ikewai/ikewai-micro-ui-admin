@@ -16,6 +16,9 @@ import { QueryHandlerService, QueryController, QueryResponse } from '../_service
 import { FilterHandle, FilterManagerService, Filter, FilterMode } from '../_services/filter-manager.service';
 import { mapToExpression } from '@angular/compiler/src/render3/view/util';
 import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { Subject } from 'rxjs';
+
+declare var jQuery: any;
 
 @Component({
   selector: 'app-map',
@@ -24,6 +27,9 @@ import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular
 })
 export class MapComponent implements OnInit, AfterViewInit {
 
+  dtOptions: DataTables.Settings = {};
+
+    dtTrigger: Subject<any> = new Subject<any>();
   static readonly DEFAULT_RESULTS = 10;
 
   @ViewChildren("entries") entries: QueryList<ElementRef>;
@@ -126,9 +132,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     };
 
     this.dataGroups = {
-    //  sites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("sites"), disableClusteringAtZoom:4}),
+      sites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("sites"), disableClusteringAtZoom:4}),
       wells: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("wells"), disableClusteringAtZoom:12}),
-    //  waterQualitySites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("waterQualitySites")})
+      waterQualitySites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("waterQualitySites")})
     };
 
     let controlGroups: any = {};
@@ -209,6 +215,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           }
         }}
       );
+      this.dtTrigger.next()
     }
   }
 
@@ -217,7 +224,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.findData()
   }
 
+
   ngOnInit() {
+    this.dtOptions = {
+      pagingType: 'full_numbers',
+      pageLength: 2
+    };
     //should change this to get observable from filter manager
     //this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
@@ -249,14 +261,24 @@ export class MapComponent implements OnInit, AfterViewInit {
               "geometry": {
                   "type": "Polygon",
                   "coordinates": [[
-                      [bounds._southWest.lng, bounds._northEast.lat],
-                      [bounds._northEast.lng, bounds._northEast.lat],
-                      [bounds._northEast.lng, bounds._southWest.lat],
-                      [bounds._southWest.lng, bounds._southWest.lat],
-                      [bounds._southWest.lng, bounds._northEast.lat]
+                      [bounds.getSouthWest().lng, bounds.getNorthEast().lat],
+                      [bounds.getNorthEast().lng, bounds.getNorthEast().lat],
+                      [bounds.getNorthEast().lng, bounds.getSouthWest().lat],
+                      [bounds.getSouthWest().lng, bounds.getSouthWest().lat],
+                      [bounds.getSouthWest().lng, bounds.getNorthEast().lat]
                   ]]
               }
           }
+    let customCircleMarker = L.CircleMarker.extend({
+         options: {
+            datum: {},
+         }
+      });
+      let customMarker = L.Marker.extend({
+           options: {
+              datum: {},
+           }
+        });
     console.log(JSON.stringify(box))
     //this.map.fitBounds(bounds);
     Object.keys(this.dataGroups).forEach((key) => {
@@ -279,28 +301,42 @@ export class MapComponent implements OnInit, AfterViewInit {
           this.metadata.push(datum)
           let group = NameGroupMap[datum.name];
           //console.log(datum.value.loc);
-          let geojson = L.geoJSON(datum.value.loc, {
+          let geod = datum.value.loc;
+          //console.log(geod)
+          let prop = {};
+          prop['uuid'] = datum.uuid
+          geod.properties = prop;
+          let geojson = L.geoJSON(geod, {
             style: this.getStyleByGroup(group),
             pointToLayer: (feature, latlng) => {
               let icon = this.getIconByGroup(group);
-              return L.marker(latlng, {icon: icon});
+              return  L.circleMarker(latlng, {radius:5,opacity: 1,fillOpacity: 0.9,color:'gray'})
+              //return L.marker(latlng, {icon: icon});
             },
             onEachFeature: (feature, layer) => {
-              let header = L.DomUtil.create("h6")
+            //  let header = L.DomUtil.create("h6")
               let wrapper = L.DomUtil.create("div")
               let details = L.DomUtil.create("div");
               let download = L.DomUtil.create("div")
               let goto = L.DomUtil.create("span", "entry-link");
 
               //details.innerText = JSON.stringify(datum.value);
-              header.innerText=datum.name.replace(/_/g, ' ');
+              //header.innerText=datum.name.replace(/_/g, ' ');
               if(datum.name == "Water_Quality_Site" && datum.value.resultCount > 0){
                 details.innerHTML = "<br/>Name: "+datum.value.name+"<br/>ID: "+datum.value.MonitoringLocationIdentifier+"<br/>Provider: "+datum.value.ProviderName+"<br/>"+datum.value.description+"<br/>Latitude: "+datum.value.latitude+"<br/>Longitude: "+datum.value.longitude+"<br/><a target='_blank' href='"+datum.value.siteUrl+"'>More Details</a>";
 
                 download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
               }
               if(datum.name == "Well"){
-                details.innerHTML = "<br/>Name: "+datum.value.well_name+"<br/>ID: "+datum.value.wid+"<br/>Use: "+datum.value.use+"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+"<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "+datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude+"<br/>Longitude: "+datum.value.longitude;
+                details.innerHTML = "<br/>Name: "+datum.value.well_name+"<br/>ID: "
+                                    +datum.value.wid+"<br/>Use: "+datum.value.use+
+                                    '<br/><i>Click point to view more</i>'
+                                    //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
+                                    //+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
+                                    //"<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "
+                                    //+datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude
+                                    //+"<br/>Longitude: "+datum.value.longitude+
+                                    //'<br/><button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" onclick="document.getElementById('+"'"+datum.uuid+"'"+').click()">View</button>';
 
                 let j:number;
                 for(j = 0; j < datum._links.associationIds.length; j++) {
@@ -310,20 +346,36 @@ export class MapComponent implements OnInit, AfterViewInit {
                 }
               }
               let popup: L.Popup = new L.Popup();
-              wrapper.append(header)
+            //  wrapper.append(header)
               wrapper.append(details);
-              wrapper.append(download);
-              wrapper.append(goto);
+            //  wrapper.append(download);
+            //  wrapper.append(goto);
 
-              let linkDiv = wrapper.getElementsByClassName("entry-link");
+            //  let linkDiv = wrapper.getElementsByClassName("entry-link");
 
               let gotoWrapper = () => {
                 console.log("click");
                 //this.gotoEntry(index);
               }
-              linkDiv[0].addEventListener("click", gotoWrapper);
+              //linkDiv[0].addEventListener("click", gotoWrapper);
               popup.setContent(wrapper);
               layer.bindPopup(popup);
+
+              layer.on("mouseover", function () {
+                  layer.openPopup();
+                });
+              layer.on('click',this.markerClick.bind(this));
+
+              // function(){ {
+              //   openModalDialog(datum);
+              //   console.log(this.selectedMetadata);
+              //   (function ($) {
+              //       $('#location-dialog').modal('show');
+              //       //$('#location-dialog').modal('show');
+              //     })(jQuery);
+                //document.getElementById('location-modal').style.display = 'block';
+                //$("#location-modal").modal('show');
+              //}})
               if(this.dataGroups[group] != undefined) {
                 this.dataGroups[group].addLayer(layer);
               }
@@ -331,6 +383,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
           });
           this.filterData = this.metadata;
+          this.dtTrigger.next();
       }
     });
   }
@@ -406,7 +459,14 @@ export class MapComponent implements OnInit, AfterViewInit {
                 download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
               }
               if(datum.name == "Well"){
-                details.innerHTML = "<br/>Name: "+datum.value.well_name+"<br/>ID: "+datum.value.wid+"<br/>Use: "+datum.value.use+"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+"<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "+datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude+"<br/>Longitude: "+datum.value.longitude;
+                details.innerHTML = "<br/>Name: "+datum.value.well_name+"<br/>ID: "
+                                    +datum.value.wid+"<br/>Use: "+datum.value.use+
+                                    "<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
+                                    +datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
+                                    "<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "
+                                    +datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude
+                                    +"<br/>Longitude: "+datum.value.longitude+
+                                    '<br/><button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalDialog('+datum+')">View</button>';
 
                 let j:number;
                 for(j = 0; j < datum._links.associationIds.length; j++) {
@@ -418,7 +478,7 @@ export class MapComponent implements OnInit, AfterViewInit {
               //goto.innerText = "Go to Entry";
 
               let popup: L.Popup = new L.Popup();
-              wrapper.append(header)
+            //  wrapper.append(header)
               wrapper.append(details);
               wrapper.append(download);
               wrapper.append(goto);
@@ -519,6 +579,26 @@ export class MapComponent implements OnInit, AfterViewInit {
     return icon;
   }
 
+
+  markerClick(e)  {
+    console.log("Marker CLICKed")
+    console.log(e)
+    let datum = e.sourceTarget.feature.geometry.properties;
+    //console.log(this.selectedMetadata)
+    document.getElementById('location-modal').style.display='block';
+    document.getElementById(datum.uuid).click();
+  }
+    openModalDialog(site)  {
+      console.log("HEYYYYYYYY")
+      console.log(site)
+      this.selectedMetadata = site;
+      console.log(this.selectedMetadata)
+    }
+
+    hideModal():void {
+      this.selectedMetadata = null;
+      //$("#location-modal").modal('hide');
+    }
 
 
   gotoEntry(index: number) {

@@ -71,7 +71,7 @@ export class SpatialService {
 
     let response = this.http.get<Metadata[]>(url, options)
      .pipe(
-      retry(3),
+      retry(0),
       map((data: any) => {
         return data.body.result;
       }),
