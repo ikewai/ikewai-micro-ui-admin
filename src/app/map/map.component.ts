@@ -345,7 +345,7 @@ export class MapComponent implements OnInit, AfterViewInit {
                   }
                 }
               }
-              let popup: L.Popup = new L.Popup();
+              let popup: L.Popup = new L.Popup({autoPan: false});
             //  wrapper.append(header)
               wrapper.append(details);
             //  wrapper.append(download);
