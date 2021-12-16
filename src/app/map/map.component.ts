@@ -175,14 +175,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   downloadClick(metadatum_href){
-      this.createPostit(metadatum_href).subscribe(result => {
-        this.result =result
-        console.log(result.body.result._links.self.href)
-        window.open(result.body.result._links.self.href, "_blank");
-
-      })
-
+    let downloadString = metadatum_href.replace("media","download/public")
+    console.log(downloadString)
+    window.open(downloadString, "_blank");
   }
+  
   createPostit(file_url): Observable<any>{
     let url = AppConfig.settings.aad.tenant + "/postits/v2/?url=" + encodeURI(file_url) + "&method=GET&lifetime=600&maxUses=1";
     let head = new HttpHeaders()
