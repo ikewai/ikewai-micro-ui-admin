@@ -13,16 +13,20 @@
     </div>
     <div *ngIf="metadata.length > 0" style="height:500px;">
     <h5>Results {{filterData.length}}</h5>
-    <input class="form" type="text" (keyup)='tableSearch($event.target.value)' placeholder="Filter Results">
+    <input class="form" type="text" (keyup)='tableSearch($event.target.value)' placeholder="Filter Results" id="filterField">
     <div style="overflow: auto; height:440px;" class="table-responsive">
     <table  class="table row-border hover table-striped">
       <tr >
+          <th class='header'></th>
           <th class='header'>ID</th>
           <th class='header'>Name</th>
           <th class='header'>Drilled</th>
           <th class='header'>Files</th>
       </tr>
       <tr *ngFor="let metadatum of filterData">
+          <td >
+            <button id="linked-{{metadatum.uuid}}" class="btn btn-primary" type="button" (click)="openLinkedPopup(metadatum)">Find</button>
+          </td>        
           <td >
             <button id="{{metadatum.uuid}}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalDialog(metadatum)">View</button>
 
