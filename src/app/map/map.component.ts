@@ -582,9 +582,29 @@ export class MapComponent implements OnInit, AfterViewInit {
     console.log(e)
     let datum = e.sourceTarget.feature.geometry.properties;
     //console.log(this.selectedMetadata)
+    document.getElementById('filterField').focus(); // if needed, remove focus from previously clicked button
+    
     document.getElementById('location-modal').style.display='block';
-    document.getElementById(datum.uuid).click();
+    if (document.getElementById(datum.uuid)) { // check object exists
+      document.getElementById(datum.uuid).focus(); // CSS will change color of button on focus
+	    document.getElementById(datum.uuid).click();
+    }    
   }
+  
+	openLinkedPopup(site) {
+    var tempLL = L.latLng([site.value.latitude,site.value.longitude]);        
+	  let details = L.DomUtil.create("div");	  
+    if (site.name == "Well") {
+      details.innerHTML = "<br/>Name: "+site.value.well_name+"<br/>ID: "
+                          +site.value.wid+"<br/>Use: "+site.value.use+
+                          '<br/><i>Click point to view more</i>';
+    }
+    L.popup()
+      .setLatLng(tempLL)
+      .setContent(details)
+      .openOn(this.map);      
+	}
+  
     openModalDialog(site)  {
       console.log("HEYYYYYYYY")
       console.log(site)
