@@ -81,8 +81,8 @@
                 (leafletMapReady)="onMapZoomedReady($event)" >
               </div>
               <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;" id="dataPreview" >
-                <iframe *ngIf="link.href.split('.').pop() === 'pdfs'"
-                        [src]="this.sanitizeLink('/assets/ViewerJS/#' + link.href.replace('https://ikeauth.its.hawaii.edu', ''))" width='100%' height='250px' allowfullscreen webkitallowfullscreen></iframe>
+                <iframe *ngIf="link.href.split('.').pop() === 'pdf'"
+                        [src]="this.sanitizeLink('/assets/ViewerJS/#' + link.href.replace('media','download/public'))" width='100%' height='250px' allowfullscreen webkitallowfullscreen></iframe>
                 <iframe *ngIf="link.href.split('.').pop() === 'xls' || link.href.split('.').pop() === 'xlsx'"
                         [src]="this.sanitizeLink('https://view.officeapps.live.com/op/embed.aspx?src=' + link.href)" width="100%" height="250px" frameborder="1" allowfullscreen webkitallowfullscreen></iframe>
                 <h6 *ngIf="link.href.split('.').pop() === 'jpg' || link.href.split('.').pop() === 'png'">{{link.href.split('/').pop()}}</h6>
