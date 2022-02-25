@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, AfterViewInit, ViewChildren, QueryList, ElementRef, Renderer2 } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, ViewChildren, QueryList, ElementRef, Renderer2, SecurityContext } from '@angular/core';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
 import { Observable, of, BehaviorSubject,throwError } from 'rxjs';
@@ -17,6 +17,7 @@ import { FilterHandle, FilterManagerService, Filter, FilterMode } from '../_serv
 import { mapToExpression } from '@angular/compiler/src/render3/view/util';
 import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Subject } from 'rxjs';
+import { DomSanitizer } from '@angular/platform-browser';
 
 declare var jQuery: any;
 
@@ -29,7 +30,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   dtOptions: DataTables.Settings = {};
 
-    dtTrigger: Subject<any> = new Subject<any>();
+  dtTrigger: Subject<any> = new Subject<any>();
   static readonly DEFAULT_RESULTS = 10;
 
   @ViewChildren("entries") entries: QueryList<ElementRef>;
@@ -46,7 +47,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   defaultFilterHandle: FilterHandle;
 
   map: L.Map;
-
+  mapZoomed: L.Map; // small map for modal screen
+  mapZoomedLatLng: any; // tracks the current LatLon for the small map for modal screen
+  mapZoomedCircle: any; // tracks the drawn circle on the small map for modal screen 
+  
   dataGroups: {
     sites: L.FeatureGroup,
     wells: L.FeatureGroup,
@@ -64,6 +68,20 @@ export class MapComponent implements OnInit, AfterViewInit {
   };
       //center: latLng(20.5, -157.917480),
 
+  optionsZoomed: L.MapOptions = {
+    layers: [
+      tileLayer('http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}', { maxZoom: 18, attribution: '...' })
+    ],
+    zoom:12,
+    center: latLng(21.48,-157.91040),
+    attributionControl: false,
+    zoomControl: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    zoomDelta: 0,
+    dragging: false
+  };
+
   drawnItems: L.FeatureGroup = new L.FeatureGroup;
 
   drawOptions = {
@@ -76,12 +94,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     },
     edit: {
       featureGroup: this.drawnItems
-  }
- };
+    }
+  };
 
- controlOptions = {
-  attributionControl: false
- };
+  controlOptions = {
+    attributionControl: false
+  };
 
   onMapReady(map: L.Map) {
     this.metadata =[];
@@ -167,8 +185,16 @@ export class MapComponent implements OnInit, AfterViewInit {
     // });
   }
 
+  onMapZoomedReady(mapZoomed: L.Map) {
+    // small map for modal screen
+    this.mapZoomed = mapZoomed;
+    if (this.mapZoomedLatLng) {
+      // if Lat Lon is cached, then the map hasn't been drawn for the clicked on location
+      this.drawMapZoomedPoint();
+    }
+  }
 
-  constructor(private renderer: Renderer2, private queryHandler: QueryHandlerService, private filters: FilterManagerService, private http: HttpClient) {
+  constructor(private renderer: Renderer2, private queryHandler: QueryHandlerService, private filters: FilterManagerService, private http: HttpClient, private sanitizer: DomSanitizer) {
     //currentUser: localStorage.getItem('currentUser');
 
 
@@ -384,6 +410,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
     });
   }
+  
   public onDrawCreated(e: any) {
 
     // tslint:disable-next-line:no-console
@@ -421,10 +448,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       if(data == null) {
         return;
-      }
-      //console.log(data);
-
-
+      }	  
+      // console.log(data);
 
       let indices = Object.keys(data);
       let i: number;
@@ -577,46 +602,102 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
 
-  markerClick(e)  {
-    console.log("Marker CLICKed")
-    console.log(e)
-    let datum = e.sourceTarget.feature.geometry.properties;
-    //console.log(this.selectedMetadata)
-    document.getElementById('filterField').focus(); // if needed, remove focus from previously clicked button
-    
-    document.getElementById('location-modal').style.display='block';
-    if (document.getElementById(datum.uuid)) { // check object exists
-      document.getElementById(datum.uuid).focus(); // CSS will change color of button on focus
+    markerClick(e)  {
+      console.log("Marker CLICKed")
+      console.log(e)
+      let datum = e.sourceTarget.feature.geometry.properties;
+      //console.log(this.selectedMetadata)
+      
+      document.getElementById('filterField').focus();
+      if (!document.getElementById(datum.uuid)) {
+      
+        // if (document.getElementById('filterField').value) {
+        //  document.getElementById('filterField').value = "";
+        // }
+      
+      } else {
+        document.getElementById('location-modal').style.display='block';
+      }
+
+      if (document.getElementById(datum.uuid)) {
+        document.getElementById(datum.uuid).focus();
 	    document.getElementById(datum.uuid).click();
-    }    
-  }
-  
-	openLinkedPopup(site) {
-    var tempLL = L.latLng([site.value.latitude,site.value.longitude]);        
-	  let details = L.DomUtil.create("div");	  
-    if (site.name == "Well") {
-      details.innerHTML = "<br/>Name: "+site.value.well_name+"<br/>ID: "
-                          +site.value.wid+"<br/>Use: "+site.value.use+
-                          '<br/><i>Click point to view more</i>';
+      }
     }
-    L.popup()
-      .setLatLng(tempLL)
-      .setContent(details)
-      .openOn(this.map);      
-	}
-  
+	
     openModalDialog(site)  {
       console.log("HEYYYYYYYY")
       console.log(site)
       this.selectedMetadata = site;
+      this.openMapZoomed(site); // small map on modal screen
       console.log(this.selectedMetadata)
     }
+	
+	openLinkedPopup(site) {
+      var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
+	  let details = L.DomUtil.create("div");
+      if (site.name == "Well") {
+        details.innerHTML = "<br/>Name: "+site.value.well_name+"<br/>ID: "
+                            +site.value.wid+"<br/>Use: "+site.value.use+
+                            '<br/><i>Click point to view more</i>';
+      }
+      L.popup()
+        .setLatLng(tempLL)
+        .setContent(details)
+        .openOn(this.map);
+	}
+    
 
-    hideModal():void {
-      this.selectedMetadata = null;
-      //$("#location-modal").modal('hide');
+    openMapZoomed(site) {
+      // cache current Lat Lon. when map is ready it will call drawMapZoomedPoint (onMapZoomedReady())
+      this.mapZoomedLatLng = L.latLng([site.value.latitude,site.value.longitude]);
+      if (this.mapZoomed) {
+        // because small map is on the modal screen, map may not be ready yet. only draw circle if map is ready
+        this.drawMapZoomedPoint();
+      }
+    }
+    
+    drawMapZoomedPoint() {
+      // move to the clicked location and draw a circle
+      this.mapZoomed.setView(this.mapZoomedLatLng, 12);
+      if (this.mapZoomedCircle) {
+        // remove previous circle
+        this.mapZoomed.removeLayer(this.mapZoomedCircle);
+        this.mapZoomedCircle = null;
+      }
+
+      let icon = this.getIconByGroup("wells");
+      // this.mapZoomedCircle = L.circleMarker(latlng, {radius:5,opacity: 1,fillOpacity: 0.9,color:'gray'})      
+      // this.mapZoomedCircle = L.circle(this.mapZoomedLatLng, {fillOpacity: 1, radius: 100}).addTo(this.mapZoomed);
+      this.mapZoomedCircle = L.marker(this.mapZoomedLatLng, {icon}).addTo(this.mapZoomed);
+
+      // remove Lat Lon cache
+      this.mapZoomedLatLng = null;
     }
 
+    sanitizeLink(fileLink) {
+      var tempDiv = document.getElementById('tempDiv');
+      // if it's the same link, no need to sanitize
+      if (fileLink != tempDiv.innerHTML) {
+        // sanitize the given link. from http://shebang.mintern.net/foolproof-html-escaping-in-javascript/
+        tempDiv.innerHTML = "";
+        tempDiv.appendChild(document.createTextNode(fileLink));
+        fileLink = tempDiv.innerHTML;
+      }
+      
+      // test resource URLs:
+      // return this.sanitizer.bypassSecurityTrustResourceUrl('https://view.officeapps.live.com/op/embed.aspx?src=http://www.hawaii.edu/elp/library/librarymaster-author-editor.xls');
+      // return this.sanitizer.bypassSecurityTrustResourceUrl('/assets/nsf-logo.png');
+      
+      // to avoid the error that the text is not sanitized
+      return this.sanitizer.bypassSecurityTrustResourceUrl(fileLink);
+    }
+    
+    hideModal():void {
+      // this interferes with the small map.
+      // this.selectedMetadata = null;
+      //$("#location-modal").modal('hide');
+    }
 
   gotoEntry(index: number) {
     //event.stopPropagation();

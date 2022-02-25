@@ -26,10 +26,9 @@
       <tr *ngFor="let metadatum of filterData">
           <td >
             <button id="linked-{{metadatum.uuid}}" class="btn btn-primary" type="button" (click)="openLinkedPopup(metadatum)">Find</button>
-          </td>        
+          </td>
           <td >
             <button id="{{metadatum.uuid}}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalDialog(metadatum)">View</button>
-
           </td>
           <td width="40%">
             <span #entries>{{metadatum.value.name}}</span>
@@ -76,6 +75,22 @@
         <div>
           <div class="container-fluid">
           <div class="row">
+            <div class="col-md-6">
+              <div leaflet class="mapZoomed pull-left" id="mapZoomedHolder"
+                [leafletOptions]="optionsZoomed" 
+                (leafletMapReady)="onMapZoomedReady($event)" >
+              </div>
+              <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;" id="dataPreview" >
+                <iframe *ngIf="link.href.split('.').pop() === 'pdf'"
+                        [src]="this.sanitizeLink('/assets/ViewerJS/#' + link.href.replace('media','download/public'))" width='100%' height='250px' allowfullscreen webkitallowfullscreen></iframe>
+                <iframe *ngIf="link.href.split('.').pop() === 'xls' || link.href.split('.').pop() === 'xlsx'"
+                        [src]="this.sanitizeLink('https://view.officeapps.live.com/op/embed.aspx?src=' + link.href)" width="100%" height="250px" frameborder="1" allowfullscreen webkitallowfullscreen></iframe>
+                <h6 *ngIf="link.href.split('.').pop() === 'jpg' || link.href.split('.').pop() === 'png'">{{link.href.split('/').pop()}}</h6>
+                <img *ngIf="link.href.split('.').pop() === 'jpg' || link.href.split('.').pop() === 'png'"
+                     [src]="this.sanitizeLink(link.href.replace('https://ikeauth.its.hawaii.edu', ''))" style="max-width: 100%;">
+                <div id="tempDiv" style="visibility: hidden;"></div>
+              </div>
+            </div>
             <div class="col-md-4">
               <b>Name:</b>&nbsp;{{selectedMetadata.value.well_name}}<br/>
               <b>ID :</b>&nbsp;{{selectedMetadata.value.wid}}<br/>
@@ -95,11 +110,12 @@
               <b>Bot Solid:</b>&nbsp;{{selectedMetadata.value.bot_solid}}<br/>
               <b>Pump GPM:</b>&nbsp;{{selectedMetadata.value.pump_gpm}}<br/>
               <b>Pump MGD:</b>&nbsp;{{selectedMetadata.value.pump_mgd}}<br/>
-            </div>
-            <div class="col-md-4">
-              <span *ngFor="let link of selectedMetadata._links.associationIds ">
-                <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" (click)="downloadClick(link.href)">Download {{link.href.split('/').slice(-1)[0]}}</a>
-              </span>
+              <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
+                <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 
+                   (click)="downloadClick(link.href)">
+                    <img class="images" src="assets/fileicons/{{link.href.split('.').pop()}}.png" height="40px"/>
+                    Download {{link.href.split('/').slice(-1)[0]}}</a>
+              </div>
               </div>
             </div>
           </div>
