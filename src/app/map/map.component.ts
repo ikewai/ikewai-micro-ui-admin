@@ -34,22 +34,42 @@ export class MapComponent implements OnInit, AfterViewInit {
   query = {
     condition: 'and',
     rules: [
-      {field: 'age', operator: '<=', value: 'Bob'},
-      {field: 'gender', operator: '>=', value: 'm'}
+      {field: 'date', operator: '=', value: '2019-01-01'},
+      {field: 'season', operator: '=', value: 'SUMMER'},
+      {field: 'tempc', operator: '>', value: '25'},
     ]
   };
   
   config: QueryBuilderConfig = {
     fields: {
-      age: {name: 'Age', type: 'number'},
-      gender: {
-        name: 'Gender',
+      date: {name: 'Date', type: 'date'},
+      season: {
+        name: 'Season',
         type: 'category',
         options: [
-          {name: 'Male', value: 'm'},
-          {name: 'Female', value: 'f'}
+          {name: 'Summer', value: 'SUMMER'},
+          {name: 'Fall', value: 'FALL'},
+          {name: 'Winter', value: 'WINTER'},
+          {name: 'Spring', value: 'SPRING'}
         ]
-      }
+      },
+      year: {name: 'Year', type: 'date'},
+      time: {name: 'Time', type: 'time'},
+      tempc: {name: 'TEMP_C', type: 'number'},
+      do_percent: {name: 'DO_percent', type: 'number'},
+      do_mg_l: {name: 'DO_mg_L', type: 'number'},
+      spc_us: {name: 'SPC_us', type: 'number'},
+      sal_ppt: {name: 'SAL_ppt', type: 'number'},
+      ph: {name: 'pH', type: 'number'},
+      water_level_cm: {name: 'WATER_LEVEL_cm', type: 'number'},
+      turbidity: {name: 'Turbidity', type: 'number'},
+      tdn_umol_L: {name: 'TDN_umol.L', type: 'number'},
+      tdp_umol_L: {name: 'TDP_umol.L', type: 'number'},
+      po4_umol_L: {name: 'PO4_umol.L', type: 'number'},
+      si_umol_L: {name: 'Si_umol.L', type: 'number'},
+      nox_umol_L: {name: 'NOX_umol.L', type: 'number'},
+      nh4_umol_L: {name: 'NH4_umol.L', type: 'number'},
+      toc_umol_L: {name: 'TOC_umol.L', type: 'number'}
     }
   }
 
