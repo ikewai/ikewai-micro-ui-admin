@@ -19,6 +19,9 @@ import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular
 import { Subject } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
 
+import { FormBuilder, FormControl } from '@angular/forms';
+
+import { QueryBuilderClassNames, QueryBuilderConfig } from 'angular2-query-builder';
 declare var jQuery: any;
 
 @Component({
@@ -27,6 +30,28 @@ declare var jQuery: any;
   styleUrls: ['./map.component.css']
 })
 export class MapComponent implements OnInit, AfterViewInit {
+
+  query = {
+    condition: 'and',
+    rules: [
+      {field: 'age', operator: '<=', value: 'Bob'},
+      {field: 'gender', operator: '>=', value: 'm'}
+    ]
+  };
+  
+  config: QueryBuilderConfig = {
+    fields: {
+      age: {name: 'Age', type: 'number'},
+      gender: {
+        name: 'Gender',
+        type: 'category',
+        options: [
+          {name: 'Male', value: 'm'},
+          {name: 'Female', value: 'f'}
+        ]
+      }
+    }
+  }
 
   dtOptions: DataTables.Settings = {};
 
@@ -54,7 +79,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   dataGroups: {
     sites: L.FeatureGroup,
     wells: L.FeatureGroup,
-    waterQualitySites: L.FeatureGroup
+    waterQualitySites: L.FeatureGroup,
+    MicroGPS: L.FeatureGroup
   }
 
   options: L.MapOptions = {
@@ -125,7 +151,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       +'</div>'
       return legend;
     }
-    legendControl.addTo(this.map);
+    //legendControl.addTo(this.map);
 
     let iconCreateFunction = (group: string): (cluster: any) => L.DivIcon => {
 
@@ -151,6 +177,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     this.dataGroups = {
       sites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("sites"), disableClusteringAtZoom:4}),
+      MicroGPS: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("MicroGPS"), disableClusteringAtZoom:4}),
       wells: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("wells"), disableClusteringAtZoom:12}),
       waterQualitySites: L.markerClusterGroup({iconCreateFunction: iconCreateFunction("waterQualitySites")})
     };
@@ -350,9 +377,9 @@ export class MapComponent implements OnInit, AfterViewInit {
 
                 download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
               }
-              if(datum.name == "Well"){
-                details.innerHTML = "<br/>Name: "+datum.value.well_name+"<br/>ID: "
-                                    +datum.value.wid+"<br/>Use: "+datum.value.use+
+              if(datum.name == "Micro_GPS"){
+                details.innerHTML = "<br/>Location: "+datum.value.Location+"<br/>Watershed: "
+                                    +datum.value.Watershed+"<br/>Site_Enviro: "+datum.value.Site_Enviro+
                                     '<br/><i>Click point to view more</i>'
                                     //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
                                     //+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
@@ -480,13 +507,9 @@ export class MapComponent implements OnInit, AfterViewInit {
 
                 download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
               }
-              if(datum.name == "Well"){
-                details.innerHTML = "<br/>Name: "+datum.value.well_name+"<br/>ID: "
-                                    +datum.value.wid+"<br/>Use: "+datum.value.use+
-                                    "<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
-                                    +datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
-                                    "<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "
-                                    +datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude
+              if(datum.name == "Micro_GPS"){
+                details.innerHTML = "<br/>Location: "+datum.value.Location+"<br/>Watershed: "
+                                    +datum.value.Watershed+"<br/>Latitude: "+datum.value.lattitude
                                     +"<br/>Longitude: "+datum.value.longitude+
                                     '<br/><button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalDialog('+datum+')">View</button>';
 
@@ -516,6 +539,7 @@ export class MapComponent implements OnInit, AfterViewInit {
               layer.bindPopup(popup);
               if(this.dataGroups[group] != undefined) {
                 this.dataGroups[group].addLayer(layer);
+                console.log(group)
               }
             }
 
@@ -565,6 +589,14 @@ export class MapComponent implements OnInit, AfterViewInit {
         };
         break;
       }
+      case "MicroGPS": {
+        style = {
+          "color": "#2171B5",
+          "weight": 3,
+          "opacity": 0.3
+        };
+        break;
+      }
     }
     return style;
   }
@@ -589,6 +621,15 @@ export class MapComponent implements OnInit, AfterViewInit {
         break;
       }
       case "wells": {
+        icon = new L.Icon({
+          iconUrl: 'assets/marker-icon.png',
+          iconRetinaUrl: 'assets/marker-icon-2x.png',
+          //shadowUrl: "assets/marker-shadow.png",
+          iconSize:[15,25]
+        });
+        break;
+      }
+      case "MicroGPS": {
         icon = new L.Icon({
           iconUrl: 'assets/marker-icon.png',
           iconRetinaUrl: 'assets/marker-icon-2x.png',
@@ -634,10 +675,11 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
 	
 	openLinkedPopup(site) {
-      var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
+      //var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
+      var tempLL = L.latLng([site.value.Lattitude,site.value.Longitude]);
 	  let details = L.DomUtil.create("div");
-      if (site.name == "Well") {
-        details.innerHTML = "<br/>Name: "+site.value.well_name+"<br/>ID: "
+      if (site.name == "Micro_GPS") {
+        details.innerHTML = "<br/>Name: "+site.value.Location+"<br/>ID: "
                             +site.value.wid+"<br/>Use: "+site.value.use+
                             '<br/><i>Click point to view more</i>';
       }
@@ -650,7 +692,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     openMapZoomed(site) {
       // cache current Lat Lon. when map is ready it will call drawMapZoomedPoint (onMapZoomedReady())
-      this.mapZoomedLatLng = L.latLng([site.value.latitude,site.value.longitude]);
+      this.mapZoomedLatLng = L.latLng([site.value.Lattitude,site.value.Longitude]);
       if (this.mapZoomed) {
         // because small map is on the modal screen, map may not be ready yet. only draw circle if map is ready
         this.drawMapZoomedPoint();
@@ -757,11 +799,13 @@ export class MapComponent implements OnInit, AfterViewInit {
 enum NameGroupMap {
   Water_Quality_Site = "waterQualitySites",
   Site = "sites",
-  Well = "wells"
+  Well = "wells",
+  Micro_GPS="MicroGPS"
 }
 
 enum GroupLabelMap {
   waterQualitySites = "Water Quality Sites",
   sites = "Sites",
-  wells = "Wells"
+  wells = "Wells",
+  Micro_GPS="MicroGPS"
 }

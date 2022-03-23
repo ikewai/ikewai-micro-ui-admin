@@ -7,6 +7,10 @@
         (leafletMapReady)="onMapReady($event)" >
       </div>
     </div>
+
+    <query-builder [(ngModel)]='query' [config]='config'></query-builder>
+
+
     <div class="col-md-6">
     <div *ngIf="metadata.length == 0" style="height:500px;">
       <h5>No Results For Current Area.</h5>
@@ -18,10 +22,9 @@
     <table  class="table row-border hover table-striped">
       <tr >
           <th class='header'></th>
-          <th class='header'>ID</th>
+          <th class='header'></th>
           <th class='header'>Name</th>
-          <th class='header'>Drilled</th>
-          <th class='header'>Files</th>
+          <th class='header'>Watershed</th>
       </tr>
       <tr *ngFor="let metadatum of filterData">
           <td >
@@ -31,9 +34,10 @@
             <button id="{{metadatum.uuid}}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalDialog(metadatum)">View</button>
           </td>
           <td width="40%">
-            <span #entries>{{metadatum.value.name}}</span>
-            <span #entries>{{metadatum.value.station_name}}</span>
-            <span #entries>{{metadatum.value.well_name}}</span>
+            <span #entries>{{metadatum.value.Location}}</span>
+          </td>
+          <td width="40%">
+            <span #entries>{{metadatum.value.Watershed}}</span>
           </td>
           <td >
             <span *ngIf="metadatum.name == 'Well'">
@@ -92,24 +96,9 @@
               </div>
             </div>
             <div class="col-md-4">
-              <b>Name:</b>&nbsp;{{selectedMetadata.value.well_name}}<br/>
-              <b>ID :</b>&nbsp;{{selectedMetadata.value.wid}}<br/>
-              <b>Island:</b>&nbsp;{{selectedMetadata.value.island}}<br/>
-              <b>Owner:</b>&nbsp;{{selectedMetadata.value.owner_user}}<br/>
-              <b>Year Drilled:</b>&nbsp;{{selectedMetadata.value.yr_drilled}}<br/>
-              <b>Driller:</b>&nbsp;{{selectedMetadata.value.driller}}<br/>
-              <b>Well Depth:</b>&nbsp;{{selectedMetadata.value.well_name}}<br/>
-              <b>Aqui Code:</b>&nbsp;{{selectedMetadata.value.aqui_code}}<br/>
-              <b>Casing Diameter:</b>&nbsp;{{selectedMetadata.value.casing_dia}}<br/>
-              <b>Solid Case:</b>&nbsp;{{selectedMetadata.value.solid_case}}<br/>
-              <b>Use Code:</b>&nbsp;{{selectedMetadata.value.use}}<br/>
-              <b>Geology Code:</b>&nbsp;{{selectedMetadata.value.Geology}}<br/>
-              <b>Ground Elevation:</b>&nbsp;{{selectedMetadata.value.ground_el}}<br/>
-              <b>Bot Hole:</b>&nbsp;{{selectedMetadata.value.bot_hole}}<br/>
-              <b>Bot Perf:</b>&nbsp;{{selectedMetadata.value.bot_perf}}<br/>
-              <b>Bot Solid:</b>&nbsp;{{selectedMetadata.value.bot_solid}}<br/>
-              <b>Pump GPM:</b>&nbsp;{{selectedMetadata.value.pump_gpm}}<br/>
-              <b>Pump MGD:</b>&nbsp;{{selectedMetadata.value.pump_mgd}}<br/>
+              <b>Location:</b>&nbsp;{{selectedMetadata.value.Location}}<br/>
+              <b>Watershed :</b>&nbsp;{{selectedMetadata.value.Watershed}}<br/>
+          
               <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
                 <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 
                    (click)="downloadClick(link.href)">

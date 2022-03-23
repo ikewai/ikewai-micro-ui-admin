@@ -23,6 +23,7 @@
     "@asymmetrik/ngx-leaflet-draw": "^4.0.0",
     "@types/leaflet.markercluster": "^1.4.0",
     "angular-datatables": "^11.1.1",
+    "angular2-query-builder": "^0.4.2",
     "core-js": "^2.5.4",
     "datatables.net": "^1.10.24",
     "datatables.net-dt": "^1.10.24",

@@ -17,6 +17,8 @@ import { AppConfig } from './_services/config.service';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
 import { DataTablesModule } from "angular-datatables";
+import { QueryBuilderModule } from "angular2-query-builder";
+import { FormsModule } from '@angular/forms'; 
 
 export function initializeApp(appConfig: AppConfig) {
   return () => appConfig.load();
@@ -37,7 +39,9 @@ export function initializeApp(appConfig: AppConfig) {
     AppRoutingModule,
     LeafletModule.forRoot(),
     LeafletDrawModule.forRoot(),
-    DataTablesModule
+    DataTablesModule,
+    FormsModule,
+    QueryBuilderModule
   ],
   providers: [
       AppConfig,
