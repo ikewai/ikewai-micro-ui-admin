@@ -8,9 +8,6 @@
       </div>
     </div>
 
-    <query-builder [(ngModel)]='query' [config]='config'></query-builder>
-
-
     <div class="col-md-6">
     <div *ngIf="metadata.length == 0" style="height:500px;">
       <h5>No Results For Current Area.</h5>
@@ -59,7 +56,13 @@
       </div>
       </div>
     </div>
+    <div style="padding-top: 10px" class="row flex-nowrap">
+      <div style="height:500px;">
+        <h5>Filter</h5>
+        <query-builder [(ngModel)]='query' [config]='config'></query-builder>
+    </div>
 </div>
+
 
 <!-- modal -->
 <div id="location-modal" class="modal" tabindex="-1">
@@ -73,6 +76,7 @@
          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         <!-- <h4 class="modal-title">Login</h4> -->
       </div>
+
 
       <!-- modal-body -->
       <div class="modal-body">
