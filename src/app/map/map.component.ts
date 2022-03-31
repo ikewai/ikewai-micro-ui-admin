@@ -399,7 +399,7 @@ export class MapComponent implements OnInit, AfterViewInit {
               }
               if(datum.name == "TEST_Micro_GPS"){
                 details.innerHTML = "<br/>Location: "+datum.value.location+"<br/>Watershed: "
-                                    +datum.value.Watershed+"<br/>Site_Enviro: "+datum.value.Site_Enviro+
+                                    +datum.value.watershed+"<br/>Site_Enviro: "+datum.value.site_enviro+
                                     '<br/><i>Click point to view more</i>'
                                     //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
                                     //+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
@@ -695,9 +695,10 @@ export class MapComponent implements OnInit, AfterViewInit {
 	
 	openLinkedPopup(site) {
       //var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
-      var tempLL = L.latLng([site.value.Lattitude,site.value.Longitude]);
+      var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
 	  let details = L.DomUtil.create("div");
       if (site.name == "TEST_Micro_GPS") {
+        console.log(site.value, 'what is my value ??!?!')
         details.innerHTML = "<br/>Name: "+site.value.location+"<br/>ID: "
                             +site.value.wid+"<br/>Use: "+site.value.use+
                             '<br/><i>Click point to view more</i>';
@@ -711,7 +712,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     openMapZoomed(site) {
       // cache current Lat Lon. when map is ready it will call drawMapZoomedPoint (onMapZoomedReady())
-      this.mapZoomedLatLng = L.latLng([site.value.Lattitude,site.value.Longitude]);
+      this.mapZoomedLatLng = L.latLng([site.value.latitude,site.value.longitude]);
       if (this.mapZoomed) {
         // because small map is on the modal screen, map may not be ready yet. only draw circle if map is ready
         this.drawMapZoomedPoint();
