@@ -31,10 +31,10 @@
             <button id="{{metadatum.uuid}}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalDialog(metadatum)">View</button>
           </td>
           <td width="40%">
-            <span #entries>{{metadatum.value.Location}}</span>
+            <span #entries>{{metadatum.value.location}}</span>
           </td>
           <td width="40%">
-            <span #entries>{{metadatum.value.Watershed}}</span>
+            <span #entries>{{metadatum.value.watershed}}</span>
           </td>
           <td >
             <span *ngIf="metadatum.name == 'Well'">
@@ -100,8 +100,8 @@
               </div>
             </div>
             <div class="col-md-4">
-              <b>Location:</b>&nbsp;{{selectedMetadata.value.Location}}<br/>
-              <b>Watershed :</b>&nbsp;{{selectedMetadata.value.Watershed}}<br/>
+              <b>Location:</b>&nbsp;{{selectedMetadata.value.location}}<br/>
+              <b>Watershed :</b>&nbsp;{{selectedMetadata.value.watershed}}<br/>
           
               <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
                 <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 

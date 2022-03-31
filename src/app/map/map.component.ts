@@ -397,8 +397,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
                 download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
               }
-              if(datum.name == "Micro_GPS"){
-                details.innerHTML = "<br/>Location: "+datum.value.Location+"<br/>Watershed: "
+              if(datum.name == "TEST_Micro_GPS"){
+                details.innerHTML = "<br/>Location: "+datum.value.location+"<br/>Watershed: "
                                     +datum.value.Watershed+"<br/>Site_Enviro: "+datum.value.Site_Enviro+
                                     '<br/><i>Click point to view more</i>'
                                     //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
@@ -527,15 +527,15 @@ export class MapComponent implements OnInit, AfterViewInit {
 
                 download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
               }
-              if(datum.name == "Micro_GPS"){
-                details.innerHTML = "<br/>Location: "+datum.value.Location+"<br/>Watershed: "
-                                    +datum.value.Watershed+"<br/>Latitude: "+datum.value.lattitude
+              if(datum.name == "TEST_Micro_GPS"){
+                details.innerHTML = "<br/>Location: "+datum.value.location+"<br/>Watershed: "
+                                    +datum.value.Watershed+"<br/>Latitude: "+datum.value.latitude
                                     +"<br/>Longitude: "+datum.value.longitude+
                                     '<br/><button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalDialog('+datum+')">View</button>';
 
                 let j:number;
                 for(j = 0; j < datum._links.associationIds.length; j++) {
-                  if(datum._links.associationIds[j].href.indexOf('ikewai-annotated')!== -1){
+                  if(datum._links.associationIds[j].href.indexOf('ikewai-annotated') !== -1){
                   //  download.innerHTML ='<a href="javascript:void(0);" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
                   }
                 }
@@ -687,8 +687,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
 	
     openModalDialog(site)  {
-      console.log("HEYYYYYYYY")
-      console.log(site)
+      console.log(site, 'site data')
       this.selectedMetadata = site;
       this.openMapZoomed(site); // small map on modal screen
       console.log(this.selectedMetadata)
@@ -698,8 +697,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       //var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
       var tempLL = L.latLng([site.value.Lattitude,site.value.Longitude]);
 	  let details = L.DomUtil.create("div");
-      if (site.name == "Micro_GPS") {
-        details.innerHTML = "<br/>Name: "+site.value.Location+"<br/>ID: "
+      if (site.name == "TEST_Micro_GPS") {
+        details.innerHTML = "<br/>Name: "+site.value.location+"<br/>ID: "
                             +site.value.wid+"<br/>Use: "+site.value.use+
                             '<br/><i>Click point to view more</i>';
       }
@@ -820,12 +819,12 @@ enum NameGroupMap {
   Water_Quality_Site = "waterQualitySites",
   Site = "sites",
   Well = "wells",
-  Micro_GPS="MicroGPS"
+  TEST_Micro_GPS="MicroGPS"
 }
 
 enum GroupLabelMap {
   waterQualitySites = "Water Quality Sites",
   sites = "Sites",
   wells = "Wells",
-  Micro_GPS="MicroGPS"
+  TEST_Micro_GPS="MicroGPS"
 }
