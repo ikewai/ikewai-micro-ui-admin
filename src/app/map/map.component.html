@@ -59,7 +59,8 @@
     <div style="padding-top: 10px" class="row flex-nowrap">
       <div style="height:500px;">
         <h5>Filter</h5>
-        <query-builder [(ngModel)]='query' [config]='config'></query-builder>
+        <query-builder [(ngModel)]='query' [config]='config' [formControl]='queryCtrl'></query-builder>
+        <button (click)="checkSanity()">Click me</button>  
     </div>
 </div>
 

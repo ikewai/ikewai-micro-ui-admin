@@ -29,17 +29,22 @@ declare var jQuery: any;
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css']
 })
+
 export class MapComponent implements OnInit, AfterViewInit {
+
+  queryCtrl = new FormControl();
+
+  checkSanity() {
+    console.log(this.queryCtrl, '??')
+  }
 
   query = {
     condition: 'and',
     rules: [
-      {field: 'date', operator: '=', value: '2019-01-01'},
-      {field: 'season', operator: '=', value: 'SUMMER'},
-      {field: 'tempc', operator: '>', value: '25'},
+      { field: 'date', operator: '=', value: '2019-01-01' },
     ]
   };
-  
+
   config: QueryBuilderConfig = {
     fields: {
       date: {name: 'Date', type: 'date'},
@@ -105,14 +110,14 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   options: L.MapOptions = {
     layers: [
-      //tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' })
+      // tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '...' })
       tileLayer('http://www.google.com/maps/vt?lyrs=y@189&gl=en&x={x}&y={y}&z={z}', { maxZoom: 18, attribution: '...' })
     ],
     zoom:10,
     center: latLng(21.48,-157.91040),
     attributionControl: false
   };
-      //center: latLng(20.5, -157.917480),
+  // center: latLng(20.5, -157.917480),
 
   optionsZoomed: L.MapOptions = {
     layers: [
