@@ -206,6 +206,21 @@ export class QueryHandlerService {
       let query = "{'$and':[{'name':{'$in':['TEST_Micro_GPS']}},{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(features[i].geometry).replace(/"/g,'\'') + "}}}]}";
       subjects.push(this.handleQuery(query));
     }
+    return new QueryController(subjects);
+  }
+
+  //handle features separately to optimize cache catches for subset queries
+  siteDateSearch(features: any[]): QueryController {
+    // let res: QueryResults = {
+    //   handle: this.handleGen.getHandle(),
+    //   dataStream: new Observable<QueryResponse>()
+    // };
+    let subjects = [];
+    let i;
+    
+    // pull all site_date_geochem
+    let query = "{'$and':[{'name':{'$in':['TEST_Site_Date_Geochem']}}]}";
+    subjects.push(this.handleQuery(query));
 
     return new QueryController(subjects);
   }

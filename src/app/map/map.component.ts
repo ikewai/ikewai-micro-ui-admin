@@ -207,7 +207,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     Object.keys(this.dataGroups).forEach((key) => {
       let dataGroup = this.dataGroups[key];
       dataGroup.addTo(this.map);
-      console.log(key);
+      // console.log(key);
       controlGroups[GroupLabelMap[key]] = dataGroup;
     });
 
@@ -249,7 +249,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   downloadClick(metadatum_href){
     let downloadString = metadatum_href.replace("media","download/public")
-    console.log(downloadString)
+    // console.log(downloadString)
     window.open(downloadString, "_blank");
   }
   
@@ -265,7 +265,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       observe: <any>"response",
       //params: params
     };
-    console.log(url);
+    // console.log(url);
 
     return this.http.post<any>(url,{}, options).pipe(map((response: any) => response))
   }
@@ -318,7 +318,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
   public onMove(e: any){
 
-        console.log('Move Event!');
+        // console.log('Move Event!');
         this.findData()
   }
 
@@ -349,7 +349,7 @@ export class MapComponent implements OnInit, AfterViewInit {
               datum: {},
            }
         });
-    console.log(JSON.stringify(box))
+    // console.log(JSON.stringify(box))
     //this.map.fitBounds(bounds);
     Object.keys(this.dataGroups).forEach((key) => {
       let dataGroup = this.dataGroups[key];
@@ -359,6 +359,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     let dataStream: QueryController = this.queryHandler.spatialSearch([box]);
     dataStream.getQueryObserver().subscribe((data: any) => {
       data = data.data;
+      console.log(data, 'what is here?')
       if(data == null) {
         return;
       }
@@ -456,6 +457,21 @@ export class MapComponent implements OnInit, AfterViewInit {
           this.dtTrigger.next();
       }
     });
+    
+    /* working attempt to make another query using query handler (Chaz) */
+
+    let siteDateStream: QueryController = this.queryHandler.siteDateSearch();
+    siteDateStream.getQueryObserver().subscribe((data: any) => {
+      data = data.data;
+      if(data == null) {
+        return;
+      }
+      let indices = Object.keys(data);
+      let i: number;
+      console.log(data, 'Site_Date_Geochem Data')
+    });
+
+    /* END working attempt to make another query using query handler (Chaz) */
   }
   
   public onDrawCreated(e: any) {
@@ -551,7 +567,7 @@ export class MapComponent implements OnInit, AfterViewInit {
               let linkDiv = wrapper.getElementsByClassName("entry-link");
 
               let gotoWrapper = () => {
-                console.log("click");
+                // console.log("click");
                 //this.gotoEntry(index);
               }
               linkDiv[0].addEventListener("click", gotoWrapper);
@@ -699,8 +715,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 	  let details = L.DomUtil.create("div");
       if (site.name == "TEST_Micro_GPS") {
         console.log(site.value, 'what is my value ??!?!')
-        details.innerHTML = "<br/>Name: "+site.value.location+"<br/>ID: "
-                            +site.value.wid+"<br/>Use: "+site.value.use+
+        details.innerHTML = "<br/>Name: "+site.value.location+"<br/>Watershed: "
+                            +site.value.watershed+"<br/>Site_Enviro: "+site.value.site_enviro+
                             '<br/><i>Click point to view more</i>';
       }
       L.popup()
