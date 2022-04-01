@@ -325,6 +325,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   public findData() {
     this.metadata= [];
     this.filterData=[];
+
     let bounds =  this.map.getBounds();//  e.layer.getBounds();
     let box = {
               "type": "Feature",
@@ -362,6 +363,20 @@ export class MapComponent implements OnInit, AfterViewInit {
       if(data == null) {
         return;
       }
+
+      /* working attempt to make another query using query handler (Chaz) */
+
+      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(data.map(item => item.value.location));
+      siteDateStream.getQueryObserver().subscribe((data: any) => {
+        data = data.data;
+        if(data == null) {
+          return;
+        }
+        console.log(data, 'Site_Date_Geochem Data')
+      });
+
+      /* END working attempt to make another query using query handler (Chaz) */
+
       let indices = Object.keys(data);
       let i: number;
       for(i = 0; i < indices.length; i++) {
@@ -457,20 +472,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
     });
     
-    /* working attempt to make another query using query handler (Chaz) */
-
-    let siteDateStream: QueryController = this.queryHandler.siteDateSearch();
-    siteDateStream.getQueryObserver().subscribe((data: any) => {
-      data = data.data;
-      if(data == null) {
-        return;
-      }
-      let indices = Object.keys(data);
-      let i: number;
-      console.log(data, 'Site_Date_Geochem Data')
-    });
-
-    /* END working attempt to make another query using query handler (Chaz) */
   }
   
   public onDrawCreated(e: any) {
