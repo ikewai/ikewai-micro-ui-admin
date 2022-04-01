@@ -359,7 +359,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     let dataStream: QueryController = this.queryHandler.spatialSearch([box]);
     dataStream.getQueryObserver().subscribe((data: any) => {
       data = data.data;
-      console.log(data, 'what is here?')
       if(data == null) {
         return;
       }

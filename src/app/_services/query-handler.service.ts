@@ -210,7 +210,7 @@ export class QueryHandlerService {
   }
 
   //handle features separately to optimize cache catches for subset queries
-  siteDateSearch(features: any[]): QueryController {
+  siteDateSearch(): QueryController {
     // let res: QueryResults = {
     //   handle: this.handleGen.getHandle(),
     //   dataStream: new Observable<QueryResponse>()
@@ -219,7 +219,8 @@ export class QueryHandlerService {
     let i;
     
     // pull all site_date_geochem
-    let query = "{'$and':[{'name':{'$in':['TEST_Site_Date_Geochem']}}]}";
+    const locationArr = ['Waimanalo_Site_4', 'Bayfront']
+    let query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locationArr) +"}}] }";
     subjects.push(this.handleQuery(query));
 
     return new QueryController(subjects);
