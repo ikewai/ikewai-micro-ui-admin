@@ -379,28 +379,35 @@ export class MapComponent implements OnInit, AfterViewInit {
           console.error('duplicate location found in microGPS - ' + microGPS.value.location)
         }
       })
-      console.log("??", microGPSData.map((item: any) => item.value.location))
       
       /* Issue: duplicate waikolu found in microGPS */
       /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
       
       /* make another query using query handler (Chaz) */
-      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location));
-      siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
+      let cachedQuery = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(microGPSData.map((item: any) => item.value.location)) +"}}] }"
 
-        siteDateData = siteDateData.data;
-        if(siteDateData == null) {
-          return;
-        }
-        siteDateData.map((siteDateGeochem: any) => {
-          if (locationHashmap[siteDateGeochem.value.location]) {
-            siteDateGeochem.value = {...siteDateGeochem.value, ...locationHashmap[siteDateGeochem.value.location]}
-          } else {
-            console.log("No matching location for " + siteDateGeochem.value.location + " inside siteDateGeochem document")
+      if (this.queryHandler.cache.dataStore[cachedQuery]) { /* fix for preventing duplicate API calls */
+        this.metadata2 = [...this.queryHandler.cache.dataStore[cachedQuery].data]
+      } else {
+        let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location));
+
+        siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
+          siteDateData = siteDateData.data;
+  
+          if (siteDateData == null) {
+            return;
           }
-          this.metadata2.push({...siteDateGeochem})
-        })
-      });
+  
+          siteDateData.map((siteDateGeochem: any) => {
+            if (locationHashmap[siteDateGeochem.value.location]) {
+              siteDateGeochem.value = {...siteDateGeochem.value, ...locationHashmap[siteDateGeochem.value.location]}
+            } else {
+              console.log("No matching location for " + siteDateGeochem.value.location + " inside siteDateGeochem document")
+            }
+            this.metadata2.push({...siteDateGeochem})
+          })
+        });
+      }
 
       console.log(locationHashmap, 'locationHashmap')
       /* END make another query using query handler (Chaz) */
