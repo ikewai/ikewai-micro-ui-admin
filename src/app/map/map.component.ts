@@ -88,6 +88,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   highlightEntries: ElementRef[] = [];
 
   metadata: Metadata[];
+  metadata2: Metadata[];
   filterData: Metadata[];
   selectedMetadata: Metadata;
   currentUser: User;
@@ -277,9 +278,9 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   tableSearch(term: string) {
     if(!term) {
-      this.filterData = this.metadata;
+      this.filterData = this.metadata2;
     } else {
-      this.filterData = this.metadata.filter(x =>
+      this.filterData = this.metadata2.filter(x =>
         {for(var obj in x.value){
           if(x.value[obj] != null){
             if(typeof(x.value[obj]) == "string"){
@@ -323,12 +324,13 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
   public onMove(e: any){
 
-        // console.log('Move Event!');
+        console.log('Move Event!');
         this.findData()
   }
 
   public findData() {
     this.metadata= [];
+    this.metadata2 = [];
     this.filterData=[];
 
     let bounds =  this.map.getBounds();//  e.layer.getBounds();
@@ -361,41 +363,42 @@ export class MapComponent implements OnInit, AfterViewInit {
       let dataGroup = this.dataGroups[key];
       dataGroup.clearLayers();
     });
-
+    
     let dataStream: QueryController = this.queryHandler.spatialSearch([box]);
     dataStream.getQueryObserver().subscribe((microGPSData: any) => {
       microGPSData = microGPSData.data;
       if(microGPSData == null) {
         return;
       }
-
       /* create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
       const locationHashmap: Object = {}
       microGPSData.map((microGPS: any) => {
         if (!locationHashmap[microGPS.value.location]) {
-          locationHashmap[microGPS.value.location] = {...microGPS.value, siteDateGeo: []};
+          locationHashmap[microGPS.value.location] = {...microGPS.value};
         } else {
           console.error('duplicate location found in microGPS - ' + microGPS.value.location)
         }
       })
-
+      console.log("??", microGPSData.map((item: any) => item.value.location))
+      
       /* Issue: duplicate waikolu found in microGPS */
       /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
-
+      
       /* make another query using query handler (Chaz) */
       let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location));
       siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
+
         siteDateData = siteDateData.data;
         if(siteDateData == null) {
           return;
         }
-
         siteDateData.map((siteDateGeochem: any) => {
           if (locationHashmap[siteDateGeochem.value.location]) {
-            locationHashmap[siteDateGeochem.value.location].siteDateGeo.push({...siteDateGeochem.value})
+            siteDateGeochem.value = {...siteDateGeochem.value, ...locationHashmap[siteDateGeochem.value.location]}
           } else {
             console.log("No matching location for " + siteDateGeochem.value.location + " inside siteDateGeochem document")
           }
+          this.metadata2.push({...siteDateGeochem})
         })
       });
 
@@ -492,9 +495,10 @@ export class MapComponent implements OnInit, AfterViewInit {
             }
 
           });
-          this.filterData = this.metadata;
+          this.filterData = this.metadata2;
           this.dtTrigger.next();
       }
+      
     });
     
   }
@@ -504,6 +508,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     // tslint:disable-next-line:no-console
 
     this.metadata= [];
+    this.metadata2 = [];
     console.log('Draw Created Event!');
     this.drawnItems.clearLayers();
     this.drawnItems.addLayer(e.layer);
@@ -530,20 +535,54 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     //this.queryHandler.getDataStreamObserver(this.defaultFilterHandle).subscribe((data: IndexMetadataMap) => {
 
-    dataStream.getQueryObserver().subscribe((data: any) => {
-      data = data.data;
+    dataStream.getQueryObserver().subscribe((microGPSData: any) => {
+      microGPSData = microGPSData.data;
       //data;
 
-      if(data == null) {
+      if(microGPSData == null) {
         return;
       }	  
       // console.log(data);
 
-      let indices = Object.keys(data);
+      /* create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
+      const locationHashmap: Object = {}
+      microGPSData.map((microGPS: any) => {
+        if (!locationHashmap[microGPS.value.location]) {
+          locationHashmap[microGPS.value.location] = {...microGPS.value};
+        } else {
+          console.error('duplicate location found in microGPS - ' + microGPS.value.location)
+        }
+      })
+
+      /* Issue: duplicate waikolu found in microGPS */
+      /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
+
+      /* make another query using query handler (Chaz) */
+      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location));
+      siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
+
+        siteDateData = siteDateData.data;
+        if(siteDateData == null) {
+          return;
+        }
+        siteDateData.map((siteDateGeochem: any) => {
+          if (locationHashmap[siteDateGeochem.value.location]) {
+            siteDateGeochem.value = {...siteDateGeochem.value, ...locationHashmap[siteDateGeochem.value.location]}
+          } else {
+            console.log("No matching location for " + siteDateGeochem.value.location + " inside siteDateGeochem document")
+          }
+          this.metadata2.push({...siteDateGeochem})
+        })
+      });
+
+      console.log(locationHashmap, 'locationHashmap')
+      /* END make another query using query handler (Chaz) */
+
+      let indices = Object.keys(microGPSData);
       let i: number;
       for(i = 0; i < indices.length; i++) {
         let index = Number(indices[i]);
-        let datum = data[index];
+        let datum = microGPSData[index];
       //  if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0)) || datum._links.associationIds.length > 0){
           this.metadata.push(datum)
           let group = NameGroupMap[datum.name];
@@ -605,7 +644,7 @@ export class MapComponent implements OnInit, AfterViewInit {
             }
 
           });
-          this.filterData = this.metadata;
+          this.filterData = this.metadata2;
           //
 
           //console.log(datum.name);
@@ -738,8 +777,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       //var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
       var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
 	  let details = L.DomUtil.create("div");
-      if (site.name == "TEST_Micro_GPS") {
-        console.log(site.value, 'what is my value ??!?!')
+      if (site.name == "TEST_Site_Date_Geochem") {
         details.innerHTML = "<br/>Name: "+site.value.location+"<br/>Watershed: "
                             +site.value.watershed+"<br/>Site_Enviro: "+site.value.site_enviro+
                             '<br/><i>Click point to view more</i>';
