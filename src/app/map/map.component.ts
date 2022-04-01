@@ -358,30 +358,50 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
 
     let dataStream: QueryController = this.queryHandler.spatialSearch([box]);
-    dataStream.getQueryObserver().subscribe((data: any) => {
-      data = data.data;
-      if(data == null) {
+    dataStream.getQueryObserver().subscribe((microGPSData: any) => {
+      microGPSData = microGPSData.data;
+      if(microGPSData == null) {
         return;
       }
 
-      /* working attempt to make another query using query handler (Chaz) */
+      /* create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
+      const locationHashmap: Object = {}
+      microGPSData.map((microGPS: any) => {
+        if (!locationHashmap[microGPS.value.location]) {
+          locationHashmap[microGPS.value.location] = {...microGPS.value, siteDateGeo: []};
+        } else {
+          console.error('duplicate location found in microGPS - ' + microGPS.value.location)
+        }
+      })
 
-      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(data.map(item => item.value.location));
-      siteDateStream.getQueryObserver().subscribe((data: any) => {
-        data = data.data;
-        if(data == null) {
+      /* Issue: duplicate waikolu found in microGPS */
+      /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
+
+      /* make another query using query handler (Chaz) */
+      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location));
+      siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
+        siteDateData = siteDateData.data;
+        if(siteDateData == null) {
           return;
         }
-        console.log(data, 'Site_Date_Geochem Data')
+
+        siteDateData.map((siteDateGeochem: any) => {
+          if (locationHashmap[siteDateGeochem.value.location]) {
+            locationHashmap[siteDateGeochem.value.location].siteDateGeo.push({...siteDateGeochem.value})
+          } else {
+            console.log("No matching location for " + siteDateGeochem.value.location + " inside siteDateGeochem document")
+          }
+        })
       });
 
-      /* END working attempt to make another query using query handler (Chaz) */
+      console.log(locationHashmap, 'locationHashmap')
+      /* END make another query using query handler (Chaz) */
 
-      let indices = Object.keys(data);
+      let indices = Object.keys(microGPSData);
       let i: number;
       for(i = 0; i < indices.length; i++) {
         let index = Number(indices[i]);
-        let datum = data[index];
+        let datum = microGPSData[index];
       //  if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0)) || datum._links.associationIds.length > 0){
           this.metadata.push(datum)
           let group = NameGroupMap[datum.name];
