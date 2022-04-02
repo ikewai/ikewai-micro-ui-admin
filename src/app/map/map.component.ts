@@ -291,6 +291,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           }
         }}
       );
+      console.log(this.dtTrigger, 'what is this?')
       this.dtTrigger.next()
     }
   }
