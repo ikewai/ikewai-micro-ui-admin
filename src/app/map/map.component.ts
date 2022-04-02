@@ -784,7 +784,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 	openLinkedPopup(site) {
       //var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
       var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
-	  let details = L.DomUtil.create("div");
+	    let details = L.DomUtil.create("div");
       if (site.name == "TEST_Site_Date_Geochem") {
         details.innerHTML = "<br/>Name: "+site.value.location+"<br/>Watershed: "
                             +site.value.watershed+"<br/>Site_Enviro: "+site.value.site_enviro+
