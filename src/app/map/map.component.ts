@@ -32,11 +32,7 @@ declare var jQuery: any;
 
 export class MapComponent implements OnInit, AfterViewInit {
 
-  queryCtrl = new FormControl();
-
-  checkSanity() {
-    console.log(this.queryCtrl, '??')
-  }
+  queryCtrl = new FormControl('');
 
   query = {
     condition: 'and',
@@ -152,6 +148,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   controlOptions = {
     attributionControl: false
   };
+
+  viewChanges() {
+    this.queryCtrl.valueChanges.subscribe(selectedValue => console.log(selectedValue, 'hello?'))
+  }
 
   onMapReady(map: L.Map) {
     this.metadata =[];
@@ -291,7 +291,6 @@ export class MapComponent implements OnInit, AfterViewInit {
           }
         }}
       );
-      console.log(this.dtTrigger, 'what is this?')
       this.dtTrigger.next()
     }
   }
@@ -299,6 +298,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     //this.map = this.mapElement.nativeElement
     this.findData()
+
+    /* subscribe to query filter observer */
+    this.queryCtrl.valueChanges.subscribe(hello => console.log(hello, '?? what?'))
   }
 
 
@@ -325,7 +327,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
   public onMove(e: any){
 
-        console.log('Move Event!');
+        // console.log('Move Event!');
         this.findData()
   }
 
@@ -375,11 +377,13 @@ export class MapComponent implements OnInit, AfterViewInit {
       const locationHashmap: Object = {}
       microGPSData.map((microGPS: any) => {
         if (!locationHashmap[microGPS.value.location]) {
-          locationHashmap[microGPS.value.location] = {...microGPS.value};
+          locationHashmap[microGPS.value.location] = {...microGPS.value, microGPS_ID: microGPS.uuid};
+          locationHashmap[microGPS.value.location].siteDateGeochem = []
         } else {
           console.error('duplicate location found in microGPS - ' + microGPS.value.location)
         }
       })
+      console.log(locationHashmap, 'hashmap')
       
       /* Issue: duplicate waikolu found in microGPS */
       /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
@@ -389,6 +393,13 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       if (this.queryHandler.cache.dataStore[cachedQuery]) { /* fix for preventing duplicate API calls */
         this.metadata2 = [...this.queryHandler.cache.dataStore[cachedQuery].data]
+
+        this.metadata2.map(siteDateGeochem => {
+          if (locationHashmap[siteDateGeochem.value.location]) {
+            locationHashmap[siteDateGeochem.value.location].siteDateGeochem.push({...siteDateGeochem.value})
+          }
+        })
+        
       } else {
         let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location));
 
@@ -402,6 +413,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           siteDateData.map((siteDateGeochem: any) => {
             if (locationHashmap[siteDateGeochem.value.location]) {
               siteDateGeochem.value = {...siteDateGeochem.value, ...locationHashmap[siteDateGeochem.value.location]}
+              locationHashmap[siteDateGeochem.value.location].siteDateGeochem.push({...siteDateGeochem.value})
             } else {
               console.log("No matching location for " + siteDateGeochem.value.location + " inside siteDateGeochem document")
             }
@@ -410,7 +422,6 @@ export class MapComponent implements OnInit, AfterViewInit {
         });
       }
 
-      console.log(locationHashmap, 'locationHashmap')
       /* END make another query using query handler (Chaz) */
 
       let indices = Object.keys(microGPSData);
@@ -556,7 +567,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       const locationHashmap: Object = {}
       microGPSData.map((microGPS: any) => {
         if (!locationHashmap[microGPS.value.location]) {
-          locationHashmap[microGPS.value.location] = {...microGPS.value};
+          locationHashmap[microGPS.value.location] = {...microGPS.value, microGPS_ID: {...microGPS}};
         } else {
           console.error('duplicate location found in microGPS - ' + microGPS.value.location)
         }
@@ -616,10 +627,11 @@ export class MapComponent implements OnInit, AfterViewInit {
                 download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
               }
               if(datum.name == "TEST_Micro_GPS"){
+                console.log(datum, '??')
                 details.innerHTML = "<br/>Location: "+datum.value.location+"<br/>Watershed: "
                                     +datum.value.Watershed+"<br/>Latitude: "+datum.value.latitude
                                     +"<br/>Longitude: "+datum.value.longitude+
-                                    '<br/><button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalDialog('+datum+')">View</button>';
+                                    '<br/><button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalSite('+datum+')">View</button>';
 
                 let j:number;
                 for(j = 0; j < datum._links.associationIds.length; j++) {
@@ -753,9 +765,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     markerClick(e)  {
       console.log("Marker CLICKed")
-      console.log(e)
+      console.log(e, 'event')
       let datum = e.sourceTarget.feature.geometry.properties;
-      //console.log(this.selectedMetadata)
       
       document.getElementById('filterField').focus();
       if (!document.getElementById(datum.uuid)) {
@@ -774,7 +785,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
     }
 	
-    openModalDialog(site)  {
+    openModalSite(site)  {
       console.log(site, 'site data')
       this.selectedMetadata = site;
       this.openMapZoomed(site); // small map on modal screen

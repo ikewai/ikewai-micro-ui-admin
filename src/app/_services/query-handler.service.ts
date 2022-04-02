@@ -222,8 +222,6 @@ export class QueryHandlerService {
     let query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}] }";
     subjects.push(this.handleQuery(query));
 
-    console.log(query, 'query from siteDateSearch')
-
     return new QueryController(subjects);
   }
 

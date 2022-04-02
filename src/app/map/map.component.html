@@ -25,10 +25,10 @@
       </tr>
       <tr *ngFor="let metadatum of filterData">
           <td >
-            <button id="linked-{{metadatum.uuid}}" class="btn btn-primary" type="button" (click)="openLinkedPopup(metadatum)">Find</button>
+            <button id="linked-{{metadatum.value.microGPS_ID}}" class="btn btn-primary" type="button" (click)="openLinkedPopup(metadatum)">Find</button>
           </td>
           <td >
-            <button id="{{metadatum.uuid}}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalDialog(metadatum)">View</button>
+            <button id="{{metadatum.value.microGPS_ID}}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalSite(metadatum)">View</button>
           </td>
           <td width="40%">
             <span #entries>{{metadatum.value.location}}</span>
@@ -59,9 +59,10 @@
     <div style="padding-top: 10px" class="row flex-nowrap">
       <div style="height:500px;">
         <h5>Filter</h5>
-        <query-builder [(ngModel)]='query' [config]='config' [formControl]='queryCtrl'></query-builder>
-        <button (click)="checkSanity()">Click me</button>  
+        <query-builder [(ngModel)]='query' [config]='config' [formControl]='queryCtrl'>
+        </query-builder>
     </div>
+
 </div>
 
 
@@ -73,7 +74,7 @@
     <div *ngIf="selectedMetadata"  class="modal-content">
       <!-- modal-header -->
       <div class="modal-header">
-        <h3>{{selectedMetadata.value.well_name}}</h3>
+        <h3>{{selectedMetadata.value.location}}</h3>
          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         <!-- <h4 class="modal-title">Login</h4> -->
       </div>
@@ -172,3 +173,4 @@ wcr: "1980-01-01T00:00:00" -->
     </div>
   </div>
 </div>
+
