@@ -22,6 +22,8 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { FormBuilder, FormControl } from '@angular/forms';
 
 import { QueryBuilderClassNames, QueryBuilderConfig } from 'angular2-query-builder';
+import { isNgTemplate } from '@angular/compiler';
+import { ConsoleReporter } from 'jasmine';
 declare var jQuery: any;
 
 @Component({
@@ -71,6 +73,78 @@ export class MapComponent implements OnInit, AfterViewInit {
       nox_umol_L: {name: 'NOX_umol.L', type: 'number'},
       nh4_umol_L: {name: 'NH4_umol.L', type: 'number'},
       toc_umol_L: {name: 'TOC_umol.L', type: 'number'}
+    }
+  }
+
+  queryFilter(query: any) {
+    console.log(query, 'need to update metadata2')
+
+    if (!query.rules.length) this.filterData = this.metadata2
+    
+    /* logical 'or' operator */
+    let result:Array<any> = ['']
+    let condition: string = query.condition === 'and' ? ' && ' : ' || ';
+
+    for (let i: number = 0; i < query.rules.length; i++) {
+      if (query.rules[i].field) {
+        let { field, operator, value } = query.rules[i];
+        operator === '=' && (operator = '===')
+        operator === '!=' && (operator = '!==')
+        result[0] !== '' && (result[0] += condition);
+        result[0] += `${field} ${operator} ${value}`;
+        // result[0] += `operation`;
+      }
+      if (query.rules[i].condition) {
+        this.queryFilterRecursive(query.rules[i], result)
+      }
+    }
+
+    console.log(result[0], '\nfinal result?')
+    const split: Array<string> = result[0].split(' ');
+    console.log(split, 'split??');
+
+  }
+
+  queryFilterRecursive(query: any, result: Array<any>) {
+    
+    let nestedQuery: Array<any> = ['']
+    let condition: string = query.condition === 'and' ? ' && ' : ' || ';
+    result[0] += condition;
+    result[0] += '( ';
+    for (let i: number = 0; i < query.rules.length; i++) {
+      if (query.rules[i].field) {
+        let { field, operator, value } = query.rules[i];
+        operator === '=' && (operator = '===')
+        operator === '!=' && (operator = '!==')
+        nestedQuery[0] !== '' && (nestedQuery[0] += condition);
+        nestedQuery[0] += `${field} ${operator} ${value}`;
+        // nestedQuery[0] += `operation`;
+      }
+      if (query.rules[i].condition) {
+        this.queryFilterRecursive(query.rules[i], nestedQuery)
+      }
+    }
+    result[0] += nestedQuery[0];
+    result[0] += ' )';
+  }
+
+  evaluateOperation(objKey: any, field: string, operator: string, value: string){
+    switch (operator) {
+      case '=':
+        return objKey[field] === value;
+      case '>':
+        return objKey[field] > value;
+      case '<':
+        return objKey[field] < value;
+      case '>=':
+        return objKey[field] >= value;
+      case '<=':
+        return objKey[field] < value;
+      case '!=':
+        return objKey[field] !== value;
+      default:
+          console.log("No such operator exists!");
+          break;
     }
   }
 
@@ -148,10 +222,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   controlOptions = {
     attributionControl: false
   };
-
-  viewChanges() {
-    this.queryCtrl.valueChanges.subscribe(selectedValue => console.log(selectedValue, 'hello?'))
-  }
 
   onMapReady(map: L.Map) {
     this.metadata =[];
@@ -300,7 +370,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.findData()
 
     /* subscribe to query filter observer */
-    this.queryCtrl.valueChanges.subscribe(hello => console.log(hello, '?? what?'))
+    this.queryCtrl.valueChanges.subscribe(selectedValue => this.queryFilter(selectedValue))
   }
 
 
