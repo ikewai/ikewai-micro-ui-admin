@@ -23,7 +23,7 @@ import { FormBuilder, FormControl } from '@angular/forms';
 
 import { QueryBuilderClassNames, QueryBuilderConfig } from 'angular2-query-builder';
 import { isNgTemplate } from '@angular/compiler';
-import { ConsoleReporter } from 'jasmine';
+
 declare var jQuery: any;
 
 @Component({
@@ -91,7 +91,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         operator === '=' && (operator = '===')
         operator === '!=' && (operator = '!==')
         result[0] !== '' && (result[0] += condition);
-        result[0] += `${field} ${operator} ${value}`;
+        result[0] += `this.metadata2[i].value['${field}'] ${operator} ${value}`;
         // result[0] += `operation`;
       }
       if (query.rules[i].condition) {
@@ -100,9 +100,24 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
 
     console.log(result[0], '\nfinal result?')
-    const split: Array<string> = result[0].split(' ');
-    console.log(split, 'split??');
+    const split: Array<any> = result[0].split(' ')
 
+    let filter = []
+    for (let i = 0; i < this.metadata2.length; i++) {
+      if (Function('return ' + result[0])()) {
+        filter.push({...this.metadata2[i]})
+      }
+    }
+    this.filterData = filter
+
+    console.log(this.filterData, 'data??')
+  }
+
+  interpretQuery(query: Array<any>, value: object) {
+    for (let i = 0; i < query.length; i++) {
+      query[i].replaceAll('value', value)
+      
+    }
   }
 
   queryFilterRecursive(query: any, result: Array<any>) {
@@ -117,7 +132,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         operator === '=' && (operator = '===')
         operator === '!=' && (operator = '!==')
         nestedQuery[0] !== '' && (nestedQuery[0] += condition);
-        nestedQuery[0] += `${field} ${operator} ${value}`;
+        nestedQuery[0] += `this.metadata2[junk].value['${field}'] ${operator} ${value}`;
         // nestedQuery[0] += `operation`;
       }
       if (query.rules[i].condition) {
