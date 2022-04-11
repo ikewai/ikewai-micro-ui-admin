@@ -79,6 +79,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   queryFilter(query: any) {
     console.log(query, 'need to update metadata2')
 
+
+    /* previous attempt to create a front end filter */
+
     if (!query.rules.length) this.filterData = this.metadata2
     
     /* logical 'or' operator */
@@ -91,7 +94,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         operator === '=' && (operator = '===')
         operator === '!=' && (operator = '!==')
         result[0] !== '' && (result[0] += condition);
-        result[0] += `this.metadata2[i].value['${field}'] ${operator} ${value}`;
+        result[0] += `item.value['${field}'] ${operator} ${value}`;
         // result[0] += `operation`;
       }
       if (query.rules[i].condition) {
@@ -101,24 +104,11 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     console.log(result[0], '\nfinal result?')
     const split: Array<any> = result[0].split(' ')
+    const myString: string = "" + result[0]
 
-    let filter = []
-    for (let i = 0; i < this.metadata2.length; i++) {
-      if (Function('return ' + result[0])()) {
-        filter.push({...this.metadata2[i]})
-      }
-    }
-    this.filterData = filter
-
-    console.log(this.filterData, 'data??')
+    /* END previous attempt to create a front end filter */
   }
 
-  interpretQuery(query: Array<any>, value: object) {
-    for (let i = 0; i < query.length; i++) {
-      query[i].replaceAll('value', value)
-      
-    }
-  }
 
   queryFilterRecursive(query: any, result: Array<any>) {
     
@@ -132,7 +122,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         operator === '=' && (operator = '===')
         operator === '!=' && (operator = '!==')
         nestedQuery[0] !== '' && (nestedQuery[0] += condition);
-        nestedQuery[0] += `this.metadata2[junk].value['${field}'] ${operator} ${value}`;
+        nestedQuery[0] += `item.value['${field}'] ${operator} ${value}`;
         // nestedQuery[0] += `operation`;
       }
       if (query.rules[i].condition) {
@@ -471,11 +461,13 @@ export class MapComponent implements OnInit, AfterViewInit {
       console.log(locationHashmap, 'hashmap')
       
       /* Issue: duplicate waikolu found in microGPS */
+
       /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
       
       /* make another query using query handler (Chaz) */
       let cachedQuery = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(microGPSData.map((item: any) => item.value.location)) +"}}] }"
 
+      /* need to implement a method to check cache without interrupting private variables */
       if (this.queryHandler.cache.dataStore[cachedQuery]) { /* fix for preventing duplicate API calls */
         this.metadata2 = [...this.queryHandler.cache.dataStore[cachedQuery].data]
 
