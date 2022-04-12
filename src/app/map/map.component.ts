@@ -563,6 +563,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       let siteDateStream: QueryController = this.queryHandler.siteDateSearch(this.microGPSData.map((item: any) => item.value.location), this.currentQuery);
 
       siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
+        const asyncStatus: any = siteDateData.status;
+        console.log(siteDateData, 'is on complete here?')
         siteDateData = siteDateData.data;
 
         if (siteDateData == null) {
@@ -579,13 +581,15 @@ export class MapComponent implements OnInit, AfterViewInit {
           this.metadata2.push({...siteDateGeochem})
 
         })
+        
+        if (asyncStatus.finished) {
+          /* clean map to represent the filtered data */
+          console.log('does cleaning happen??')
+          this.microGPSData = this.microGPSData.filter(item => item.value.siteDateGeochem && item.value.siteDateGeochem.length)
+          console.log(this.microGPSData, 'this is after it was supposedly filtered, now its supposed to get drawn')
 
-        /* clean map to represent the filtered data */
-        console.log('does cleaning happen??')
-        this.microGPSData = this.microGPSData.filter(item => item.value.siteDateGeochem && item.value.siteDateGeochem.length)
-        console.log(this.microGPSData, 'this is after it was supposedly filtered, now its supposed to get drawn')
-
-        this.drawMapPoints();
+          this.drawMapPoints();
+        }
       });
 
       
