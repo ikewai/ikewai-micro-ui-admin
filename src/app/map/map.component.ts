@@ -35,11 +35,21 @@ declare var jQuery: any;
 export class MapComponent implements OnInit, AfterViewInit {
 
   queryCtrl = new FormControl('');
+  currentQuery: string = "";
 
   query = {
     condition: 'and',
     rules: [
-      { field: 'date', operator: '=', value: '2019-01-01' },
+      { field: 'year', operator: '=', value: '2019', type: 'number' },
+      { condition: 'or',
+        rules: [
+          { field: 'season', operator: '=', value: 'WINTER', type: 'string'},
+          { field: 'season', operator: '=', value: 'SPRING', type: 'string'},
+          { condition: 'and',
+          rules: [
+            { field: 'ph', operator: '>', value: '1', type: 'number'}]
+        }]
+      }
     ]
   };
 
@@ -56,9 +66,9 @@ export class MapComponent implements OnInit, AfterViewInit {
           {name: 'Spring', value: 'SPRING'}
         ]
       },
-      year: {name: 'Year', type: 'date'},
+      year: {name: 'Year', type: 'number'},
       time: {name: 'Time', type: 'time'},
-      tempc: {name: 'TEMP_C', type: 'number'},
+      temp_c: {name: 'TEMP_C', type: 'number'},
       do_percent: {name: 'DO_percent', type: 'number'},
       do_mg_l: {name: 'DO_mg_L', type: 'number'},
       spc_us: {name: 'SPC_us', type: 'number'},
@@ -76,53 +86,70 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
-  queryFilter(query: any) {
-    console.log(query, 'need to update metadata2')
-
-
+  queryFilter() {
+    console.log(this.query, 'need to update metadata2')
     /* previous attempt to create a front end filter */
 
-    if (!query.rules.length) this.filterData = this.metadata2
+    if (!this.query.rules.length) this.filterData = this.metadata2
+    else this.metadata2 = []
     
     /* logical 'or' operator */
     let result:Array<any> = ['']
-    let condition: string = query.condition === 'and' ? ' && ' : ' || ';
+    let condition: string = this.query.condition === 'and' ? " {'$and': [" : " {'$or':  [";
+    result[0] += condition;
+    for (let i: number = 0; i < this.query.rules.length; i++) {
+      if (this.query.rules[i].field) {
+        let { field, operator, value } = this.query.rules[i];
 
-    for (let i: number = 0; i < query.rules.length; i++) {
-      if (query.rules[i].field) {
-        let { field, operator, value } = query.rules[i];
-        operator === '=' && (operator = '===')
-        operator === '!=' && (operator = '!==')
-        result[0] !== '' && (result[0] += condition);
-        result[0] += `item.value['${field}'] ${operator} ${value}`;
+        let type: string;
+        if (field !== 'season' && field !== 'date' && field !== 'time') {
+          type = 'number'
+        } else {
+          type = 'string'
+        }
+
+        const statement = this.evaluateOperation(operator, value, type);
+        result[0] += `{'value.${field}'${statement}}`;
         // result[0] += `operation`;
       }
-      if (query.rules[i].condition) {
-        this.queryFilterRecursive(query.rules[i], result)
+      if (this.query.rules[i].condition) {
+        this.queryFilterRecursive(this.query.rules[i], result)
       }
+      (i !== this.query.rules.length - 1) ? result[0] += ", " : null;
     }
-
-    console.log(result[0], '\nfinal result?')
-    const split: Array<any> = result[0].split(' ')
-    const myString: string = "" + result[0]
+    result[0] += ']}'
+    this.currentQuery = result[0];
 
     /* END previous attempt to create a front end filter */
+    this.findData();
+
   }
 
+
+  showMetadata() {
+    console.log(this.metadata, '?')
+    console.log(this.metadata2, '???')
+  }
 
   queryFilterRecursive(query: any, result: Array<any>) {
     
     let nestedQuery: Array<any> = ['']
-    let condition: string = query.condition === 'and' ? ' && ' : ' || ';
+    let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
     result[0] += condition;
-    result[0] += '( ';
     for (let i: number = 0; i < query.rules.length; i++) {
       if (query.rules[i].field) {
         let { field, operator, value } = query.rules[i];
-        operator === '=' && (operator = '===')
-        operator === '!=' && (operator = '!==')
-        nestedQuery[0] !== '' && (nestedQuery[0] += condition);
-        nestedQuery[0] += `item.value['${field}'] ${operator} ${value}`;
+
+        let type: string;
+        if (field !== 'season' && field !== 'date' && field !== 'time') {
+          type = 'number'
+        } else {
+          type = 'string'
+        }
+
+        const statement = this.evaluateOperation(operator, value, type);
+        nestedQuery[0] += `{'value.${field}'${statement}}`;
+        (i !== query.rules.length - 1) ? nestedQuery[0] += ", " : null;
         // nestedQuery[0] += `operation`;
       }
       if (query.rules[i].condition) {
@@ -130,26 +157,46 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
     }
     result[0] += nestedQuery[0];
-    result[0] += ' )';
+    result[0] += ']}';
   }
 
-  evaluateOperation(objKey: any, field: string, operator: string, value: string){
-    switch (operator) {
-      case '=':
-        return objKey[field] === value;
-      case '>':
-        return objKey[field] > value;
-      case '<':
-        return objKey[field] < value;
-      case '>=':
-        return objKey[field] >= value;
-      case '<=':
-        return objKey[field] < value;
-      case '!=':
-        return objKey[field] !== value;
-      default:
+  evaluateOperation(operator: string, value: string, type: string){
+    if (type !== 'number') {
+      switch (operator) {
+        case '=':
+          return `: '${value}'`;
+        case '>':
+          return `: {'$gt': '${value}'}`;
+        case '<':
+          return `: {'$lt': '${value}'}`;
+        case '>=':
+          return `: {'$gte': '${value}'}`;
+        case '<=':
+          return `: {'$lte': '${value}'}`;
+        case '!=':
+          return `: {'$ne': '${value}'}`;
+        default:
+            console.log("No such operator exists!");
+            break;
+      }
+    } else {
+      switch (operator) {
+        case '=':
+          return `: ${value}`;
+        case '>':
+          return `: {'$gt': ${value}}`;
+        case '<':
+          return `: {'$lt': ${value}}`;
+        case '>=':
+          return `: {'$gte': ${value}}`;
+        case '<=':
+          return `: {'$lte': ${value}}`;
+        case '!=':
+          return `: {'$ne': ${value}}`;
+        default:
           console.log("No such operator exists!");
           break;
+      }
     }
   }
 
@@ -373,9 +420,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {
     //this.map = this.mapElement.nativeElement
     this.findData()
-
-    /* subscribe to query filter observer */
-    this.queryCtrl.valueChanges.subscribe(selectedValue => this.queryFilter(selectedValue))
   }
 
 
@@ -458,17 +502,23 @@ export class MapComponent implements OnInit, AfterViewInit {
           console.error('duplicate location found in microGPS - ' + microGPS.value.location)
         }
       })
-      console.log(locationHashmap, 'hashmap')
+      // console.log(locationHashmap, 'hashmap')
       
       /* Issue: duplicate waikolu found in microGPS */
 
       /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
       
       /* make another query using query handler (Chaz) */
-      let cachedQuery = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(microGPSData.map((item: any) => item.value.location)) +"}}] }"
+      let cachedQuery = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(microGPSData.map((item: any) => item.value.location)) +"}}, " + this.currentQuery + "] }"
+
+      console.log(cachedQuery, 'the cached query, what is going on here?')
+      console.log(this.queryHandler.cache.dataStore, 'what is the cached query then??')
+      console.log(this.queryHandler.cache.dataStore[cachedQuery], 'The boolean here \n\n\n')
 
       /* need to implement a method to check cache without interrupting private variables */
       if (this.queryHandler.cache.dataStore[cachedQuery]) { /* fix for preventing duplicate API calls */
+
+        console.log('\n\ncached query hit!\n\n')
         this.metadata2 = [...this.queryHandler.cache.dataStore[cachedQuery].data]
 
         this.metadata2.map(siteDateGeochem => {
@@ -478,7 +528,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         })
         
       } else {
-        let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location));
+        let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location), this.currentQuery);
 
         siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
           siteDateData = siteDateData.data;
@@ -498,6 +548,10 @@ export class MapComponent implements OnInit, AfterViewInit {
           })
         });
       }
+
+      /* clean map */
+
+      console.log(locationHashmap, 'show me the microGPS')
 
       /* END make another query using query handler (Chaz) */
 
@@ -654,7 +708,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
 
       /* make another query using query handler (Chaz) */
-      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location));
+      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location), this.currentQuery);
       siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
 
         siteDateData = siteDateData.data;
@@ -673,7 +727,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       console.log(locationHashmap, 'locationHashmap')
       /* END make another query using query handler (Chaz) */
-
       let indices = Object.keys(microGPSData);
       let i: number;
       for(i = 0; i < indices.length; i++) {
@@ -863,10 +916,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
 	
     openModalSite(site)  {
-      console.log(site, 'site data')
+      // console.log(site, 'site data')
       this.selectedMetadata = site;
       this.openMapZoomed(site); // small map on modal screen
-      console.log(this.selectedMetadata)
     }
 	
 	openLinkedPopup(site) {

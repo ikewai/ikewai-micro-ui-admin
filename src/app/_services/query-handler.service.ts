@@ -210,16 +210,21 @@ export class QueryHandlerService {
   }
 
   //handle features separately to optimize cache catches for subset queries
-  siteDateSearch(locations: string[]): QueryController {
+  siteDateSearch(locations: string[], filterQuery: string): QueryController {
     // let res: QueryResults = {
     //   handle: this.handleGen.getHandle(),
     //   dataStream: new Observable<QueryResponse>()
     // };
 
     let subjects = [];
-    
+    let query: string;
+    console.log(filterQuery, 'what?')
+    if (filterQuery) {
+      query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}," + filterQuery + "] }";
+    } else {
+      query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}] }";
+    }
     // pull all site_date_geochem
-    let query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}] }";
     subjects.push(this.handleQuery(query));
 
     return new QueryController(subjects);

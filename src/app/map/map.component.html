@@ -61,6 +61,14 @@
         <h5>Filter</h5>
         <query-builder [(ngModel)]='query' [config]='config' [formControl]='queryCtrl'>
         </query-builder>
+        <div class="container" style="margin-top: 10px">
+          <div class="row">
+            <div class="col text-center">
+              <button class="btn btn-primary center" type="button" (click)="queryFilter()">Query</button>
+              <button class="btn btn-primary center" type="button" (click)="showMetadata()">show metadata</button>
+            </div>
+          </div>
+        </div>
     </div>
 
 </div>
@@ -104,6 +112,13 @@
             <div class="col-md-4">
               <b>Location:</b>&nbsp;{{selectedMetadata.value.location}}<br/>
               <b>Watershed :</b>&nbsp;{{selectedMetadata.value.watershed}}<br/>
+              <b>Time :</b>&nbsp;{{selectedMetadata.value.time}}<br/>
+              <b>Date :</b>&nbsp;{{selectedMetadata.value.date}}<br/>
+              <b>Season :</b>&nbsp;{{selectedMetadata.value.season}}<br/>
+              <b>Year :</b>&nbsp;{{selectedMetadata.value.year}}<br/>
+              <span *ngIf="selectedMetadata.value.temp_c"><b>Temperature :</b>&nbsp;{{selectedMetadata.value.temp_c}} °C<br/></span>
+              <span *ngIf="selectedMetadata.value.ph"><b>pH :</b>&nbsp;{{selectedMetadata.value.ph}}<br/></span>
+              <span *ngIf="selectedMetadata.value.water_level_cm"><b>Water Level :</b>&nbsp;{{selectedMetadata.value.water_level_cm}} cm<br/></span>
           
               <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
                 <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 
