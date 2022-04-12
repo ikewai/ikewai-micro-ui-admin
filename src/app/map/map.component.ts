@@ -588,6 +588,8 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.drawMapPoints();
       });
 
+      
+
     }
   }
 
