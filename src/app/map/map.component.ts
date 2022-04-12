@@ -90,7 +90,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     console.log(this.query, 'need to update metadata2')
     /* previous attempt to create a front end filter */
 
-    if (!this.query.rules.length) this.filterData = this.metadata2
+    if (!this.query.rules.length) this.currentQuery = '';
     else this.metadata2 = []
     
     /* logical 'or' operator */
@@ -118,7 +118,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       (i !== this.query.rules.length - 1) ? result[0] += ", " : null;
     }
     result[0] += ']}'
-    this.currentQuery = result[0];
+    this.currentQuery = ", " + result[0];
 
     /* END previous attempt to create a front end filter */
     this.findData();
@@ -127,8 +127,9 @@ export class MapComponent implements OnInit, AfterViewInit {
 
 
   showMetadata() {
-    console.log(this.metadata, '?')
-    console.log(this.metadata2, '???')
+    console.log(this.metadata, 'metadata')
+    console.log(this.metadata2, 'metadata2')
+    console.log(this.currentQuery, 'current query')
   }
 
   queryFilterRecursive(query: any, result: Array<any>) {
@@ -208,6 +209,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   @ViewChildren("entries") entries: QueryList<ElementRef>;
 
   highlightEntries: ElementRef[] = [];
+
+  microGPSData: Array<Object>;
 
   metadata: Metadata[];
   metadata2: Metadata[];
@@ -444,6 +447,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     // Marker.prototype.options.icon.options.shadowUrl = "assets/marker-shadow.png";
     // Marker.prototype.options.icon.options.iconRetinaUrl = "assets/marker-icon-2x.png";
   }
+
   public onMove(e: any){
 
         // console.log('Move Event!');
@@ -453,7 +457,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   public findData() {
     this.metadata= [];
     this.metadata2 = [];
-    this.filterData=[];
+    this.filterData= [];
+    this.microGPSData = [];
 
     let bounds =  this.map.getBounds();//  e.layer.getBounds();
     let box = {
@@ -485,178 +490,210 @@ export class MapComponent implements OnInit, AfterViewInit {
       let dataGroup = this.dataGroups[key];
       dataGroup.clearLayers();
     });
+
+    let query = "{'$and':[{'name':{'$in':['TEST_Micro_GPS']}},{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(box.geometry).replace(/"/g,'\'') + "}}}]}";
+
+    if (this.queryHandler.cache.dataStore[query]) {
+
+      
+      console.log('DUPLICATE MICRO GPS CALL FOUND')
+
+      this.microGPSData = [...this.queryHandler.cache.dataStore[query].data];
+
+      this.querySiteDateGeo();
+
+    } else {
     
     let dataStream: QueryController = this.queryHandler.spatialSearch([box]);
+
+
     dataStream.getQueryObserver().subscribe((microGPSData: any) => {
-      microGPSData = microGPSData.data;
-      if(microGPSData == null) {
+      this.microGPSData = microGPSData.data;
+      if(this.microGPSData == null) {
         return;
       }
-      /* create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
-      const locationHashmap: Object = {}
-      microGPSData.map((microGPS: any) => {
-        if (!locationHashmap[microGPS.value.location]) {
-          locationHashmap[microGPS.value.location] = {...microGPS.value, microGPS_ID: microGPS.uuid};
-          locationHashmap[microGPS.value.location].siteDateGeochem = []
-        } else {
-          console.error('duplicate location found in microGPS - ' + microGPS.value.location)
+      
+      this.querySiteDateGeo();
+    });
+
+    }
+    
+  }
+
+  public querySiteDateGeo() {
+    /* create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
+    const locationHashmap: Object = {}
+    this.microGPSData.map((microGPS: any) => {
+      if (!locationHashmap[microGPS.value.location]) {
+        locationHashmap[microGPS.value.location] = microGPS.value; 
+        locationHashmap[microGPS.value.location].microGPS_ID = microGPS.uuid;
+        locationHashmap[microGPS.value.location].siteDateGeochem = []
+      } else {
+        console.error('duplicate location found in microGPS - ' + microGPS.value.location)
+      }
+    })
+    
+    /* Issue: duplicate waikolu found in microGPS */
+
+    /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
+    
+    /* make another query using query handler (Chaz) */
+    let cachedQuery = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(this.microGPSData.map((item: any) => item.value.location)) +"}}" + this.currentQuery + "] }"
+
+    /* need to implement a method to check cache without interrupting private variables */
+    if (this.queryHandler.cache.dataStore[cachedQuery]) { /* fix for preventing duplicate API calls */
+
+      console.log('\n\ncached query hit!\n\n')
+      this.metadata2 = [...this.queryHandler.cache.dataStore[cachedQuery].data]
+
+      this.metadata2.map(siteDateGeochem => {
+        if (locationHashmap[siteDateGeochem.value.location]) {
+          locationHashmap[siteDateGeochem.value.location].siteDateGeochem.push({...siteDateGeochem.value})
         }
       })
-      // console.log(locationHashmap, 'hashmap')
+
+      /* clean map to represent the filtered data */
+      console.log('does cleaning happen cache???')
+      this.microGPSData = this.microGPSData.filter(item => item.value.siteDateGeochem && item.value.siteDateGeochem.length)
+      console.log('microGPS cache')
+
+      this.drawMapPoints();
       
-      /* Issue: duplicate waikolu found in microGPS */
+    } else {
+      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(this.microGPSData.map((item: any) => item.value.location), this.currentQuery);
 
-      /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
-      
-      /* make another query using query handler (Chaz) */
-      let cachedQuery = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(microGPSData.map((item: any) => item.value.location)) +"}}, " + this.currentQuery + "] }"
+      siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
+        siteDateData = siteDateData.data;
 
-      console.log(cachedQuery, 'the cached query, what is going on here?')
-      console.log(this.queryHandler.cache.dataStore, 'what is the cached query then??')
-      console.log(this.queryHandler.cache.dataStore[cachedQuery], 'The boolean here \n\n\n')
+        if (siteDateData == null) {
+          return;
+        }
 
-      /* need to implement a method to check cache without interrupting private variables */
-      if (this.queryHandler.cache.dataStore[cachedQuery]) { /* fix for preventing duplicate API calls */
-
-        console.log('\n\ncached query hit!\n\n')
-        this.metadata2 = [...this.queryHandler.cache.dataStore[cachedQuery].data]
-
-        this.metadata2.map(siteDateGeochem => {
+        siteDateData.map((siteDateGeochem: any) => {
           if (locationHashmap[siteDateGeochem.value.location]) {
+            siteDateGeochem.value = {...siteDateGeochem.value, ...locationHashmap[siteDateGeochem.value.location]}
             locationHashmap[siteDateGeochem.value.location].siteDateGeochem.push({...siteDateGeochem.value})
+          } else {
+            console.log("No matching location for " + siteDateGeochem.value.location + " inside siteDateGeochem document")
           }
+          this.metadata2.push({...siteDateGeochem})
+
         })
-        
-      } else {
-        let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location), this.currentQuery);
 
-        siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
-          siteDateData = siteDateData.data;
-  
-          if (siteDateData == null) {
-            return;
-          }
-  
-          siteDateData.map((siteDateGeochem: any) => {
-            if (locationHashmap[siteDateGeochem.value.location]) {
-              siteDateGeochem.value = {...siteDateGeochem.value, ...locationHashmap[siteDateGeochem.value.location]}
-              locationHashmap[siteDateGeochem.value.location].siteDateGeochem.push({...siteDateGeochem.value})
-            } else {
-              console.log("No matching location for " + siteDateGeochem.value.location + " inside siteDateGeochem document")
-            }
-            this.metadata2.push({...siteDateGeochem})
-          })
-        });
-      }
+        /* clean map to represent the filtered data */
+        console.log('does cleaning happen??')
+        this.microGPSData = this.microGPSData.filter(item => item.value.siteDateGeochem && item.value.siteDateGeochem.length)
+        console.log(this.microGPSData, 'this is after it was supposedly filtered, now its supposed to get drawn')
 
-      /* clean map */
+        this.drawMapPoints();
+      });
 
-      console.log(locationHashmap, 'show me the microGPS')
+    }
+  }
 
-      /* END make another query using query handler (Chaz) */
+  public drawMapPoints() {
+        /* END make another query using query handler (Chaz) */
 
-      let indices = Object.keys(microGPSData);
-      let i: number;
-      for(i = 0; i < indices.length; i++) {
-        let index = Number(indices[i]);
-        let datum = microGPSData[index];
-      //  if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0)) || datum._links.associationIds.length > 0){
-          this.metadata.push(datum)
-          let group = NameGroupMap[datum.name];
-          //console.log(datum.value.loc);
-          let geod = datum.value.loc;
-          //console.log(geod)
-          let prop = {};
-          prop['uuid'] = datum.uuid
-          geod.properties = prop;
-          let geojson = L.geoJSON(geod, {
-            style: this.getStyleByGroup(group),
-            pointToLayer: (feature, latlng) => {
-              let icon = this.getIconByGroup(group);
-              return  L.circleMarker(latlng, {radius:5,opacity: 1,fillOpacity: 0.9,color:'gray'})
-              //return L.marker(latlng, {icon: icon});
-            },
-            onEachFeature: (feature, layer) => {
-            //  let header = L.DomUtil.create("h6")
-              let wrapper = L.DomUtil.create("div")
-              let details = L.DomUtil.create("div");
-              let download = L.DomUtil.create("div")
-              let goto = L.DomUtil.create("span", "entry-link");
-
-              //details.innerText = JSON.stringify(datum.value);
-              //header.innerText=datum.name.replace(/_/g, ' ');
-              if(datum.name == "Water_Quality_Site" && datum.value.resultCount > 0){
-                details.innerHTML = "<br/>Name: "+datum.value.name+"<br/>ID: "+datum.value.MonitoringLocationIdentifier+"<br/>Provider: "+datum.value.ProviderName+"<br/>"+datum.value.description+"<br/>Latitude: "+datum.value.latitude+"<br/>Longitude: "+datum.value.longitude+"<br/><a target='_blank' href='"+datum.value.siteUrl+"'>More Details</a>";
-
-                download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
-              }
-              if(datum.name == "TEST_Micro_GPS"){
-                details.innerHTML = "<br/>Location: "+datum.value.location+"<br/>Watershed: "
-                                    +datum.value.watershed+"<br/>Site_Enviro: "+datum.value.site_enviro+
-                                    '<br/><i>Click point to view more</i>'
-                                    //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
-                                    //+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
-                                    //"<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "
-                                    //+datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude
-                                    //+"<br/>Longitude: "+datum.value.longitude+
-                                    //'<br/><button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" onclick="document.getElementById('+"'"+datum.uuid+"'"+').click()">View</button>';
-
-                let j:number;
-                for(j = 0; j < datum._links.associationIds.length; j++) {
-                  if(datum._links.associationIds[j].href.indexOf('ikewai-annotated')!== -1){
-                  //  download.innerHTML ='<a href="javascript:void(0);" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
+        let indices = Object.keys(this.microGPSData);
+        let i: number;
+        for(i = 0; i < indices.length; i++) {
+          let index = Number(indices[i]);
+          let datum = this.microGPSData[index];
+        //  if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0)) || datum._links.associationIds.length > 0){
+            this.metadata.push(datum)
+            let group = NameGroupMap[datum.name];
+            //console.log(datum.value.loc);
+            let geod = datum.value.loc;
+            //console.log(geod)
+            let prop = {};
+            prop['uuid'] = datum.uuid
+            geod.properties = prop;
+            let geojson = L.geoJSON(geod, {
+              style: this.getStyleByGroup(group),
+              pointToLayer: (feature, latlng) => {
+                let icon = this.getIconByGroup(group);
+                return  L.circleMarker(latlng, {radius:5,opacity: 1,fillOpacity: 0.9,color:'gray'})
+                //return L.marker(latlng, {icon: icon});
+              },
+              onEachFeature: (feature, layer) => {
+              //  let header = L.DomUtil.create("h6")
+                let wrapper = L.DomUtil.create("div")
+                let details = L.DomUtil.create("div");
+                let download = L.DomUtil.create("div")
+                let goto = L.DomUtil.create("span", "entry-link");
+    
+                //details.innerText = JSON.stringify(datum.value);
+                //header.innerText=datum.name.replace(/_/g, ' ');
+                if(datum.name == "Water_Quality_Site" && datum.value.resultCount > 0){
+                  details.innerHTML = "<br/>Name: "+datum.value.name+"<br/>ID: "+datum.value.MonitoringLocationIdentifier+"<br/>Provider: "+datum.value.ProviderName+"<br/>"+datum.value.description+"<br/>Latitude: "+datum.value.latitude+"<br/>Longitude: "+datum.value.longitude+"<br/><a target='_blank' href='"+datum.value.siteUrl+"'>More Details</a>";
+    
+                  download.innerHTML = "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid="+datum.value.MonitoringLocationIdentifier+"&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download "+datum.value.resultCount+" Measurements</a></br>"
+                }
+                if(datum.name == "TEST_Micro_GPS"){
+                  details.innerHTML = "<br/>Location: "+datum.value.location+"<br/>Watershed: "
+                                      +datum.value.watershed+"<br/>Site_Enviro: "+datum.value.site_enviro+
+                                      '<br/><i>Click point to view more</i>'
+                                      //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
+                                      //+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
+                                      //"<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "
+                                      //+datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude
+                                      //+"<br/>Longitude: "+datum.value.longitude+
+                                      //'<br/><button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" onclick="document.getElementById('+"'"+datum.uuid+"'"+').click()">View</button>';
+    
+                  let j:number;
+                  for(j = 0; j < datum._links.associationIds.length; j++) {
+                    if(datum._links.associationIds[j].href.indexOf('ikewai-annotated')!== -1){
+                    //  download.innerHTML ='<a href="javascript:void(0);" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
+                    }
                   }
                 }
-              }
-              let popup: L.Popup = new L.Popup({autoPan: false});
-            //  wrapper.append(header)
-              wrapper.append(details);
-            //  wrapper.append(download);
-            //  wrapper.append(goto);
-
-            //  let linkDiv = wrapper.getElementsByClassName("entry-link");
-
-              let gotoWrapper = () => {
-                console.log("click");
-                //this.gotoEntry(index);
-              }
-              //linkDiv[0].addEventListener("click", gotoWrapper);
-              popup.setContent(wrapper);
-              layer.bindPopup(popup);
-
-              layer.on("mouseover", function () {
-                  layer.openPopup();
-                });
-              layer.on('click',this.markerClick.bind(this));
-
-              // function(){ {
-              //   openModalDialog(datum);
-              //   console.log(this.selectedMetadata);
-              //   (function ($) {
-              //       $('#location-dialog').modal('show');
-              //       //$('#location-dialog').modal('show');
-              //     })(jQuery);
-                //document.getElementById('location-modal').style.display = 'block';
-                //$("#location-modal").modal('show');
-              //}})
-              if(this.dataGroups[group] != undefined) {
-                this.dataGroups[group].addLayer(layer);
-              }
-            }
-
-          });
-          this.filterData = this.metadata2;
-          this.dtTrigger.next();
-      }
-      
-    });
+                let popup: L.Popup = new L.Popup({autoPan: false});
+              //  wrapper.append(header)
+                wrapper.append(details);
+              //  wrapper.append(download);
+              //  wrapper.append(goto);
     
+              //  let linkDiv = wrapper.getElementsByClassName("entry-link");
+    
+                let gotoWrapper = () => {
+                  console.log("click");
+                  //this.gotoEntry(index);
+                }
+                //linkDiv[0].addEventListener("click", gotoWrapper);
+                popup.setContent(wrapper);
+                layer.bindPopup(popup);
+    
+                layer.on("mouseover", function () {
+                    layer.openPopup();
+                  });
+                layer.on('click',this.markerClick.bind(this));
+    
+                // function(){ {
+                //   openModalDialog(datum);
+                //   console.log(this.selectedMetadata);
+                //   (function ($) {
+                //       $('#location-dialog').modal('show');
+                //       //$('#location-dialog').modal('show');
+                //     })(jQuery);
+                  //document.getElementById('location-modal').style.display = 'block';
+                  //$("#location-modal").modal('show');
+                //}})
+                if(this.dataGroups[group] != undefined) {
+                  this.dataGroups[group].addLayer(layer);
+                }
+              }
+    
+            });
+            this.filterData = this.metadata2;
+            this.dtTrigger.next();
+        }
   }
   
   public onDrawCreated(e: any) {
 
     // tslint:disable-next-line:no-console
 
+    console.log("is this getting hit at all?\n\n\n\n")
     this.metadata= [];
     this.metadata2 = [];
     console.log('Draw Created Event!');
@@ -686,17 +723,17 @@ export class MapComponent implements OnInit, AfterViewInit {
     //this.queryHandler.getDataStreamObserver(this.defaultFilterHandle).subscribe((data: IndexMetadataMap) => {
 
     dataStream.getQueryObserver().subscribe((microGPSData: any) => {
-      microGPSData = microGPSData.data;
+      this.microGPSData = microGPSData.data;
       //data;
 
-      if(microGPSData == null) {
+      if(this.microGPSData == null) {
         return;
       }	  
       // console.log(data);
 
       /* create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
       const locationHashmap: Object = {}
-      microGPSData.map((microGPS: any) => {
+      this.microGPSData.map((microGPS: any) => {
         if (!locationHashmap[microGPS.value.location]) {
           locationHashmap[microGPS.value.location] = {...microGPS.value, microGPS_ID: {...microGPS}};
         } else {
@@ -708,7 +745,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
 
       /* make another query using query handler (Chaz) */
-      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(microGPSData.map((item: any) => item.value.location), this.currentQuery);
+      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(this.microGPSData.map((item: any) => item.value.location), this.currentQuery);
       siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
 
         siteDateData = siteDateData.data;
@@ -727,11 +764,11 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       console.log(locationHashmap, 'locationHashmap')
       /* END make another query using query handler (Chaz) */
-      let indices = Object.keys(microGPSData);
+      let indices = Object.keys(this.microGPSData);
       let i: number;
       for(i = 0; i < indices.length; i++) {
         let index = Number(indices[i]);
-        let datum = microGPSData[index];
+        let datum = this.microGPSData[index];
       //  if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0)) || datum._links.associationIds.length > 0){
           this.metadata.push(datum)
           let group = NameGroupMap[datum.name];

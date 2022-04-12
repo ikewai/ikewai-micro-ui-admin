@@ -195,12 +195,15 @@ export class QueryHandlerService {
 
   //handle features separately to optimize cache catches for subset queries
   spatialSearch(features: any[]): QueryController {
+
     // let res: QueryResults = {
     //   handle: this.handleGen.getHandle(),
     //   dataStream: new Observable<QueryResponse>()
     // };
     let subjects = [];
     let i;
+
+
     for(i = 0; i < features.length; i++) {
       //need to do something to handle too long queries
       let query = "{'$and':[{'name':{'$in':['TEST_Micro_GPS']}},{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(features[i].geometry).replace(/"/g,'\'') + "}}}]}";
@@ -218,12 +221,8 @@ export class QueryHandlerService {
 
     let subjects = [];
     let query: string;
-    console.log(filterQuery, 'what?')
-    if (filterQuery) {
-      query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}," + filterQuery + "] }";
-    } else {
-      query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}] }";
-    }
+      
+    query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}" + filterQuery + "] }";
     // pull all site_date_geochem
     subjects.push(this.handleQuery(query));
 
