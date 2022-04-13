@@ -9,7 +9,7 @@ import { MapComponent } from './map/map.component';
 
 import { JwtInterceptor } from './_helpers/jwt.interceptor';
 import { ErrorInterceptor } from './_helpers/error.interceptor';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { APP_INITIALIZER } from '@angular/core';
 import { AppConfig } from './_services/config.service';
@@ -18,7 +18,6 @@ import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
 import { DataTablesModule } from "angular-datatables";
 import { QueryBuilderModule } from "angular2-query-builder";
-import { FormsModule } from '@angular/forms'; 
 
 export function initializeApp(appConfig: AppConfig) {
   return () => appConfig.load();
@@ -41,7 +40,7 @@ export function initializeApp(appConfig: AppConfig) {
     LeafletDrawModule.forRoot(),
     DataTablesModule,
     FormsModule,
-    QueryBuilderModule
+    QueryBuilderModule,
   ],
   providers: [
       AppConfig,

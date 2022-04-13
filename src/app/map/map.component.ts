@@ -1,7 +1,9 @@
-import { Component, OnInit, ViewChild, AfterViewInit, ViewChildren, QueryList, ElementRef, Renderer2, SecurityContext } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit, ViewChildren, QueryList, ElementRef, Renderer2, SecurityContext, LOCALE_ID } from '@angular/core';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
 import { Observable, of, BehaviorSubject,throwError } from 'rxjs';
+
+
 import { map, retry, catchError } from 'rxjs/operators';
 import { User } from '../_models/user'
 import { Metadata } from '../_models/metadata'
@@ -53,6 +55,13 @@ export class MapComponent implements OnInit, AfterViewInit {
     ]
   };
 
+  query2 = {
+    condition: 'and',
+    rules: [
+      { field: 'sequencing_facility', operator: '=', value: 'UCI', type: 'string' },
+    ]
+  };
+
   config: QueryBuilderConfig = {
     fields: {
       date: {name: 'Date', type: 'date'},
@@ -82,17 +91,40 @@ export class MapComponent implements OnInit, AfterViewInit {
       si_umol_L: {name: 'Si_umol.L', type: 'number'},
       nox_umol_L: {name: 'NOX_umol.L', type: 'number'},
       nh4_umol_L: {name: 'NH4_umol.L', type: 'number'},
-      toc_umol_L: {name: 'TOC_umol.L', type: 'number'}
+      toc_umol_L: {name: 'TOC_umol.L', type: 'number'},
+      agar_type: {        
+        name: 'agar_type',
+        type: 'category',
+        options: [
+        {name: 'CHROM - Staphylococcus', value: 'CHROM'},
+        {name: 'mEI - enterococus', value: 'mEI'},
+        {name: 'MI - Eschericia coli>', value: 'MI'},
+        {name: 'MI_UV - total coliform', value: 'MI_UV'},
+        {name: 'LB - Heterotrophs', value: 'LB'}
+      ]}
     }
   }
 
-  queryFilter() {
-    console.log(this.query, 'need to update metadata2')
-    /* previous attempt to create a front end filter */
+  config2: QueryBuilderConfig = {
+    fields: {
+      sequencing_facility: {name: 'sequencing_facility', type: 'string'},
+    }
+  }
 
+  
+
+  queryOptions = {
+    agar_type: 'TEST_CFU'
+  }
+
+  toggleMicrobes() {
+    this.isSiteDateGeoFilter = !this.isSiteDateGeoFilter;
+  }
+
+  queryFilter() {
     if (!this.query.rules.length) this.currentQuery = '';
     else this.metadata2 = []
-    
+
     /* logical 'or' operator */
     let result:Array<any> = ['']
     let condition: string = this.query.condition === 'and' ? " {'$and': [" : " {'$or':  [";
@@ -101,8 +133,11 @@ export class MapComponent implements OnInit, AfterViewInit {
       if (this.query.rules[i].field) {
         let { field, operator, value } = this.query.rules[i];
 
+        if (this.queryOptions[field]) {
+          console.log('A different call needs to be taken')
+        }
         let type: string;
-        if (field !== 'season' && field !== 'date' && field !== 'time') {
+        if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'agar_type') {
           type = 'number'
         } else {
           type = 'string'
@@ -141,8 +176,12 @@ export class MapComponent implements OnInit, AfterViewInit {
       if (query.rules[i].field) {
         let { field, operator, value } = query.rules[i];
 
+        if (this.queryOptions[field]) {
+          console.log('A different call needs to be taken')
+        }
+
         let type: string;
-        if (field !== 'season' && field !== 'date' && field !== 'time') {
+        if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'agar_type') {
           type = 'number'
         } else {
           type = 'string'
@@ -212,6 +251,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   microGPSData: Array<Object>;
 
+  isSiteDateGeoFilter: Boolean = true;
+  microbeMetadata: Metadata[];
   metadata: Metadata[];
   metadata2: Metadata[];
   filterData: Metadata[];
@@ -495,9 +536,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     if (this.queryHandler.cache.dataStore[query]) {
 
-      
-      console.log('DUPLICATE MICRO GPS CALL FOUND')
-
       this.microGPSData = [...this.queryHandler.cache.dataStore[query].data];
 
       this.querySiteDateGeo();
@@ -543,7 +581,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     /* need to implement a method to check cache without interrupting private variables */
     if (this.queryHandler.cache.dataStore[cachedQuery]) { /* fix for preventing duplicate API calls */
 
-      console.log('\n\ncached query hit!\n\n')
       this.metadata2 = [...this.queryHandler.cache.dataStore[cachedQuery].data]
 
       this.metadata2.map(siteDateGeochem => {
@@ -553,9 +590,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       })
 
       /* clean map to represent the filtered data */
-      console.log('does cleaning happen cache???')
-      this.microGPSData = this.microGPSData.filter(item => item.value.siteDateGeochem && item.value.siteDateGeochem.length)
-      console.log('microGPS cache')
+      this.microGPSData = this.microGPSData.filter((item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length)
 
       this.drawMapPoints();
       
@@ -564,7 +599,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
         const asyncStatus: any = siteDateData.status;
-        console.log(siteDateData, 'is on complete here?')
         siteDateData = siteDateData.data;
 
         if (siteDateData == null) {
@@ -584,17 +618,37 @@ export class MapComponent implements OnInit, AfterViewInit {
         
         if (asyncStatus.finished) {
           /* clean map to represent the filtered data */
-          console.log('does cleaning happen??')
-          this.microGPSData = this.microGPSData.filter(item => item.value.siteDateGeochem && item.value.siteDateGeochem.length)
-          console.log(this.microGPSData, 'this is after it was supposedly filtered, now its supposed to get drawn')
+          this.microGPSData = this.microGPSData.filter((item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length)
 
           this.drawMapPoints();
+
+          this.queryMicrobes();
         }
       });
 
       
 
     }
+  }
+
+  public queryMicrobes() {
+
+    this.microbeMetadata = []
+    let microbeStream: QueryController = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id));
+
+    microbeStream.getQueryObserver().subscribe((microbeData: any) => {
+      const asyncStatus: any = microbeData.status;
+      microbeData = microbeData.data;
+
+      if (microbeData == null) {
+        return;
+      }
+
+      microbeData.map((microbes: any) => {
+        this.microbeMetadata.push({...microbes})
+      })
+      
+    });
   }
 
   public drawMapPoints() {

@@ -229,6 +229,22 @@ export class QueryHandlerService {
     return new QueryController(subjects);
   }
 
+  microbeSearch(locations: string[]): QueryController {
+    // let res: QueryResults = {
+    //   handle: this.handleGen.getHandle(),
+    //   dataStream: new Observable<QueryResponse>()
+    // };
+
+    let subjects = [];
+    let query: string;
+      
+    query = "{'$and': [{'name':{'$in':['TEST_Microbes']}, 'value.id': {'$in':" + JSON.stringify(locations) +"}}] }";
+    // pull all site_date_geochem
+    subjects.push(this.handleQuery(query));
+
+    return new QueryController(subjects);
+  }
+
   //deal with case where same query running multiple times before complete
   private handleQuery(query: string): BehaviorSubject<QueryResponse> {
     let dataStream = new BehaviorSubject<QueryResponse>({status: null, data: []});
