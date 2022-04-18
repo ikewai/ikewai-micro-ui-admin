@@ -11,6 +11,7 @@ import { takeUntil } from 'rxjs/operators';
 @Injectable({
   providedIn: 'root'
 })
+
 export class QueryHandlerService {
 
   //static readonly DEFAULT_PAGE = 10;
@@ -259,7 +260,7 @@ export class QueryHandlerService {
     }
     else {
       //issue with retreival, should always pull from first item with no specified range
-      if(stored.range[0] != 0) {
+      if (stored.range[0] != 0) {
         throw new Error("Unexpected error occured in cache retreival: data retreived did not start at 0");
       }
       offset = stored.range[1];

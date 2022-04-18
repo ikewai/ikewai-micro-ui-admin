@@ -38,6 +38,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   queryCtrl = new FormControl('');
   currentQuery: string = "";
+  currentReadableQuery: string = "";
 
   query = {
     condition: 'and',
@@ -122,20 +123,23 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   queryFilter() {
-    if (!this.query.rules.length) this.currentQuery = '';
-    else this.metadata2 = []
+    if (!this.query.rules.length) {
+      this.currentQuery = ''
+      this.currentReadableQuery = ''
+    } else {
+      this.metadata2 = []
 
     /* logical 'or' operator */
-    let result:Array<any> = ['']
+    let result: Array<any> = ['', '']
     let condition: string = this.query.condition === 'and' ? " {'$and': [" : " {'$or':  [";
+    let readableCondition: string = this.query.condition === 'and' ? "Where all samples meet each criteria: " : "Where all samples meet one of these criteria: ";
+    let readableCondition2: string = this.query.condition === 'and' ? " and " : " or ";
     result[0] += condition;
+    result[1] += readableCondition;
     for (let i: number = 0; i < this.query.rules.length; i++) {
       if (this.query.rules[i].field) {
         let { field, operator, value } = this.query.rules[i];
 
-        if (this.queryOptions[field]) {
-          console.log('A different call needs to be taken')
-        }
         let type: string;
         if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'agar_type') {
           type = 'number'
@@ -144,8 +148,11 @@ export class MapComponent implements OnInit, AfterViewInit {
         }
 
         const statement = this.evaluateOperation(operator, value, type);
+        const readable = this.parseReadable(operator, value, type);
         result[0] += `{'value.${field}'${statement}}`;
-        // result[0] += `operation`;
+        (i <= this.query.rules.length - 1 && i !== 0) ? result[1] += readableCondition2 : null;
+        result[1] += `${field} ${readable}`;
+        (i === 0) ? result[1] += readableCondition2 : null;
       }
       if (this.query.rules[i].condition) {
         this.queryFilterRecursive(this.query.rules[i], result)
@@ -154,10 +161,11 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
     result[0] += ']}'
     this.currentQuery = ", " + result[0];
+    this.currentReadableQuery = result[1]
 
     /* END previous attempt to create a front end filter */
-    this.findData();
-
+  }
+  this.findData();
   }
 
 
@@ -169,16 +177,14 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   queryFilterRecursive(query: any, result: Array<any>) {
     
-    let nestedQuery: Array<any> = ['']
+    let nestedQuery: Array<any> = ['', '']
     let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
+    let readableCondition: string = query.condition === 'and' ? " and " : " or ";
     result[0] += condition;
+    result[1] += "("
     for (let i: number = 0; i < query.rules.length; i++) {
       if (query.rules[i].field) {
         let { field, operator, value } = query.rules[i];
-
-        if (this.queryOptions[field]) {
-          console.log('A different call needs to be taken')
-        }
 
         let type: string;
         if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'agar_type') {
@@ -188,8 +194,11 @@ export class MapComponent implements OnInit, AfterViewInit {
         }
 
         const statement = this.evaluateOperation(operator, value, type);
+        const readable = this.parseReadable(operator, value, type);
         nestedQuery[0] += `{'value.${field}'${statement}}`;
+        nestedQuery[1] += `${field} ${readable}`;
         (i !== query.rules.length - 1) ? nestedQuery[0] += ", " : null;
+        (i !== query.rules.length - 1) ? nestedQuery[1] += readableCondition : null;
         // nestedQuery[0] += `operation`;
       }
       if (query.rules[i].condition) {
@@ -198,6 +207,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
     result[0] += nestedQuery[0];
     result[0] += ']}';
+    result[1] += nestedQuery[1];
+    result[1] += ')'
   }
 
   evaluateOperation(operator: string, value: string, type: string){
@@ -237,6 +248,26 @@ export class MapComponent implements OnInit, AfterViewInit {
           console.log("No such operator exists!");
           break;
       }
+    }
+  }
+
+  parseReadable(operator: string, value: string, type: string){
+    switch (operator) {
+      case '=':
+        return `is equal to ${value}`;
+      case '>':
+        return `is greater than ${value}`;
+      case '<':
+        return `is less than ${value}`;
+      case '>=':
+        return `is greater than or equal to ${value}`;
+      case '<=':
+        return `is less than or equal to ${value}`;
+      case '!=':
+        return `does not equal ${value}`;
+      default:
+          console.log("No such operator exists!");
+          break;
     }
   }
 
@@ -593,6 +624,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.microGPSData = this.microGPSData.filter((item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length)
 
       this.drawMapPoints();
+
+      this.queryMicrobes();
       
     } else {
       let siteDateStream: QueryController = this.queryHandler.siteDateSearch(this.microGPSData.map((item: any) => item.value.location), this.currentQuery);
@@ -633,23 +666,59 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public queryMicrobes() {
 
-    this.microbeMetadata = []
-    let microbeStream: QueryController = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id));
-
-    microbeStream.getQueryObserver().subscribe((microbeData: any) => {
-      const asyncStatus: any = microbeData.status;
-      microbeData = microbeData.data;
-
-      if (microbeData == null) {
-        return;
+    /* create a hashmap to detect id to nest microbes without using a nested for loop (chaz) */
+    const siteDateGeoMap: Object = {}
+    this.metadata2.map((siteDateGeo: any) => {
+      if (!siteDateGeoMap[siteDateGeo.value.id]) {
+        siteDateGeoMap[siteDateGeo.value.id] = siteDateGeo.value; 
+        siteDateGeoMap[siteDateGeo.value.id].microbes = []
+      } else {
+        console.error('duplicate ID found in siteDateGeochem - ' + siteDateGeo.value.id)
       }
+    })
 
-      microbeData.map((microbes: any) => {
-        this.microbeMetadata.push({...microbes})
-      })
-      
-    });
+    console.log(siteDateGeoMap, 'map here')
+
+    this.microbeMetadata = []
+
+    let query = "{'$and': [{'name':{'$in':['TEST_Microbes']}, 'value.id': {'$in':" + JSON.stringify(this.metadata2.map((item: any) => item.value.id)) +"}}] }";
+
+    if (this.queryHandler.cache.dataStore[query]) { /* fix for preventing duplicate API calls */
+
+    this.microbeMetadata = [...this.queryHandler.cache.dataStore[query].data]
+  
+    } else {
+      let microbeStream: QueryController = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id));
+
+      console.log(microbeStream, 'k wait maybe here')
+  
+      microbeStream.getQueryObserver().subscribe((microbeData: any) => {
+        const asyncStatus: any = microbeData.status;
+        microbeData = microbeData.data;
+  
+        if (microbeData == null) {
+          return;
+        }
+  
+        microbeData.map((microbes: any) => {
+  
+          if (siteDateGeoMap[microbes.value.id]) {
+            microbes.value = {...microbes.value, ...siteDateGeoMap[microbes.value.id]}
+            siteDateGeoMap[microbes.value.id].microbes.push({...microbes.value})
+          } else {
+            console.log("No matching Site_Date_Geochem for " + microbes.value.id + " inside Microbes document")
+          }
+  
+          this.microbeMetadata.push({...microbes})
+        })
+        
+                
+        if (asyncStatus.finished) {
+          console.log(this.microbeMetadata, 'finished')
+        }
+    })
   }
+  };
 
   public drawMapPoints() {
         /* END make another query using query handler (Chaz) */
@@ -1019,13 +1088,17 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
 	
 	openLinkedPopup(site) {
+    console.log(site, 'what is site here?')
       //var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
       var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
 	    let details = L.DomUtil.create("div");
       if (site.name == "TEST_Site_Date_Geochem") {
         details.innerHTML = "<br/>Name: "+site.value.location+"<br/>Watershed: "
-                            +site.value.watershed+"<br/>Site_Enviro: "+site.value.site_enviro+
-                            '<br/><i>Click point to view more</i>';
+                            +site.value.watershed+"<br/>Site_Enviro: "+site.value.site_enviro;
+      }
+      if (site.name == "TEST_Microbes") {
+        details.innerHTML = "<br/>Name: "+site.value.location+"<br/>Watershed: "
+                            +site.value.watershed+"<br/>Site_Enviro: "+site.value.site_enviro;
       }
       L.popup()
         .setLatLng(tempLL)
