@@ -284,8 +284,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   isSiteDateGeoFilter: Boolean = true;
   microbeMetadata: Metadata[];
-  metadata: Metadata[];
-  metadata2: Metadata[];
+  metadata: any; // need to specify type
+  metadata2: any; // need to specify type
   filterData: Metadata[];
   selectedMetadata: Metadata;
   currentUser: User;
@@ -563,17 +563,16 @@ export class MapComponent implements OnInit, AfterViewInit {
       dataGroup.clearLayers();
     });
 
-    let query = "{'$and':[{'name':{'$in':['TEST_Micro_GPS']}},{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(box.geometry).replace(/"/g,'\'') + "}}}]}";
+    let dataStream: any = this.queryHandler.spatialSearch([box]);
 
-    if (this.queryHandler.cache.dataStore[query]) {
+    if (dataStream.data) {
 
-      this.microGPSData = [...this.queryHandler.cache.dataStore[query].data];
+      this.microGPSData = [...dataStream.data];
 
       this.querySiteDateGeo();
 
     } else {
     
-    let dataStream: QueryController = this.queryHandler.spatialSearch([box]);
 
 
     dataStream.getQueryObserver().subscribe((microGPSData: any) => {
@@ -591,7 +590,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public querySiteDateGeo() {
     /* create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
-    const locationHashmap: Object = {}
+    const locationHashmap: any = {}
     this.microGPSData.map((microGPS: any) => {
       if (!locationHashmap[microGPS.value.location]) {
         locationHashmap[microGPS.value.location] = microGPS.value; 
@@ -606,13 +605,11 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
     
-    /* make another query using query handler (Chaz) */
-    let cachedQuery = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(this.microGPSData.map((item: any) => item.value.location)) +"}}" + this.currentQuery + "] }"
+    let siteDateStream: any = this.queryHandler.siteDateSearch(this.microGPSData.map((item: any) => item.value.location), this.currentQuery);
+    
+    if (siteDateStream.data) { /* fix for preventing duplicate API calls */
 
-    /* need to implement a method to check cache without interrupting private variables */
-    if (this.queryHandler.cache.dataStore[cachedQuery]) { /* fix for preventing duplicate API calls */
-
-      this.metadata2 = [...this.queryHandler.cache.dataStore[cachedQuery].data]
+      this.metadata2 = [...siteDateStream.data]
 
       this.metadata2.map(siteDateGeochem => {
         if (locationHashmap[siteDateGeochem.value.location]) {
@@ -628,7 +625,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.queryMicrobes();
       
     } else {
-      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(this.microGPSData.map((item: any) => item.value.location), this.currentQuery);
 
       siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
         const asyncStatus: any = siteDateData.status;
@@ -677,20 +673,16 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
     })
 
-    console.log(siteDateGeoMap, 'map here')
 
     this.microbeMetadata = []
 
-    let query = "{'$and': [{'name':{'$in':['TEST_Microbes']}, 'value.id': {'$in':" + JSON.stringify(this.metadata2.map((item: any) => item.value.id)) +"}}] }";
+    let microbeStream: any = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id));
 
-    if (this.queryHandler.cache.dataStore[query]) { /* fix for preventing duplicate API calls */
+    if (microbeStream.data) { /* look for a better to fix this within query handler */
 
-    this.microbeMetadata = [...this.queryHandler.cache.dataStore[query].data]
+    this.microbeMetadata = [...microbeStream.data]
   
     } else {
-      let microbeStream: QueryController = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id));
-
-      console.log(microbeStream, 'k wait maybe here')
   
       microbeStream.getQueryObserver().subscribe((microbeData: any) => {
         const asyncStatus: any = microbeData.status;
@@ -727,7 +719,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         let i: number;
         for(i = 0; i < indices.length; i++) {
           let index = Number(indices[i]);
-          let datum = this.microGPSData[index];
+          let datum: any = this.microGPSData[index]; // need to specify type
         //  if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0)) || datum._links.associationIds.length > 0){
             this.metadata.push(datum)
             let group = NameGroupMap[datum.name];
@@ -897,7 +889,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       let i: number;
       for(i = 0; i < indices.length; i++) {
         let index = Number(indices[i]);
-        let datum = this.microGPSData[index];
+        let datum: any = this.microGPSData[index]; // need to specify type
       //  if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0)) || datum._links.associationIds.length > 0){
           this.metadata.push(datum)
           let group = NameGroupMap[datum.name];

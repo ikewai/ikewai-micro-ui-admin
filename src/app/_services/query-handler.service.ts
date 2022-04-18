@@ -195,26 +195,28 @@ export class QueryHandlerService {
   //should also go back to having a central cancel subject for each query unit that subqueries listen to to make cancelation more streamlined
 
   //handle features separately to optimize cache catches for subset queries
-  spatialSearch(features: any[]): QueryController {
+  spatialSearch(features: any[]): any {
 
     // let res: QueryResults = {
     //   handle: this.handleGen.getHandle(),
     //   dataStream: new Observable<QueryResponse>()
     // };
     let subjects = [];
-    let i;
-
-
-    for(i = 0; i < features.length; i++) {
-      //need to do something to handle too long queries
-      let query = "{'$and':[{'name':{'$in':['TEST_Micro_GPS']}},{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(features[i].geometry).replace(/"/g,'\'') + "}}}]}";
+    //need to do something to handle too long queries
+    let query = "{'$and':[{'name':{'$in':['TEST_Micro_GPS']}},{'value.loc': {$geoWithin: {'$geometry':" + JSON.stringify(features[0].geometry).replace(/"/g,'\'') + "}}}]}";
+    
+    let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+    
+    if (stored) {
+      return stored;
+    } else {
       subjects.push(this.handleQuery(query));
+      return new QueryController(subjects);
     }
-    return new QueryController(subjects);
   }
 
   //handle features separately to optimize cache catches for subset queries
-  siteDateSearch(locations: string[], filterQuery: string): QueryController {
+  siteDateSearch(locations: string[], filterQuery: string): any {
     // let res: QueryResults = {
     //   handle: this.handleGen.getHandle(),
     //   dataStream: new Observable<QueryResponse>()
@@ -225,12 +227,17 @@ export class QueryHandlerService {
       
     query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}" + filterQuery + "] }";
     // pull all site_date_geochem
-    subjects.push(this.handleQuery(query));
 
-    return new QueryController(subjects);
+    let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+    if (stored) {
+      return stored;
+    } else {
+      subjects.push(this.handleQuery(query));
+      return new QueryController(subjects);
+    }
   }
 
-  microbeSearch(locations: string[]): QueryController {
+  microbeSearch(locations: string[]): any {
     // let res: QueryResults = {
     //   handle: this.handleGen.getHandle(),
     //   dataStream: new Observable<QueryResponse>()
@@ -241,9 +248,14 @@ export class QueryHandlerService {
       
     query = "{'$and': [{'name':{'$in':['TEST_Microbes']}, 'value.id': {'$in':" + JSON.stringify(locations) +"}}] }";
     // pull all site_date_geochem
-    subjects.push(this.handleQuery(query));
 
-    return new QueryController(subjects);
+    let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+    if (stored) {
+      return stored;
+    } else {
+      subjects.push(this.handleQuery(query));
+      return new QueryController(subjects);
+    }
   }
 
   //deal with case where same query running multiple times before complete
@@ -328,7 +340,6 @@ export class QueryHandlerService {
       dataStream.subscribe(null, cleanup, cleanup);
 
     }
-
     return dataStream;
   }
 
