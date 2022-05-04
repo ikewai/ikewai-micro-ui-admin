@@ -45,6 +45,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   currentMicrobeLayer: any = null;
   currentSampleLayer: any = null;
 
+  clearMapLayers() {
+    this.dataGroups.MicroGPS.clearLayers();
+    this.dataGroups.microbes.clearLayers();
+  }
+
   gpsStream: any = null;
   siteDateStream: any = null;
   microbeStream: any = null;
@@ -276,9 +281,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (this.behindTheScenesLoading) {
       return alert("Still loading microbes. Please try again in a few seconds.");
     }
-    this.microGPSData = this.microGPSData.filter(
-      (item: any) => item.value.microbes && item.value.microbes.length
-    );
+    this.clearMapLayers();
 
     this.drawMicrobes();
     this.microbesFilterToggled = true;
@@ -287,6 +290,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   toggleSiteDateGeo() {
+    this.clearMapLayers();
+
     this.microGPSData = this.microGPSData.filter(
       (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
     );
@@ -688,10 +693,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     //this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
 
-    /* subscribe to query filter observer */
-    this.sampleQueryCtrl.valueChanges.subscribe(selectedValue => console.log(selectedValue, 'SAMPLE CHANGE'))
-    this.microbeQueryCtrl.valueChanges.subscribe(selectedValue => console.log(selectedValue, 'MICROBE CHANGE'))
-
     //this.findData()
     //console.log(this.defaultFilterHandle);
     //this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
@@ -715,6 +716,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     // this.siteDateStream && this.siteDateStream.cancel();
     // this.microbeStream && this.microbeStream.cancel();
     /* cancel any previous queries END (see microbes line 705) */
+
+    /* clear map layers */
+    this.clearMapLayers();
 
     this.globalLoading = true;
     this.behindTheScenesLoading = true;
@@ -816,6 +820,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       );
 
       if (this.isSiteDateGeoFilter) { /* only draw points if it's necessary */
+      console.log('is the cache being hit here?')
         this.drawMapPoints();
       }
 
@@ -1038,6 +1043,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           //$("#location-modal").modal('show');
           //}})
           if (this.dataGroups[group] != undefined) {
+            this.currentMicrobeLayer = layer;
             this.dataGroups[group].addLayer(layer);
           }
         },
@@ -1161,6 +1167,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           //$("#location-modal").modal('show');
           //}})
           if (this.dataGroups[group] != undefined) {
+            this.currentSampleLayer = layer;
             this.dataGroups[group].addLayer(layer);
           }
         },
