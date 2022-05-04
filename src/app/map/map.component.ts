@@ -1115,7 +1115,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   markerClick(e) {
-    
+
     /* Chaz 5-3-2022
      * Currently disabled due to one point mapping to many points.
      * Still need to think of an alternative functionality for markerClick.
@@ -1139,13 +1139,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   openModalSite(site) {
-    // console.log(site, 'site data')
     this.selectedMetadata = site;
     this.openMapZoomed(site); // small map on modal screen
   }
 
   openLinkedPopup(site) {
-    console.log(site, 'what is site here?');
     //var tempLL = L.latLng([site.value.latitude,site.value.longitude]);
     var tempLL = L.latLng([site.value.latitude, site.value.longitude]);
     let details = L.DomUtil.create('div');
