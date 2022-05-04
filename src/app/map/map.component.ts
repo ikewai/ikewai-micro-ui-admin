@@ -387,7 +387,6 @@ export class MapComponent implements OnInit, AfterViewInit {
         '</div>';
       return legend;
     };
-    //legendControl.addTo(this.map);
 
     let iconCreateFunction = (group: string): ((cluster: any) => L.DivIcon) => {
       return (cluster: any) => {
@@ -432,23 +431,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     L.control.layers(null, controlGroups).addTo(this.map);
     this.drawnItems.addTo(this.map);
-
-    //testing
-    // this.defaultFilterSource.subscribe((data: Metadata[]) => {
-    //   if(data == null) {
-    //     return;
-    //   }
-    //   let i;
-    //   for(i = 0; i < data.length; i++) {
-    //     let datum = data[i];
-    //     //console.log(datum.value.loc);
-    //     let geojson = L.geoJSON(datum.value.loc);
-    //     let group = NameGroupMap[datum.name];
-    //     console.log(datum.name);
-    //     // console.log(this.dataGroups[group]);
-    //     this.dataGroups[group].addLayer(geojson);
-    //   }
-    // });
   }
 
   onMapZoomedReady(mapZoomed: L.Map) {
