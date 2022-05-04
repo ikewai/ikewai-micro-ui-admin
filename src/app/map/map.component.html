@@ -189,40 +189,69 @@
                 <div id="tempDiv" style="visibility: hidden;"></div>
               </div>
             </div>
-            <div *ngIf="selectedMetadata.name === 'TEST_Site_Date_Geochem'" class="col-md-4 overflow-auto" style="height: 250px; width: 50%">
-              <b>Location:</b>&nbsp;{{selectedMetadata.value.location}}<br/>
-              <b>Watershed :</b>&nbsp;{{selectedMetadata.value.watershed}}<br/>
-              <span *ngIf="selectedMetadata.value.time"><b>Time :</b>&nbsp;{{selectedMetadata.value.time}}<br/></span>
-              <span *ngIf="selectedMetadata.value.date"><b>Date :</b>&nbsp;{{selectedMetadata.value.date}}<br/></span>
-              <span *ngIf="selectedMetadata.value.season"><b>Season :</b>&nbsp;{{selectedMetadata.value.season}}<br/></span>
-              <span *ngIf="selectedMetadata.value.year"><b>Year :</b>&nbsp;{{selectedMetadata.value.year}}<br/></span>
-              <span *ngIf="selectedMetadata.value.temp_c"><b>Temperature :</b>&nbsp;{{selectedMetadata.value.temp_c}} °C<br/></span>
-              <span *ngIf="selectedMetadata.value.ph"><b>pH :</b>&nbsp;{{selectedMetadata.value.ph}}<br/></span>
-              <span *ngIf="selectedMetadata.value.water_level_cm"><b>Water Level :</b>&nbsp;{{selectedMetadata.value.water_level_cm}} cm<br/></span>
-              <span *ngIf="selectedMetadata.value.do_percent"><b>DO_Percent :</b>&nbsp;{{selectedMetadata.value.do_percent}} %<br/></span>
-              <span *ngIf="selectedMetadata.value.do_mg_l"><b>DO_mg.L :</b>&nbsp;{{selectedMetadata.value.do_mg_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.spc_us"><b>SPC_US :</b>&nbsp;{{selectedMetadata.value.spc_us}}<br/></span>
-              <span *ngIf="selectedMetadata.value.sal_ppt"><b>Sal_ppt :</b>&nbsp;{{selectedMetadata.value.sal_ppt}}<br/></span>
-              <span *ngIf="selectedMetadata.value.turbidity"><b>Turbidity :</b>&nbsp;{{selectedMetadata.value.turbidity}}<br/></span>
-              <span *ngIf="selectedMetadata.value.tdn_umol_l"><b>TDN.umol.L :</b>&nbsp;{{selectedMetadata.value.tdn_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.tdp_umol_l"><b>TDP.umol.L :</b>&nbsp;{{selectedMetadata.value.tdp_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.PO4_umol_l"><b>PO4.umol.L :</b>&nbsp;{{selectedMetadata.value.PO4_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.si_umol_l"><b>SI.umol.L :</b>&nbsp;{{selectedMetadata.value.si_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.nox_umol_l"><b>NOX.umol.L :</b>&nbsp;{{selectedMetadata.value.nox_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.nh4_umol_l"><b>NH4.umol.L :</b>&nbsp;{{selectedMetadata.value.nh4_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.toc_umol_l"><b>TOC.umol.L :</b>&nbsp;{{selectedMetadata.value.toc_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.cor_tdn_umol_l"><b>COR TDN.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_tdn_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.cor_tdp_umol_l"><b>COR TDP.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_tdp_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.cor_PO4_umol_l"><b>COR PO4.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_PO4_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.cor_nox_umol_l"><b>COR NOX.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_nox_umol_l}}<br/></span>
-              <span *ngIf="selectedMetadata.value.cor_nh4_umol_l"><b>COR NH4.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_nh4_umol_l}}<br/></span>
+              <div *ngIf="selectedMetadata.name === 'TEST_Site_Date_Geochem'" class="col-md-4 overflow-auto" style="height: 250px; width: 50%">
+                <div *ngIf="!ahupuaaToggled">
+                  <b>Location:</b>&nbsp;{{selectedMetadata.value.location}}<br/>
+                  <b>Watershed :</b>&nbsp;<a class="link-primary" (click)="toggleAhupuaa()">{{selectedMetadata.value.watershed}}</a><br/>
+                  <span *ngIf="selectedMetadata.value.time"><b>Time :</b>&nbsp;{{selectedMetadata.value.time}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.date"><b>Date :</b>&nbsp;{{selectedMetadata.value.date}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.season"><b>Season :</b>&nbsp;{{selectedMetadata.value.season}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.year"><b>Year :</b>&nbsp;{{selectedMetadata.value.year}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.temp_c"><b>Temperature :</b>&nbsp;{{selectedMetadata.value.temp_c}} °C<br/></span>
+                  <span *ngIf="selectedMetadata.value.ph"><b>pH :</b>&nbsp;{{selectedMetadata.value.ph}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.water_level_cm"><b>Water Level :</b>&nbsp;{{selectedMetadata.value.water_level_cm}} cm<br/></span>
+                  <span *ngIf="selectedMetadata.value.do_percent"><b>DO_Percent :</b>&nbsp;{{selectedMetadata.value.do_percent}} %<br/></span>
+                  <span *ngIf="selectedMetadata.value.do_mg_l"><b>DO_mg.L :</b>&nbsp;{{selectedMetadata.value.do_mg_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.spc_us"><b>SPC_US :</b>&nbsp;{{selectedMetadata.value.spc_us}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.sal_ppt"><b>Sal_ppt :</b>&nbsp;{{selectedMetadata.value.sal_ppt}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.turbidity"><b>Turbidity :</b>&nbsp;{{selectedMetadata.value.turbidity}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.tdn_umol_l"><b>TDN.umol.L :</b>&nbsp;{{selectedMetadata.value.tdn_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.tdp_umol_l"><b>TDP.umol.L :</b>&nbsp;{{selectedMetadata.value.tdp_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.PO4_umol_l"><b>PO4.umol.L :</b>&nbsp;{{selectedMetadata.value.PO4_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.si_umol_l"><b>SI.umol.L :</b>&nbsp;{{selectedMetadata.value.si_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.nox_umol_l"><b>NOX.umol.L :</b>&nbsp;{{selectedMetadata.value.nox_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.nh4_umol_l"><b>NH4.umol.L :</b>&nbsp;{{selectedMetadata.value.nh4_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.toc_umol_l"><b>TOC.umol.L :</b>&nbsp;{{selectedMetadata.value.toc_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.cor_tdn_umol_l"><b>COR TDN.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_tdn_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.cor_tdp_umol_l"><b>COR TDP.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_tdp_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.cor_PO4_umol_l"><b>COR PO4.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_PO4_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.cor_nox_umol_l"><b>COR NOX.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_nox_umol_l}}<br/></span>
+                  <span *ngIf="selectedMetadata.value.cor_nh4_umol_l"><b>COR NH4.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_nh4_umol_l}}<br/></span>
 
-              <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
-                <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 
-                   (click)="downloadClick(link.href)">
-                    <img class="images" src="assets/fileicons/{{link.href.split('.').pop()}}.png" height="40px"/>
-                    Download {{link.href.split('/').slice(-1)[0]}}</a>
-              </div>
+                  <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
+                    <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 
+                      (click)="downloadClick(link.href)">
+                        <img class="images" src="assets/fileicons/{{link.href.split('.').pop()}}.png" height="40px"/>
+                        Download {{link.href.split('/').slice(-1)[0]}}</a>
+                  </div>
+                </div>
+                <div *ngIf="ahupuaaToggled">
+                  <span style="font-size: 10px" class="d-flex justify-content-between"><b>Corresponding Ahupua'a Data</b><a class="link-primary" (click)="toggleAhupuaa()">Back to Sample Data</a></span><br/>
+                  <b>Ahupua'a: </b>&nbsp;{{selectedAhupuaa.value.ahupuaa}}<br/>
+                  <b>Watershed: </b>&nbsp;{{selectedAhupuaa.value.watershed}}<br/>
+                  <span *ngIf="selectedAhupuaa.value.island"><b>Island: </b>&nbsp;{{selectedAhupuaa.value.island}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.pcaref"><b>Pcaref: </b>&nbsp;{{selectedAhupuaa.value.pcaref}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.area_watershed_sqkm"><b>Area: </b>&nbsp;{{selectedAhupuaa.value.area_watershed_sqkm}} square km<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.max_elevation_watershed-m"><b>Max Elevation Watershed: </b>&nbsp;{{selectedAhupuaa.value.max_elevation_watershed-m}} m<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.dar_cluster_code"><b>Dar Cluster Code: </b>&nbsp;{{selectedAhupuaa.value.dar_cluster_code}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.agricultural_percent"><b>Agricultural Percent: </b>&nbsp;{{selectedAhupuaa.value.agricultural_percent}}%<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.conservation_percent"><b>Conservation Percent: </b>&nbsp;{{selectedAhupuaa.value.conservation_percent}}%<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.rural_percent"><b>Rural Percent: </b>&nbsp;{{selectedAhupuaa.value.rural_percent}}%<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.urban_percent"><b>Urban Percent: </b>&nbsp;{{selectedAhupuaa.value.urban_percent}}%<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.land_cover_rating"><b>Land Cover Rating: </b>&nbsp;{{selectedAhupuaa.value.land_cover_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.shallow_waters_rating"><b>Shallow Waters Rating: </b>&nbsp;{{selectedAhupuaa.value.shallow_waters_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.stewardship_rating"><b>Stewardship Rating: </b>&nbsp;{{selectedAhupuaa.value.stewardship_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.size_rating"><b>Size Rating: </b>&nbsp;{{selectedAhupuaa.value.size_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.wetness_rating"><b>Wetness Rating: </b>&nbsp;{{selectedAhupuaa.value.wetness_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.reach_diversity_rating"><b>Reach Diversity Rating: </b>&nbsp;{{selectedAhupuaa.value.reach_diversity_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.total_watershed_rating"><b>Total Watershed Rating: </b>&nbsp;{{selectedAhupuaa.value.total_watershed_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.native_species_rating"><b>Native Species Rating: </b>&nbsp;{{selectedAhupuaa.value.native_species_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.introduced_genera_rating"><b>Introduced Genera Rating: </b>&nbsp;{{selectedAhupuaa.value.introduced_genera_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.all_species_score_rating"><b>All Species Score Rating: </b>&nbsp;{{selectedAhupuaa.value.all_species_score_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.total_biological_rating"><b>Total Biological Rating: </b>&nbsp;{{selectedAhupuaa.value.total_biological_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.overall_rating"><b>Overall Rating: </b>&nbsp;{{selectedAhupuaa.value.overall_rating}}<br/></span>
+                  <span *ngIf="selectedAhupuaa.value.raiting_strength"><b>Raiting Strength: </b>&nbsp;{{selectedAhupuaa.value.raiting_strength}}<br/></span>
+                </div>
               </div>
               <div *ngIf="selectedMetadata.name === 'TEST_Microbes'" class="col-md-4">
                 <b>ID:</b>&nbsp;{{selectedMetadata.value.id}}<br/>

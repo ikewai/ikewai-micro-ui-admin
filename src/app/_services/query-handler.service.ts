@@ -215,6 +215,26 @@ export class QueryHandlerService {
     }
   }
 
+  ahupuaaSearch(): any {
+
+    // let res: QueryResults = {
+    //   handle: this.handleGen.getHandle(),
+    //   dataStream: new Observable<QueryResponse>()
+    // };
+    let subjects = [];
+    //need to do something to handle too long queries
+    let query = "{'$and':[{'name':{'$in':['TEST_Ahupuaa']}}]}";
+    
+    let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+    
+    if (stored) {
+      return stored;
+    } else {
+      subjects.push(this.handleQuery(query));
+      return new QueryController(subjects);
+    }
+  }
+
   //handle features separately to optimize cache catches for subset queries
   siteDateSearch(locations: string[], filterQuery: string): any {
     // let res: QueryResults = {

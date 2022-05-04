@@ -44,6 +44,13 @@ export class MapComponent implements OnInit, AfterViewInit {
   behindTheScenesLoading: boolean = false;
   currentMicrobeLayer: any = null;
   currentSampleLayer: any = null;
+  allAhupuaaData: any = null;
+  ahupuaaToggled: boolean = false;
+  selectedAhupuaa: any = null;
+
+  toggleAhupuaa() {
+    this.ahupuaaToggled = !this.ahupuaaToggled;
+  }
 
   clearMapLayers() {
     this.dataGroups.MicroGPS.clearLayers();
@@ -681,6 +688,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
+    let ahupuaaData: any = this.queryHandler.ahupuaaSearch();
+    ahupuaaData.getQueryObserver().subscribe((ahupuaaData: any) => {
+      this.allAhupuaaData = ahupuaaData.data;
+      console.log(this.allAhupuaaData, '?? data?')
+    });
     this.findData();
   }
 
@@ -1434,6 +1446,12 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   openModalSite(site) {
     this.selectedMetadata = site;
+    this.selectedAhupuaa = this.allAhupuaaData.find((element:any) => {      
+      if (element.value.watershed === site.value.watershed) {
+        console.log(element.value.watershed, site.value.watershed)
+        return element;
+      }
+      element.watershed === site.value.watersehd})
     this.openMapZoomed(site); // small map on modal screen
   }
 
