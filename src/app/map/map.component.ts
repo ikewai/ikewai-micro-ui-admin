@@ -52,6 +52,10 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.ahupuaaToggled = !this.ahupuaaToggled;
   }
 
+  toggleAhupuaaClosed() {
+    this.ahupuaaToggled = false;
+  }
+
   clearMapLayers() {
     this.dataGroups.MicroGPS.clearLayers();
     this.dataGroups.microbes.clearLayers();
@@ -186,6 +190,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   queryOptions = {
     agar_type: 'TEST_CFU',
   };
+
 
   microbeQueryFilter() {
     if (this.behindTheScenesLoading) {
@@ -691,7 +696,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     let ahupuaaData: any = this.queryHandler.ahupuaaSearch();
     ahupuaaData.getQueryObserver().subscribe((ahupuaaData: any) => {
       this.allAhupuaaData = ahupuaaData.data;
-      console.log(this.allAhupuaaData, '?? data?')
     });
     this.findData();
   }
@@ -832,7 +836,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       );
 
       if (this.isSiteDateGeoFilter) { /* only draw points if it's necessary */
-      console.log('is the cache being hit here?')
         this.drawMapPoints();
       }
 
@@ -1445,10 +1448,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   openModalSite(site) {
+    this.toggleAhupuaaClosed();
     this.selectedMetadata = site;
     this.selectedAhupuaa = this.allAhupuaaData.find((element:any) => {      
       if (element.value.watershed === site.value.watershed) {
-        console.log(element.value.watershed, site.value.watershed)
         return element;
       }
       element.watershed === site.value.watersehd})
