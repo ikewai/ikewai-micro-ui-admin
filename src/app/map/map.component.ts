@@ -278,7 +278,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       (item: any) => item.value.microbes && item.value.microbes.length
     );
 
-    this.drawMapPoints();
+    this.drawMicrobes();
     this.microbesFilterToggled = true;
     this.isSiteDateGeoFilter = false;
     this.toggleFilterBar();
@@ -489,6 +489,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     wells: L.FeatureGroup;
     waterQualitySites: L.FeatureGroup;
     MicroGPS: L.FeatureGroup;
+    microbes: L.FeatureGroup;
   };
 
   options: L.MapOptions = {
@@ -588,6 +589,10 @@ export class MapComponent implements OnInit, AfterViewInit {
       sites: L.markerClusterGroup({ iconCreateFunction: iconCreateFunction('sites'), disableClusteringAtZoom: 4 }),
       MicroGPS: L.markerClusterGroup({
         iconCreateFunction: iconCreateFunction('MicroGPS'),
+        disableClusteringAtZoom: 4,
+      }),
+      microbes: L.markerClusterGroup({
+        iconCreateFunction: iconCreateFunction('Microbes'),
         disableClusteringAtZoom: 4,
       }),
       wells: L.markerClusterGroup({ iconCreateFunction: iconCreateFunction('wells'), disableClusteringAtZoom: 12 }),
@@ -803,7 +808,9 @@ export class MapComponent implements OnInit, AfterViewInit {
         (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
       );
 
-      this.drawMapPoints();
+      if (this.isSiteDateGeoFilter) { /* only draw points if it's necessary */
+        this.drawMapPoints();
+      }
 
       this.queryMicrobes();
     } else {
@@ -830,13 +837,12 @@ export class MapComponent implements OnInit, AfterViewInit {
 
         if (asyncStatus.finished) {
 
+          this.microGPSData = this.microGPSData.filter(
+            (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
+          );
+
           if (this.isSiteDateGeoFilter) {
             /* clean map to represent the filtered data */
-            console.log('DID THIS GET FIRED??')
-            this.microGPSData = this.microGPSData.filter(
-              (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
-            );
-
             this.drawMapPoints();
           }
 
@@ -866,6 +872,13 @@ export class MapComponent implements OnInit, AfterViewInit {
       /* look for a better to fix this within query handler */
 
       this.microbeMetadata = [...microbeStream.data];
+
+      if (this.microbesFilterToggled) {
+        console.log('RE DRAW from cache')
+    
+        this.drawMicrobes();
+      }
+      
       this.behindTheScenesLoading = false;
     } else {
       this.microbeStream = microbeStream;
@@ -888,7 +901,6 @@ export class MapComponent implements OnInit, AfterViewInit {
           this.microbeMetadata.push({ ...microbes });
         });
 
-        console.log(this.microGPSData, 'the map stufff?')
 
         if (asyncStatus.finished) { 
           /* I tried to cancel data that is being fetched when a new
@@ -899,20 +911,139 @@ export class MapComponent implements OnInit, AfterViewInit {
 
           // this.globalLoading = false;
           this.behindTheScenesLoading = false;
-          console.log(this.microbeMetadata, 'finished');
+          console.log(this.microbeMetadata, 'do i have location?')
 
           if (this.microbesFilterToggled) {
             console.log('RE DRAW')
-
-            this.microGPSData = this.microGPSData.filter(
-              (item: any) => item.value.microbes && item.value.microbes.length
-            );
         
-            this.drawMapPoints();
+            this.drawMicrobes();
           }
         }
       });
     }
+  }
+
+  public drawMicrobes() {
+    /* END make another query using query handler (Chaz) */
+
+    let indices = Object.keys(this.microbeMetadata);
+    let i: number;
+    for (i = 0; i < indices.length; i++) {
+      let index = Number(indices[i]);
+      let datum: any = this.microbeMetadata[index]; // need to specify type
+      //  if((datum.name=="Water_Quality_Site" && datum.value.resultCount > 0)) || datum._links.associationIds.length > 0){
+      this.metadata.push(datum);
+      let group = NameGroupMap[datum.name];
+      //console.log(datum.value.loc);
+      let geod = datum.value.loc;
+      //console.log(geod)
+      let prop = {};
+      prop['uuid'] = datum.uuid;
+      geod.properties = prop;
+      let geojson = L.geoJSON(geod, {
+        style: this.getStyleByGroup(group),
+        pointToLayer: (feature, latlng) => {
+          let icon = this.getIconByGroup(group);
+          return L.circleMarker(latlng, { radius: 5, opacity: 1, fillOpacity: 0.9, color: 'gray' });
+          //return L.marker(latlng, {icon: icon});
+        },
+        onEachFeature: (feature, layer) => {
+          //  let header = L.DomUtil.create("h6")
+          let wrapper = L.DomUtil.create('div');
+          let details = L.DomUtil.create('div');
+          let download = L.DomUtil.create('div');
+          let goto = L.DomUtil.create('span', 'entry-link');
+
+          //details.innerText = JSON.stringify(datum.value);
+          //header.innerText=datum.name.replace(/_/g, ' ');
+          if (datum.name == 'Water_Quality_Site' && datum.value.resultCount > 0) {
+            details.innerHTML =
+              '<br/>Name: ' +
+              datum.value.name +
+              '<br/>ID: ' +
+              datum.value.MonitoringLocationIdentifier +
+              '<br/>Provider: ' +
+              datum.value.ProviderName +
+              '<br/>' +
+              datum.value.description +
+              '<br/>Latitude: ' +
+              datum.value.latitude +
+              '<br/>Longitude: ' +
+              datum.value.longitude +
+              "<br/><a target='_blank' href='" +
+              datum.value.siteUrl +
+              "'>More Details</a>";
+
+            download.innerHTML =
+              "<br/><a class='btn btn-success' href='https://www.waterqualitydata.us/Result/search?siteid=" +
+              datum.value.MonitoringLocationIdentifier +
+              "&mimeType=csv&zip=yes&sorted=no' target='_blank' > Download " +
+              datum.value.resultCount +
+              ' Measurements</a></br>';
+          }
+          if (datum.name == 'TEST_Microbes') {
+            details.innerHTML =
+              '<br/>Location: ' +
+              datum.value.location +
+              '<br/>Watershed: ' +
+              datum.value.watershed +
+              '<br/>Site_Enviro: ' +
+              datum.value.site_enviro;
+            //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
+            //+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
+            //"<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "
+            //+datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude
+            //+"<br/>Longitude: "+datum.value.longitude+
+            //'<br/><button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" onclick="document.getElementById('+"'"+datum.uuid+"'"+').click()">View</button>';
+
+            let j: number;
+            for (j = 0; j < datum._links.associationIds.length; j++) {
+              if (datum._links.associationIds[j].href.indexOf('ikewai-annotated') !== -1) {
+                //  download.innerHTML ='<a href="javascript:void(0);" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
+              }
+            }
+          }
+          let popup: L.Popup = new L.Popup({ autoPan: false });
+          //  wrapper.append(header)
+          wrapper.append(details);
+          //  wrapper.append(download);
+          //  wrapper.append(goto);
+
+          //  let linkDiv = wrapper.getElementsByClassName("entry-link");
+
+          let gotoWrapper = () => {
+            console.log('click');
+            //this.gotoEntry(index);
+          };
+          //linkDiv[0].addEventListener("click", gotoWrapper);
+          popup.setContent(wrapper);
+          layer.bindPopup(popup);
+
+          layer.on('mouseover', function () {
+            layer.openPopup();
+          });
+          layer.on('click', this.markerClick.bind(this));
+
+          // function(){ {
+          //   openModalDialog(datum);
+          //   console.log(this.selectedMetadata);
+          //   (function ($) {
+          //       $('#location-dialog').modal('show');
+          //       //$('#location-dialog').modal('show');
+          //     })(jQuery);
+          //document.getElementById('location-modal').style.display = 'block';
+          //$("#location-modal").modal('show');
+          //}})
+          if (this.dataGroups[group] != undefined) {
+            this.dataGroups[group].addLayer(layer);
+          }
+        },
+      });
+      this.filterData = this.metadata2;
+      this.dtTrigger.next();
+    }
+    this.loading = false;
+    this.globalLoading = false;
   }
 
   public drawMapPoints() {
@@ -1469,6 +1600,7 @@ enum NameGroupMap {
   Site = 'sites',
   Well = 'wells',
   TEST_Micro_GPS = 'MicroGPS',
+  TEST_Microbes = 'microbes'
 }
 
 enum GroupLabelMap {
@@ -1476,4 +1608,5 @@ enum GroupLabelMap {
   sites = 'Sites',
   wells = 'Wells',
   TEST_Micro_GPS = 'MicroGPS',
+  TEST_Microbes = 'microbes'
 }

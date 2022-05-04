@@ -62,10 +62,10 @@
     </div>
 
     <div *ngIf="microbesFilterToggled" class="col-md-6">
-      <div *ngIf="filterData.length == 0" style="height:500px;">
+      <div *ngIf="microbeMetadata.length == 0" style="height:500px;">
         <h5>No Microbe Results For Current Area.</h5>
       </div>
-      <div *ngIf="filterData.length > 0" style="height:500px;">
+      <div *ngIf="microbeMetadata.length > 0" style="height:500px;">
       <h5>Microbe Results {{microbeMetadata.length}}</h5>
       <div style="overflow: auto; height:468px;" class="table-responsive">
       <table  class="table row-border hover table-striped">
