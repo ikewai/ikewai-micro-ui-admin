@@ -53,12 +53,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     ],
   };
 
-  query2 = {
+  microbeQuery = {
     condition: 'and',
     rules: [{ field: 'sequencing_facility', operator: '=', value: 'UCI', type: 'string' }],
   };
 
-  config: QueryBuilderConfig = {
+  sampleConfig: QueryBuilderConfig = {
     fields: {
       date: { name: 'Date', type: 'date' },
       season: {
@@ -81,28 +81,34 @@ export class MapComponent implements OnInit, AfterViewInit {
       ph: { name: 'pH', type: 'number' },
       water_level_cm: { name: 'WATER_LEVEL_cm', type: 'number' },
       turbidity: { name: 'Turbidity', type: 'number' },
-      tdn_umol_L: { name: 'TDN_umol.L', type: 'number' },
-      tdp_umol_L: { name: 'TDP_umol.L', type: 'number' },
-      po4_umol_L: { name: 'PO4_umol.L', type: 'number' },
-      si_umol_L: { name: 'Si_umol.L', type: 'number' },
-      nox_umol_L: { name: 'NOX_umol.L', type: 'number' },
-      nh4_umol_L: { name: 'NH4_umol.L', type: 'number' },
-      toc_umol_L: { name: 'TOC_umol.L', type: 'number' },
-      agar_type: {
-        name: 'agar_type',
-        type: 'category',
-        options: [
-          { name: 'CHROM - Staphylococcus', value: 'CHROM' },
-          { name: 'mEI - enterococus', value: 'mEI' },
-          { name: 'MI - Eschericia coli>', value: 'MI' },
-          { name: 'MI_UV - total coliform', value: 'MI_UV' },
-          { name: 'LB - Heterotrophs', value: 'LB' },
-        ],
-      },
+      tdn_umol_l: { name: 'TDN_umol.L', type: 'number' },
+      tdp_umol_l: { name: 'TDP_umol.L', type: 'number' },
+      po4_umol_l: { name: 'PO4_umol.L', type: 'number' },
+      si_umol_l: { name: 'Si_umol.L', type: 'number' },
+      nox_umol_l: { name: 'NOX_umol.L', type: 'number' },
+      nh4_umol_l: { name: 'NH4_umol.L', type: 'number' },
+      toc_umol_l: { name: 'TOC_umol.L', type: 'number' },
+      cor_tdn_umol_l: { name: 'COR_TDN_umol.L', type: 'number' },
+      cor_tdp_umol_l: {name: 'COR_TDP_umol.L', type: 'number'},
+      cor_po4_umol_l: {name: 'COR_PO4_umol.L', type: 'number'},
+      cor_nox_umol_l: {name: 'COR_NOX_umol.L', type: 'number'},
+      cor_nh4_umol_l: {name: 'COR_NH4_umol.L', type: 'number'},
+      /* CFU */
+      // agar_type: {
+      //   name: 'agar_type',
+      //   type: 'category',
+      //   options: [
+      //     { name: 'CHROM - Staphylococcus', value: 'CHROM' },
+      //     { name: 'mEI - enterococus', value: 'mEI' },
+      //     { name: 'MI - Eschericia coli>', value: 'MI' },
+      //     { name: 'MI_UV - total coliform', value: 'MI_UV' },
+      //     { name: 'LB - Heterotrophs', value: 'LB' },
+      //   ],
+      // },
     },
   };
 
-  config2: QueryBuilderConfig = {
+  microbeConfig: QueryBuilderConfig = {
     fields: {
       sequencing_facility: { name: 'sequencing_facility', type: 'string' },
     },
@@ -199,7 +205,6 @@ export class MapComponent implements OnInit, AfterViewInit {
         nestedQuery[1] += `${field} ${readable}`;
         i !== query.rules.length - 1 ? (nestedQuery[0] += ', ') : null;
         i !== query.rules.length - 1 ? (nestedQuery[1] += readableCondition) : null;
-        // nestedQuery[0] += `operation`;
       }
       if (query.rules[i].condition) {
         this.sampleQueryFilterRecursive(query.rules[i], nestedQuery);

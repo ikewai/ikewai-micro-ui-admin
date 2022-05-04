@@ -115,7 +115,7 @@
           <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">Cultured Bacteria Filter</button>
         </div>
         <h5>Sample Filter</h5>
-        <query-builder [(ngModel)]='sampleQuery' [config]='config' [formControl]='queryCtrl'>
+        <query-builder [(ngModel)]='sampleQuery' [config]='sampleConfig' [formControl]='queryCtrl'>
         </query-builder>
         <div class="container" style="margin-top: 10px">
           <div class="row">
@@ -133,7 +133,7 @@
       </div>
       <h5>Microbes Filter</h5>
       <p>{{this.currentReadableQuery}}</p>
-      <query-builder [(ngModel)]='query2' [config]='config2' [formControl]='queryCtrl'>
+      <query-builder [(ngModel)]='microbeQuery' [config]='microbeConfig' [formControl]='queryCtrl'>
       </query-builder>
       <div class="container" style="margin-top: 10px">
         <div class="row">
