@@ -33,7 +33,8 @@ import { QueryBuilderConfig } from 'angular2-query-builder';
   styleUrls: ['./map.component.css'],
 })
 export class MapComponent implements OnInit, AfterViewInit {
-  queryCtrl = new FormControl('');
+  sampleQueryCtrl = new FormControl('');
+  microbeQueryCtrl = new FormControl('');
   currentSampleQuery: string = '';
   currentMicrobeQuery: string = '';
   currentSampleReadableQuery: string = '';
@@ -41,6 +42,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   loading: boolean = false;
   globalLoading: boolean = false;
   behindTheScenesLoading: boolean = false;
+  currentMicrobeLayer: any = null;
+  currentSampleLayer: any = null;
 
   gpsStream: any = null;
   siteDateStream: any = null;
@@ -48,11 +51,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   microbesFilterToggled: boolean = false;
   showFilterBar: boolean = false;
-
-  test() {
-    console.log(this.queryCtrl, '??')
-  }
-
 
   sampleQuery = {
     condition: 'and',
@@ -402,7 +400,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         case '!=':
           return `: {'$ne': '${value}'}`;
         default:
-          console.log('No such operator exists!');
+          console.error('No such operator exists!');
           break;
       }
     } else { /* equals a number in the database (no quotes around the value) */
@@ -420,7 +418,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         case '!=':
           return `: {'$ne': ${value}}`;
         default:
-          console.log('No such operator exists!');
+          console.error('No such operator exists!');
           break;
       }
     }
@@ -456,7 +454,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       case '!=':
         return `does not equal ${value}`;
       default:
-        console.log('No such operator exists!');
+        console.error('No such operator exists!');
         break;
     }
   }
@@ -690,6 +688,10 @@ export class MapComponent implements OnInit, AfterViewInit {
     //this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
 
+    /* subscribe to query filter observer */
+    this.sampleQueryCtrl.valueChanges.subscribe(selectedValue => console.log(selectedValue, 'SAMPLE CHANGE'))
+    this.microbeQueryCtrl.valueChanges.subscribe(selectedValue => console.log(selectedValue, 'MICROBE CHANGE'))
+
     //this.findData()
     //console.log(this.defaultFilterHandle);
     //this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
@@ -878,9 +880,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       this.microbeMetadata = [...microbeStream.data];
 
-      if (this.microbesFilterToggled) {
-        console.log('RE DRAW from cache')
-    
+      if (this.microbesFilterToggled) {    
         this.drawMicrobes();
       }
       
@@ -916,10 +916,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
           // this.globalLoading = false;
           this.behindTheScenesLoading = false;
-          console.log(this.microbeMetadata, 'do i have location?')
 
           if (this.microbesFilterToggled) {
-            console.log('RE DRAW')
         
             this.drawMicrobes();
           }
@@ -1250,7 +1248,6 @@ export class MapComponent implements OnInit, AfterViewInit {
         });
       });
 
-      console.log(locationHashmap, 'locationHashmap');
       /* END make another query using query handler (Chaz) */
       let indices = Object.keys(this.microGPSData);
       let i: number;
@@ -1302,7 +1299,6 @@ export class MapComponent implements OnInit, AfterViewInit {
                 ' Measurements</a></br>';
             }
             if (datum.name == 'TEST_Micro_GPS') {
-              console.log(datum, '??');
               details.innerHTML =
                 '<br/>Location: ' +
                 datum.value.location +
@@ -1342,7 +1338,6 @@ export class MapComponent implements OnInit, AfterViewInit {
             layer.bindPopup(popup);
             if (this.dataGroups[group] != undefined) {
               this.dataGroups[group].addLayer(layer);
-              console.log(group);
             }
           },
         });
@@ -1443,27 +1438,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   markerClick(e) {
-
-    /* Chaz 5-3-2022
-     * Currently disabled due to one point mapping to many points.
-     * Still need to think of an alternative functionality for markerClick.
-     */
-
-    // let datum = e.sourceTarget.feature.geometry.properties;
-
-    // document.getElementById('filterField').focus();
-    // if (!document.getElementById(datum.uuid)) {
-    //   // if (document.getElementById('filterField').value) {
-    //   //  document.getElementById('filterField').value = "";
-    //   // }
-    // } else {
-    //   document.getElementById('location-modal').style.display = 'block';
-    // }
-
-    // if (document.getElementById(datum.uuid)) {
-    //   document.getElementById(datum.uuid).focus();
-    //   document.getElementById(datum.uuid).click();
-    // }
   }
 
   openModalSite(site) {
