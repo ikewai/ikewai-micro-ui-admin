@@ -944,7 +944,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         style: this.getStyleByGroup(group),
         pointToLayer: (feature, latlng) => {
           let icon = this.getIconByGroup(group);
-          return L.circleMarker(latlng, { radius: 5, opacity: 1, fillOpacity: 0.9, color: 'gray' });
+          return L.circleMarker(latlng, { radius: 5, opacity: 1, fillOpacity: 0.9, color: 'pink' });
           //return L.marker(latlng, {icon: icon});
         },
         onEachFeature: (feature, layer) => {

@@ -48,30 +48,30 @@
 
 
 
-::ng-deep .marker-cluster-small-wells {
+::ng-deep .marker-cluster-small-microbes {
     background-color: rgba(158, 202, 225, 0.8) !important;
     color: white !important;
 }
 
-::ng-deep .marker-cluster-small-wells div {
+::ng-deep .marker-cluster-small-microbes div {
     background-color: rgba(107, 174, 214, 0.8) !important;
 }
 
-::ng-deep .marker-cluster-medium-wells {
+::ng-deep .marker-cluster-medium-microbes {
     background-color: rgba(66, 146, 198, 0.8) !important;
     color: white !important;
 }
 
-::ng-deep .marker-cluster-medium-wells div {
+::ng-deep .marker-cluster-medium-microbes div {
     background-color: rgba(33, 113, 181, 0.8) !important;
 }
 
-::ng-deep .marker-cluster-large-wells {
+::ng-deep .marker-cluster-large-microbes {
     background-color: rgba(8, 81, 156, 0.8) !important;
     color: white !important;
 }
 
-::ng-deep .marker-cluster-large-wells div {
+::ng-deep .marker-cluster-large-microbes div {
     background-color: rgba(8, 48, 107, 0.8) !important;
 }
 
