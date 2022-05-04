@@ -228,10 +228,17 @@
                 <b>ID:</b>&nbsp;{{selectedMetadata.value.id}}<br/>
                 <b>Date:</b>&nbsp;{{selectedMetadata.value.date}}<br/>
                 <b>Site:</b>&nbsp;{{selectedMetadata.value.site}}<br/>
-                <span *ngIf="selectedMetadata.value.filter_size_um"><b>Filter Size UM:</b>&nbsp;{{selectedMetadata.value.filter_size_um}}<br/></span>
-                <span *ngIf="selectedMetadata.value.volume_l"><b>Volume L:</b>&nbsp;{{selectedMetadata.value.volume_l}}<br/></span>
-                <span *ngIf="selectedMetadata.value.lifestyle"><b>Lifestyle:</b>&nbsp;{{selectedMetadata.value.lifestyle}} cm<br/></span>
-            
+                <span *ngIf="selectedMetadata.value.filter_size_um"><b>Filter Size UM: </b>&nbsp;{{selectedMetadata.value.filter_size_um}}<br/></span>
+                <span *ngIf="selectedMetadata.value.volume_l"><b>Volume L: </b>&nbsp;{{selectedMetadata.value.volume_l}}<br/></span>
+                <span *ngIf="selectedMetadata.value.lifestyle"><b>Lifestyle: </b>&nbsp;{{selectedMetadata.value.lifestyle}}<br/></span>
+                <span *ngIf="selectedMetadata.value.collection_time"><b>Collection Time: </b>&nbsp;{{selectedMetadata.value.collection_time}}<br/></span>
+                <span *ngIf="selectedMetadata.value.sequencing_facility"><b>Sequencing Facility: </b>&nbsp;{{selectedMetadata.value.sequencing_facility}}<br/></span>
+                <span *ngIf="selectedMetadata.value.sample_type"><b>Sample Type: </b>&nbsp;{{selectedMetadata.value.sample_type}}<br/></span>
+                <span *ngIf="selectedMetadata.value.sample_replicate"><b>Sample Replicate: </b>&nbsp;{{selectedMetadata.value.sample_replicate}}<br/></span>
+                <span *ngIf="selectedMetadata.value.sample_no"><b>Sample No: </b>&nbsp;{{selectedMetadata.value.sample_no}}<br/></span>
+                <span *ngIf="selectedMetadata.value.library"><b>Library: </b>&nbsp;{{selectedMetadata.value.library}}<br/></span>
+
+
                 <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
                   <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 
                      (click)="downloadClick(link.href)">

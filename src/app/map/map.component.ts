@@ -73,6 +73,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   sampleConfig: QueryBuilderConfig = {
     fields: {
       id: { name: 'Name', type: 'string' },
+      location: { name: 'Location', type: 'string' },
       date: { name: 'Date', type: 'date' },
       season: {
         name: 'Season',
@@ -123,7 +124,48 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   microbeConfig: QueryBuilderConfig = {
     fields: {
-      sequencing_facility: { name: 'sequencing_facility', type: 'string' },
+      sequencing_facility: {
+        name: 'Sequencing Facility',
+        type: 'category',
+        options: [
+          { name: 'UCI', value: 'UCI' },
+          { name: 'HIMB', value: 'HIMB' },
+          { name: '0', value: '0' },
+        ],
+      },
+      library: { name: 'Library', type: 'number' },
+      date: { name: 'Date', type: 'date' },
+      site: { name: 'Site', type: 'string' },
+      id: { name: 'Name', type: 'string' },
+      lifestyle: {
+        name: 'Lifestyle',
+        type: 'category',
+        options: [
+          { name: 'Free Living', value: 'Free_Living' },
+          { name: 'Particle Bound', value: 'Particle_Bound' },
+          { name: 'Mud', value: 'Mud' },
+        ],
+      },
+      sample_type: {
+        name: 'Sample Type',
+        type: 'category',
+        options: [
+          { name: 'Water', value: 'Water' },
+          { name: 'Mud', value: 'Mud' },
+        ],
+      },
+      filter_size_um: {
+        name: 'Filter Size',
+        type: 'category',
+        options: [
+          { name: '0.2 - Free living organisms', value: '0.2' },
+          { name: '0.45 - EPA cutoff for pathogens', value: '0.45' },
+          { name: '0.8 - Particle bound organisms', value: '0.8' },
+          { name: 'Mud', value: 'Mud' },
+        ],
+      },
+      sample_no: { name: 'Sample No', type: 'string' },
+      sample_replicate: { name: 'Sample Replicate', type: 'string' },
     },
   };
 
@@ -133,7 +175,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   microbeQueryFilter() {
     if (this.behindTheScenesLoading) {
-      return alert("Still loading microbes. Please try again in a couple seconds.");
+      return alert("Still loading microbes. Please try again in a few seconds.");
     }
     if (!this.microbeQuery.rules.length) {
       this.currentMicrobeQuery = '';
@@ -156,10 +198,10 @@ export class MapComponent implements OnInit, AfterViewInit {
           let { field, operator, value } = this.microbeQuery.rules[i];
 
           let type: string;
-          if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'id') {
-            type = 'number';
-          } else {
+          if (field !== 'library' && field !== 'volume_l') {
             type = 'string';
+          } else {
+            type = 'number';
           }
 
           const statement = this.evaluateOperation(operator, value, type);
@@ -180,8 +222,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       /* END previous attempt to create a front end filter */
     }
-    this.findData();
     this.toggleFilterBar();
+    this.findData();
   }
 
   microbeQueryFilterRecursive(query: any, result: Array<any>) {
@@ -229,18 +271,33 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   toggleMicrobes() {
+    if (this.behindTheScenesLoading) {
+      return alert("Still loading microbes. Please try again in a few seconds.");
+    }
+    this.microGPSData = this.microGPSData.filter(
+      (item: any) => item.value.microbes && item.value.microbes.length
+    );
+
+    this.drawMapPoints();
     this.microbesFilterToggled = true;
     this.isSiteDateGeoFilter = false;
+    this.toggleFilterBar();
   }
 
   toggleSiteDateGeo() {
+    this.microGPSData = this.microGPSData.filter(
+      (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
+    );
+
+    this.drawMapPoints();
     this.microbesFilterToggled = false;
     this.isSiteDateGeoFilter = true;
+    this.toggleFilterBar();
   }
 
   sampleQueryFilter() {
     if (this.behindTheScenesLoading) {
-      return alert("Still loading microbes. Please try again in a couple seconds.");
+      return alert("Still loading microbes. Please try again in a few seconds.");
     }
     if (!this.sampleQuery.rules.length) {
       this.currentSampleQuery = '';
@@ -263,7 +320,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           let { field, operator, value } = this.sampleQuery.rules[i];
 
           let type: string;
-          if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'id') {
+          if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'id' && field !== 'location') {
             type = 'number';
           } else {
             type = 'string';
@@ -302,7 +359,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         let { field, operator, value } = query.rules[i];
 
         let type: string;
-        if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'agar_type') {
+        if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'id' && field !== 'location') {
           type = 'number';
         } else {
           type = 'string';
@@ -772,12 +829,16 @@ export class MapComponent implements OnInit, AfterViewInit {
         });
 
         if (asyncStatus.finished) {
-          /* clean map to represent the filtered data */
-          this.microGPSData = this.microGPSData.filter(
-            (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
-          );
 
-          this.drawMapPoints();
+          if (this.isSiteDateGeoFilter) {
+            /* clean map to represent the filtered data */
+            console.log('DID THIS GET FIRED??')
+            this.microGPSData = this.microGPSData.filter(
+              (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
+            );
+
+            this.drawMapPoints();
+          }
 
           this.queryMicrobes();
         }
@@ -805,6 +866,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       /* look for a better to fix this within query handler */
 
       this.microbeMetadata = [...microbeStream.data];
+      this.behindTheScenesLoading = false;
     } else {
       this.microbeStream = microbeStream;
       microbeStream.getQueryObserver().subscribe((microbeData: any) => {
@@ -826,6 +888,8 @@ export class MapComponent implements OnInit, AfterViewInit {
           this.microbeMetadata.push({ ...microbes });
         });
 
+        console.log(this.microGPSData, 'the map stufff?')
+
         if (asyncStatus.finished) { 
           /* I tried to cancel data that is being fetched when a new
            * findData() instance is called, however, when I cancel, this causes incomplete 
@@ -836,6 +900,16 @@ export class MapComponent implements OnInit, AfterViewInit {
           // this.globalLoading = false;
           this.behindTheScenesLoading = false;
           console.log(this.microbeMetadata, 'finished');
+
+          if (this.microbesFilterToggled) {
+            console.log('RE DRAW')
+
+            this.microGPSData = this.microGPSData.filter(
+              (item: any) => item.value.microbes && item.value.microbes.length
+            );
+        
+            this.drawMapPoints();
+          }
         }
       });
     }
