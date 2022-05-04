@@ -482,7 +482,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    //this.map = this.mapElement.nativeElement
     this.findData();
   }
 
