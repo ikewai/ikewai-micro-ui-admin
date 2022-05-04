@@ -34,7 +34,7 @@ import { QueryBuilderConfig } from 'angular2-query-builder';
 })
 export class MapComponent implements OnInit, AfterViewInit {
   queryCtrl = new FormControl('');
-  currentQuery: string = '';
+  currentSampleQuery: string = '';
   currentReadableQuery: string = '';
   loading: boolean = false;
 
@@ -124,7 +124,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   sampleQueryFilter() {
     if (!this.sampleQuery.rules.length) {
-      this.currentQuery = '';
+      this.currentSampleQuery = '';
       this.currentReadableQuery = '';
     } else {
       this.metadata2 = [];
@@ -163,7 +163,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           i !== this.sampleQuery.rules.length - 1 ? (result[0] += ', ') : null;
       }  
       result[0] += ']}';
-      this.currentQuery = ', ' + result[0];
+      this.currentSampleQuery = ', ' + result[0];
       this.currentReadableQuery = result[1];
 
       /* END previous attempt to create a front end filter */
@@ -246,7 +246,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   resetQuery() {
-    this.currentQuery = '';
+    this.currentSampleQuery = '';
     this.findData();
   }
 
@@ -588,7 +588,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     let siteDateStream: any = this.queryHandler.siteDateSearch(
       this.microGPSData.map((item: any) => item.value.location),
-      this.currentQuery
+      this.currentSampleQuery
     );
 
     if (siteDateStream.data) {
@@ -659,7 +659,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     this.microbeMetadata = [];
 
-    let microbeStream: any = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id));
+    let microbeStream: any = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id), this.microbeQuery);
 
     if (microbeStream.data) {
       /* look for a better to fix this within query handler */
@@ -872,7 +872,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       /* make another query using query handler (Chaz) */
       let siteDateStream: QueryController = this.queryHandler.siteDateSearch(
         this.microGPSData.map((item: any) => item.value.location),
-        this.currentQuery
+        this.currentSampleQuery
       );
       siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
         siteDateData = siteDateData.data;

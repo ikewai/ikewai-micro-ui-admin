@@ -224,7 +224,7 @@ export class QueryHandlerService {
 
     let subjects = [];
     let query: string;
-      
+      console.log(filterQuery, ' the filter query')
     query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}" + filterQuery + "] }";
     // pull all site_date_geochem
 
@@ -237,7 +237,7 @@ export class QueryHandlerService {
     }
   }
 
-  microbeSearch(locations: string[]): any {
+  microbeSearch(locations: string[], filterQuery: string): any {
     // let res: QueryResults = {
     //   handle: this.handleGen.getHandle(),
     //   dataStream: new Observable<QueryResponse>()
@@ -246,9 +246,8 @@ export class QueryHandlerService {
     let subjects = [];
     let query: string;
       
-    query = "{'$and': [{'name':{'$in':['TEST_Microbes']}, 'value.id': {'$in':" + JSON.stringify(locations) +"}}] }";
+    query = "{'$and': [{'name':{'$in':['TEST_Microbes']}, 'value.id': {'$in':" + JSON.stringify(locations) +"}}" + filterQuery +"] }";
     // pull all site_date_geochem
-
     let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
     if (stored) {
       return stored;
