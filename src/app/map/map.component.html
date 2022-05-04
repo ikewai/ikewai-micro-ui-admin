@@ -1,3 +1,4 @@
+<div *ngIf="globalLoading" class="d-flex justify-content-center align-items-center" style="width: 100%; height: 90%; position: absolute; z-index: 99999"><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>
 <div class="container-fluid">
 <div class="row" style="padding-bottom: 25px">
     <div class="col-md-6">
@@ -227,7 +228,7 @@
                 <b>ID:</b>&nbsp;{{selectedMetadata.value.id}}<br/>
                 <b>Date:</b>&nbsp;{{selectedMetadata.value.date}}<br/>
                 <b>Site:</b>&nbsp;{{selectedMetadata.value.site}}<br/>
-                <span *ngIf="selectedMetadata.value.filter_size_um"><b>Filter Size UM:</b>&nbsp;{{selectedMetadata.value.filter_size_um}} °C<br/></span>
+                <span *ngIf="selectedMetadata.value.filter_size_um"><b>Filter Size UM:</b>&nbsp;{{selectedMetadata.value.filter_size_um}}<br/></span>
                 <span *ngIf="selectedMetadata.value.volume_l"><b>Volume L:</b>&nbsp;{{selectedMetadata.value.volume_l}}<br/></span>
                 <span *ngIf="selectedMetadata.value.lifestyle"><b>Lifestyle:</b>&nbsp;{{selectedMetadata.value.lifestyle}} cm<br/></span>
             

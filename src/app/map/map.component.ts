@@ -39,18 +39,23 @@ export class MapComponent implements OnInit, AfterViewInit {
   currentReadableQuery: string = '';
   loading: boolean = false;
 
+  gpsStream: any = null;
+  siteDateStream: any = null;
+  microbeStream: any = null;
+
+
   sampleQuery = {
     condition: 'and',
     rules: [
-      { field: 'year', operator: '=', value: '2019', type: 'number' },
-      {
-        condition: 'or',
-        rules: [
-          { field: 'season', operator: '=', value: 'WINTER', type: 'string' },
-          { field: 'season', operator: '=', value: 'SPRING', type: 'string' },
-          { condition: 'and', rules: [{ field: 'ph', operator: '>', value: '1', type: 'number' }] },
-        ],
-      },
+      { field: 'id', operator: '=', value: 'Sumida.Middle_Spring_43362', type: 'string' },
+      // {
+      //   condition: 'or',
+      //   rules: [
+      //     { field: 'season', operator: '=', value: 'WINTER', type: 'string' },
+      //     { field: 'season', operator: '=', value: 'SPRING', type: 'string' },
+      //     { condition: 'and', rules: [{ field: 'ph', operator: '>', value: '1', type: 'number' }] },
+      //   ],
+      // },
     ],
   };
 
@@ -61,6 +66,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   sampleConfig: QueryBuilderConfig = {
     fields: {
+      id: { name: 'Name', type: 'string' },
       date: { name: 'Date', type: 'date' },
       season: {
         name: 'Season',
@@ -145,7 +151,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           let { field, operator, value } = this.sampleQuery.rules[i];
 
           let type: string;
-          if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'agar_type') {
+          if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'id') {
             type = 'number';
           } else {
             type = 'string';
@@ -513,6 +519,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public findData() {
+    /* cancel any previous queries */
+    // this.gpsStream && this.gpsStream.cancel();
+    // this.siteDateStream && this.siteDateStream.cancel();
+    // this.microbeStream && this.microbeStream.cancel();
+
     this.metadata = [];
     this.metadata2 = [];
     this.filterData = [];
@@ -559,6 +570,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       this.querySiteDateGeo();
     } else {
+      this.gpsStream = dataStream;
       dataStream.getQueryObserver().subscribe((microGPSData: any) => {
         this.microGPSData = microGPSData.data;
         if (this.microGPSData == null) {
@@ -612,6 +624,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       this.queryMicrobes();
     } else {
+      this.siteDateStream = siteDateStream;
       siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
         const asyncStatus: any = siteDateData.status;
         siteDateData = siteDateData.data;
@@ -667,6 +680,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       this.microbeMetadata = [...microbeStream.data];
     } else {
+      this.microbeStream = microbeStream;
       microbeStream.getQueryObserver().subscribe((microbeData: any) => {
         const asyncStatus: any = microbeData.status;
         microbeData = microbeData.data;
@@ -686,7 +700,12 @@ export class MapComponent implements OnInit, AfterViewInit {
           this.microbeMetadata.push({ ...microbes });
         });
 
-        if (asyncStatus.finished) {
+        if (asyncStatus.finished) { 
+          /* I tried to cancel data that is being fetched when a new
+           * findData() instance is called, however, when I cancel, this causes incomplete 
+           * data to be cached. Because of race conditions with UI loading and the query component,
+           * I have opted to use a simple UI blocker in the meantime
+           */
           console.log(this.microbeMetadata, 'finished');
         }
       });

@@ -224,7 +224,7 @@ export class QueryHandlerService {
 
     let subjects = [];
     let query: string;
-      console.log(filterQuery, ' the filter query')
+    
     query = "{'$and': [{'name':{'$in':['TEST_Site_Date_Geochem']}, 'value.location': {'$in':" + JSON.stringify(locations) +"}}" + filterQuery + "] }";
     // pull all site_date_geochem
 
@@ -562,7 +562,8 @@ export class QueryController {
   }
 
   cancel() {
-    let i;
+    let i:number;
+    console.log(this.querySubjects, 'hello?  query subjects')
     for(i = 0; i < this.querySubjects.length; i++) {
       let sub = this.querySubjects[i];
       //if null then already completed, complete any still running subscriptions
