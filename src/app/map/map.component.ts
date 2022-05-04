@@ -1,42 +1,31 @@
 import {
   Component,
   OnInit,
-  ViewChild,
   AfterViewInit,
   ViewChildren,
   QueryList,
   ElementRef,
   Renderer2,
-  SecurityContext,
-  LOCALE_ID,
 } from '@angular/core';
-import { LeafletModule } from '@asymmetrik/ngx-leaflet';
-import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
-import { Observable, of, BehaviorSubject, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 
-import { map, retry, catchError } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { User } from '../_models/user';
 import { Metadata } from '../_models/metadata';
-import { latLng, tileLayer, Marker, icon } from 'leaflet';
+import { latLng, tileLayer } from 'leaflet';
 import * as L from 'leaflet';
 import 'leaflet.markercluster';
-//import 'leaflet.pm/dist/leaflet.pm.min.js';
 import { AppConfig } from '../_services/config.service';
-//import { AuthenticationService } from '../_services/authentication.service';
-//import { SpatialService } from '../_services/spatial.service'
-import { QueryHandlerService, QueryController, QueryResponse } from '../_services/query-handler.service';
-import { FilterHandle, FilterManagerService, Filter, FilterMode } from '../_services/filter-manager.service';
-import { mapToExpression } from '@angular/compiler/src/render3/view/util';
+import { QueryHandlerService, QueryController } from '../_services/query-handler.service';
+import { FilterHandle, FilterManagerService } from '../_services/filter-manager.service';
 import { HttpClient, HttpHeaders, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
 
-import { FormBuilder, FormControl } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 
-import { QueryBuilderClassNames, QueryBuilderConfig } from 'angular2-query-builder';
-import { isNgTemplate } from '@angular/compiler';
+import { QueryBuilderConfig } from 'angular2-query-builder';
 
-declare var jQuery: any;
 
 @Component({
   selector: 'app-map',
@@ -328,7 +317,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     center: latLng(21.48, -157.9104),
     attributionControl: false,
   };
-  // center: latLng(20.5, -157.917480),
 
   optionsZoomed: L.MapOptions = {
     layers: [
