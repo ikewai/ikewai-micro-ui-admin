@@ -49,6 +49,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   microbesFilterToggled: boolean = false;
   showFilterBar: boolean = false;
 
+  test() {
+    console.log(this.queryCtrl, '??')
+  }
+
 
   sampleQuery = {
     condition: 'and',
