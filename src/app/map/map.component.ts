@@ -1319,10 +1319,8 @@ export class MapComponent implements OnInit, AfterViewInit {
                 }
               }
             }
-            //goto.innerText = "Go to Entry";
 
             let popup: L.Popup = new L.Popup();
-            //  wrapper.append(header)
             wrapper.append(details);
             wrapper.append(download);
             wrapper.append(goto);
@@ -1330,8 +1328,6 @@ export class MapComponent implements OnInit, AfterViewInit {
             let linkDiv = wrapper.getElementsByClassName('entry-link');
 
             let gotoWrapper = () => {
-              // console.log("click");
-              //this.gotoEntry(index);
             };
             linkDiv[0].addEventListener('click', gotoWrapper);
             popup.setContent(wrapper);
@@ -1342,19 +1338,8 @@ export class MapComponent implements OnInit, AfterViewInit {
           },
         });
         this.filterData = this.metadata2;
-        //
-
-        //console.log(datum.name);
-        // console.log(this.dataGroups[group]);
-        //console.log(geojson);
-
-        //        }
       }
     });
-
-    // setTimeout(() => {
-    //   dataStream.cancel();
-    // }, 2000);
   }
 
   getStyleByGroup(group: string): L.PathOptions {
