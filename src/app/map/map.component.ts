@@ -36,12 +36,18 @@ export class MapComponent implements OnInit, AfterViewInit {
   queryCtrl = new FormControl('');
   currentSampleQuery: string = '';
   currentMicrobeQuery: string = '';
-  currentReadableQuery: string = '';
+  currentSampleReadableQuery: string = '';
+  currentMicrobeReadableQuery: string = '';
   loading: boolean = false;
+  globalLoading: boolean = false;
+  behindTheScenesLoading: boolean = false;
 
   gpsStream: any = null;
   siteDateStream: any = null;
   microbeStream: any = null;
+
+  microbesFilterToggled: boolean = false;
+  showFilterBar: boolean = false;
 
 
   sampleQuery = {
@@ -125,14 +131,120 @@ export class MapComponent implements OnInit, AfterViewInit {
     agar_type: 'TEST_CFU',
   };
 
+  microbeQueryFilter() {
+    if (this.behindTheScenesLoading) {
+      return alert("Still loading microbes. Please try again in a couple seconds.");
+    }
+    if (!this.microbeQuery.rules.length) {
+      this.currentMicrobeQuery = '';
+      this.currentMicrobeReadableQuery = '';
+    } else {
+      this.microbeMetadata = [];
+
+      /* logical 'or' operator */
+      let result: Array<any> = ['', ''];
+      let condition: string = this.microbeQuery.condition === 'and' ? " {'$and': [" : " {'$or':  [";
+      let readableCondition: string =
+        this.microbeQuery.condition === 'and'
+          ? 'Where all microbes meet each criteria: '
+          : 'Where all microbes meet one of these criteria: ';
+      let readableCondition2: string = this.microbeQuery.condition === 'and' ? ' and ' : ' or ';
+      result[0] += condition;
+      result[1] += readableCondition;
+      for (let i: number = 0; i < this.microbeQuery.rules.length; i++) {
+        if (this.microbeQuery.rules[i].field) {
+          let { field, operator, value } = this.microbeQuery.rules[i];
+
+          let type: string;
+          if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'id') {
+            type = 'number';
+          } else {
+            type = 'string';
+          }
+
+          const statement = this.evaluateOperation(operator, value, type);
+          const readable = this.parseReadable(operator, value, type);
+          result[0] += `{'value.${field}'${statement}}`;
+          i <= this.microbeQuery.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
+          result[1] += `${field} ${readable}`;
+          i === 0 ?  (result[1] += readableCondition2) : null;
+        }
+        if (this.microbeQuery.rules[i].condition) {
+          this.microbeQueryFilterRecursive(this.microbeQuery.rules[i], result);
+        }
+          i !== this.microbeQuery.rules.length - 1 ? (result[0] += ', ') : null;
+      }  
+      result[0] += ']}';
+      this.currentMicrobeQuery = ', ' + result[0];
+      this.currentMicrobeReadableQuery = result[1];
+
+      /* END previous attempt to create a front end filter */
+    }
+    this.findData();
+    this.toggleFilterBar();
+  }
+
+  microbeQueryFilterRecursive(query: any, result: Array<any>) {
+    let nestedQuery: Array<any> = ['', ''];
+    let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
+    let readableCondition: string = query.condition === 'and' ? ' and ' : ' or ';
+    result[0] += condition;
+    result[1] += '(';
+    for (let i: number = 0; i < query.rules.length; i++) {
+      if (query.rules[i].field) {
+        let { field, operator, value } = query.rules[i];
+
+        let type: string;
+        if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'agar_type') {
+          type = 'number';
+        } else {
+          type = 'string';
+        }
+
+        const statement = this.evaluateOperation(operator, value, type);
+        const readable = this.parseReadable(operator, value, type);
+        nestedQuery[0] += `{'value.${field}'${statement}}`;
+        nestedQuery[1] += `${field} ${readable}`;
+        i !== query.rules.length - 1 ? (nestedQuery[0] += ', ') : null;
+        i !== query.rules.length - 1 ? (nestedQuery[1] += readableCondition) : null;
+      }
+      if (query.rules[i].condition) {
+        this.microbeQueryFilterRecursive(query.rules[i], nestedQuery);
+      }
+    }
+    result[0] += nestedQuery[0];
+    result[0] += ']}';
+    result[1] += nestedQuery[1];
+    result[1] += ')';
+  }
+
+
+  toggleFilterBar() {
+    if (this.isSiteDateGeoFilter) {
+      this.currentSampleQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
+    }
+    if (this.microbesFilterToggled) {
+      this.currentSampleQuery !== "" || this.currentMicrobeQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
+    }
+  }
+
   toggleMicrobes() {
-    this.isSiteDateGeoFilter = !this.isSiteDateGeoFilter;
+    this.microbesFilterToggled = true;
+    this.isSiteDateGeoFilter = false;
+  }
+
+  toggleSiteDateGeo() {
+    this.microbesFilterToggled = false;
+    this.isSiteDateGeoFilter = true;
   }
 
   sampleQueryFilter() {
+    if (this.behindTheScenesLoading) {
+      return alert("Still loading microbes. Please try again in a couple seconds.");
+    }
     if (!this.sampleQuery.rules.length) {
       this.currentSampleQuery = '';
-      this.currentReadableQuery = '';
+      this.currentSampleReadableQuery = '';
     } else {
       this.metadata2 = [];
 
@@ -171,11 +283,12 @@ export class MapComponent implements OnInit, AfterViewInit {
       }  
       result[0] += ']}';
       this.currentSampleQuery = ', ' + result[0];
-      this.currentReadableQuery = result[1];
+      this.currentSampleReadableQuery = result[1];
 
       /* END previous attempt to create a front end filter */
     }
     this.findData();
+    this.toggleFilterBar();
   }
 
   sampleQueryFilterRecursive(query: any, result: Array<any>) {
@@ -252,9 +365,18 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
-  resetQuery() {
+  resetSampleQuery() {
     this.currentSampleQuery = '';
     this.findData();
+    this.toggleFilterBar();
+  }
+
+  resetMicrobeQuery() {
+    this.currentMicrobeQuery = '';
+    this.currentMicrobeReadableQuery = '';
+
+    this.findData();
+    this.toggleFilterBar();
   }
 
   parseReadable(operator: string, value: string, type: string) {
@@ -523,6 +645,10 @@ export class MapComponent implements OnInit, AfterViewInit {
     // this.gpsStream && this.gpsStream.cancel();
     // this.siteDateStream && this.siteDateStream.cancel();
     // this.microbeStream && this.microbeStream.cancel();
+    /* cancel any previous queries END (see microbes line 705) */
+
+    this.globalLoading = true;
+    this.behindTheScenesLoading = true;
 
     this.metadata = [];
     this.metadata2 = [];
@@ -706,6 +832,9 @@ export class MapComponent implements OnInit, AfterViewInit {
            * data to be cached. Because of race conditions with UI loading and the query component,
            * I have opted to use a simple UI blocker in the meantime
            */
+
+          // this.globalLoading = false;
+          this.behindTheScenesLoading = false;
           console.log(this.microbeMetadata, 'finished');
         }
       });
@@ -832,6 +961,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.dtTrigger.next();
     }
     this.loading = false;
+    this.globalLoading = false;
   }
 
   public onDrawCreated(e: any) {
