@@ -38,7 +38,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   currentReadableQuery: string = '';
   loading: boolean = false;
 
-  query = {
+  sampleQuery = {
     condition: 'and',
     rules: [
       { field: 'year', operator: '=', value: '2019', type: 'number' },
@@ -116,8 +116,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.isSiteDateGeoFilter = !this.isSiteDateGeoFilter;
   }
 
-  queryFilter() {
-    if (!this.query.rules.length) {
+  sampleQueryFilter() {
+    if (!this.sampleQuery.rules.length) {
       this.currentQuery = '';
       this.currentReadableQuery = '';
     } else {
@@ -125,17 +125,17 @@ export class MapComponent implements OnInit, AfterViewInit {
 
       /* logical 'or' operator */
       let result: Array<any> = ['', ''];
-      let condition: string = this.query.condition === 'and' ? " {'$and': [" : " {'$or':  [";
+      let condition: string = this.sampleQuery.condition === 'and' ? " {'$and': [" : " {'$or':  [";
       let readableCondition: string =
-        this.query.condition === 'and'
+        this.sampleQuery.condition === 'and'
           ? 'Where all samples meet each criteria: '
           : 'Where all samples meet one of these criteria: ';
-      let readableCondition2: string = this.query.condition === 'and' ? ' and ' : ' or ';
+      let readableCondition2: string = this.sampleQuery.condition === 'and' ? ' and ' : ' or ';
       result[0] += condition;
       result[1] += readableCondition;
-      for (let i: number = 0; i < this.query.rules.length; i++) {
-        if (this.query.rules[i].field) {
-          let { field, operator, value } = this.query.rules[i];
+      for (let i: number = 0; i < this.sampleQuery.rules.length; i++) {
+        if (this.sampleQuery.rules[i].field) {
+          let { field, operator, value } = this.sampleQuery.rules[i];
 
           let type: string;
           if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'agar_type') {
@@ -147,14 +147,14 @@ export class MapComponent implements OnInit, AfterViewInit {
           const statement = this.evaluateOperation(operator, value, type);
           const readable = this.parseReadable(operator, value, type);
           result[0] += `{'value.${field}'${statement}}`;
-          i <= this.query.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
+          i <= this.sampleQuery.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
           result[1] += `${field} ${readable}`;
           i === 0 ?  (result[1] += readableCondition2) : null;
         }
-        if (this.query.rules[i].condition) {
-          this.queryFilterRecursive(this.query.rules[i], result);
+        if (this.sampleQuery.rules[i].condition) {
+          this.sampleQueryFilterRecursive(this.sampleQuery.rules[i], result);
         }
-          i !== this.query.rules.length - 1 ? (result[0] += ', ') : null;
+          i !== this.sampleQuery.rules.length - 1 ? (result[0] += ', ') : null;
       }  
       result[0] += ']}';
       this.currentQuery = ', ' + result[0];
@@ -173,9 +173,10 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   resetQuery() {
     this.currentQuery = '';
+    this.findData();
   }
 
-  queryFilterRecursive(query: any, result: Array<any>) {
+  sampleQueryFilterRecursive(query: any, result: Array<any>) {
     let nestedQuery: Array<any> = ['', ''];
     let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
     let readableCondition: string = query.condition === 'and' ? ' and ' : ' or ';
@@ -201,7 +202,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         // nestedQuery[0] += `operation`;
       }
       if (query.rules[i].condition) {
-        this.queryFilterRecursive(query.rules[i], nestedQuery);
+        this.sampleQueryFilterRecursive(query.rules[i], nestedQuery);
       }
     }
     result[0] += nestedQuery[0];
