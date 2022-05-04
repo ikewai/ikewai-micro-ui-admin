@@ -35,6 +35,7 @@ import { QueryBuilderConfig } from 'angular2-query-builder';
 export class MapComponent implements OnInit, AfterViewInit {
   queryCtrl = new FormControl('');
   currentSampleQuery: string = '';
+  currentMicrobeQuery: string = '';
   currentReadableQuery: string = '';
   loading: boolean = false;
 
@@ -659,7 +660,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     this.microbeMetadata = [];
 
-    let microbeStream: any = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id), this.microbeQuery);
+    let microbeStream: any = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id), this.currentMicrobeQuery);
 
     if (microbeStream.data) {
       /* look for a better to fix this within query handler */

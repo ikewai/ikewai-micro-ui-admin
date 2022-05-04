@@ -108,7 +108,7 @@
         </div>
       </div>
 
-    <div style="padding-top: 10px; padding-bottom: 20px" class="row flex-nowrap" [ngClass]="{'w-100': currentQuery === '', 'w-75': 'currentQuery' !== ''}">
+    <div style="padding-top: 10px; padding-bottom: 20px" class="row flex-nowrap" [ngClass]="{'w-100': currentSampleQuery === '', 'w-75': 'currentSampleQuery' !== ''}">
       <div *ngIf="isSiteDateGeoFilter" style="height:500px;">
         <div>
           <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
@@ -144,7 +144,7 @@
         </div>
       </div>
   </div>
-  <div class="p-20 text-wrap w-25 animated fadeInLeft" [ngClass]="{'d-none': currentQuery === '', 'd-block': 'currentQuery' !== ''}" style="padding-top: 47px">
+  <div class="p-20 text-wrap w-25 animated fadeInLeft" [ngClass]="{'d-none': currentSampleQuery === '', 'd-block': 'currentSampleQuery' !== ''}" style="padding-top: 47px">
     <h5>Applied Filters</h5>
     <div style="padding-left: 5px; padding-top: 5px">
       <p>{{this.currentReadableQuery}}</p>
