@@ -424,6 +424,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   resetSampleQuery() {
     this.currentSampleQuery = '';
+    this.currentSampleReadableQuery = '';
     this.findData();
     this.toggleFilterBar();
   }
