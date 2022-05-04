@@ -171,17 +171,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.findData();
   }
 
-  showMetadata() {
-    console.log(this.metadata, 'metadata');
-    console.log(this.metadata2, 'metadata2');
-    console.log(this.currentQuery, 'current query');
-  }
-
-  resetQuery() {
-    this.currentQuery = '';
-    this.findData();
-  }
-
   sampleQueryFilterRecursive(query: any, result: Array<any>) {
     let nestedQuery: Array<any> = ['', ''];
     let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
@@ -217,7 +206,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   evaluateOperation(operator: string, value: string, type: string) {
-    if (type !== 'number') {
+    if (type !== 'number') { /* matches a string in database */
       switch (operator) {
         case '=':
           return `: '${value}'`;
@@ -235,7 +224,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           console.log('No such operator exists!');
           break;
       }
-    } else {
+    } else { /* equals a number in the database (no quotes around the value) */
       switch (operator) {
         case '=':
           return `: ${value}`;
@@ -254,6 +243,11 @@ export class MapComponent implements OnInit, AfterViewInit {
           break;
       }
     }
+  }
+
+  resetQuery() {
+    this.currentQuery = '';
+    this.findData();
   }
 
   parseReadable(operator: string, value: string, type: string) {
