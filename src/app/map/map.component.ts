@@ -758,8 +758,7 @@ export class MapComponent implements OnInit, AfterViewInit {
               '<br/>Watershed: ' +
               datum.value.watershed +
               '<br/>Site_Enviro: ' +
-              datum.value.site_enviro +
-              '<br/><i>Click point to view more</i>';
+              datum.value.site_enviro;
             //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
             //+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
             //"<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "

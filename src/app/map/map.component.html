@@ -132,7 +132,6 @@
         <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">Cultured Bacteria Filter</button>
       </div>
       <h5>Microbes Filter</h5>
-      <p>{{this.currentReadableQuery}}</p>
       <query-builder [(ngModel)]='microbeQuery' [config]='microbeConfig' [formControl]='queryCtrl'>
       </query-builder>
       <div class="container" style="margin-top: 10px">
@@ -148,6 +147,7 @@
     <h5>Applied Filters</h5>
     <div style="padding-left: 5px; padding-top: 5px">
       <p>{{this.currentReadableQuery}}</p>
+      <p *ngIf="currentMicrobeQuery">{{this.currentReadableQuery}}</p>
     </div>
   </div>
 </div>
@@ -188,17 +188,34 @@
                 <div id="tempDiv" style="visibility: hidden;"></div>
               </div>
             </div>
-            <div *ngIf="selectedMetadata.name === 'TEST_Site_Date_Geochem'" class="col-md-4">
+            <div *ngIf="selectedMetadata.name === 'TEST_Site_Date_Geochem'" class="col-md-4 overflow-auto" style="height: 250px; width: 50%">
               <b>Location:</b>&nbsp;{{selectedMetadata.value.location}}<br/>
               <b>Watershed :</b>&nbsp;{{selectedMetadata.value.watershed}}<br/>
-              <b>Time :</b>&nbsp;{{selectedMetadata.value.time}}<br/>
-              <b>Date :</b>&nbsp;{{selectedMetadata.value.date}}<br/>
-              <b>Season :</b>&nbsp;{{selectedMetadata.value.season}}<br/>
-              <b>Year :</b>&nbsp;{{selectedMetadata.value.year}}<br/>
+              <span *ngIf="selectedMetadata.value.time"><b>Time :</b>&nbsp;{{selectedMetadata.value.time}}<br/></span>
+              <span *ngIf="selectedMetadata.value.date"><b>Date :</b>&nbsp;{{selectedMetadata.value.date}}<br/></span>
+              <span *ngIf="selectedMetadata.value.season"><b>Season :</b>&nbsp;{{selectedMetadata.value.season}}<br/></span>
+              <span *ngIf="selectedMetadata.value.year"><b>Year :</b>&nbsp;{{selectedMetadata.value.year}}<br/></span>
               <span *ngIf="selectedMetadata.value.temp_c"><b>Temperature :</b>&nbsp;{{selectedMetadata.value.temp_c}} °C<br/></span>
               <span *ngIf="selectedMetadata.value.ph"><b>pH :</b>&nbsp;{{selectedMetadata.value.ph}}<br/></span>
               <span *ngIf="selectedMetadata.value.water_level_cm"><b>Water Level :</b>&nbsp;{{selectedMetadata.value.water_level_cm}} cm<br/></span>
-          
+              <span *ngIf="selectedMetadata.value.do_percent"><b>DO_Percent :</b>&nbsp;{{selectedMetadata.value.do_percent}} %<br/></span>
+              <span *ngIf="selectedMetadata.value.do_mg_l"><b>DO_mg.L :</b>&nbsp;{{selectedMetadata.value.do_mg_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.spc_us"><b>SPC_US :</b>&nbsp;{{selectedMetadata.value.spc_us}}<br/></span>
+              <span *ngIf="selectedMetadata.value.sal_ppt"><b>Sal_ppt :</b>&nbsp;{{selectedMetadata.value.sal_ppt}}<br/></span>
+              <span *ngIf="selectedMetadata.value.turbidity"><b>Turbidity :</b>&nbsp;{{selectedMetadata.value.turbidity}}<br/></span>
+              <span *ngIf="selectedMetadata.value.tdn_umol_l"><b>TDN.umol.L :</b>&nbsp;{{selectedMetadata.value.tdn_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.tdp_umol_l"><b>TDP.umol.L :</b>&nbsp;{{selectedMetadata.value.tdp_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.PO4_umol_l"><b>PO4.umol.L :</b>&nbsp;{{selectedMetadata.value.PO4_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.si_umol_l"><b>SI.umol.L :</b>&nbsp;{{selectedMetadata.value.si_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.nox_umol_l"><b>NOX.umol.L :</b>&nbsp;{{selectedMetadata.value.nox_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.nh4_umol_l"><b>NH4.umol.L :</b>&nbsp;{{selectedMetadata.value.nh4_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.toc_umol_l"><b>TOC.umol.L :</b>&nbsp;{{selectedMetadata.value.toc_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.cor_tdn_umol_l"><b>COR TDN.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_tdn_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.cor_tdp_umol_l"><b>COR TDP.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_tdp_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.cor_PO4_umol_l"><b>COR PO4.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_PO4_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.cor_nox_umol_l"><b>COR NOX.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_nox_umol_l}}<br/></span>
+              <span *ngIf="selectedMetadata.value.cor_nh4_umol_l"><b>COR NH4.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_nh4_umol_l}}<br/></span>
+
               <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
                 <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 
                    (click)="downloadClick(link.href)">
