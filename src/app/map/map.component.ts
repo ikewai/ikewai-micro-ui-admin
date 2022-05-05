@@ -25,6 +25,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { FormControl } from '@angular/forms';
 
 import { QueryBuilderConfig } from 'angular2-query-builder';
+import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
 
 
 @Component({
@@ -47,6 +48,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   allAhupuaaData: any = null;
   ahupuaaToggled: boolean = false;
   selectedAhupuaa: any = null;
+
+  focusedFilterRow: any = null;
+
+  microbesFlattenedQueryArr: Array<any> = [];
 
   toggleAhupuaa() {
     this.ahupuaaToggled = !this.ahupuaaToggled;
@@ -85,7 +90,13 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   microbeQuery = {
     condition: 'and',
-    rules: [{ field: 'sequencing_facility', operator: '=', value: 'UCI', type: 'string' }],
+    rules: [{ field: 'sequencing_facility', operator: '=', value: 'UCI', type: 'string' }, {
+      condition: 'or',
+      rules: [{field: 'lifestyle', operator: '=', value: 'Particle Bound', type: 'string'}, {
+        condition: 'or',
+        rules: [{field: 'library', operator: '=', value: 1, type: 'number'}, {field: 'library', operator: '=', value: 2, type: 'number'}]
+      }]
+    }, {field: 'volume_l', operator: '=', value: 0.25, type: 'number'}],
   };
 
   sampleConfig: QueryBuilderConfig = {
@@ -193,16 +204,67 @@ export class MapComponent implements OnInit, AfterViewInit {
     agar_type: 'TEST_CFU',
   };
 
+  flattenQuery(queryArray: Array<any>, level: number, condition: string, filterTable: string, num: number) {
+    if (level === 0) this.microbesFlattenedQueryArr = [];
+    for (let i = 0; i < queryArray.length; i++) {
+      const querySubject: any = queryArray[i];
+      if (querySubject.condition) {
+        this.flattenQuery(querySubject.rules, level + 1, querySubject.condition, filterTable, num + 2);
+      } else {
+        querySubject.level = level;
+        querySubject.subjectCondition = condition.toUpperCase();
+        querySubject.table = filterTable;
+        if (this.microbesFlattenedQueryArr.length) {
+          querySubject.index = Math.max(num + i, this.microbesFlattenedQueryArr[this.microbesFlattenedQueryArr.length - 1].index + 1);
+        } else {
+          querySubject.index = num + i;
+        }
+        this.microbesFlattenedQueryArr.push(querySubject);
+      }
+    }
+  }
+
+  removeMicrobeFilter(filterTable: any, indexToRemove: number) {
+
+    const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
+    button.click();
+    this.removeElement(indexToRemove);
+  }
+
+  removeElement(indexToRemove: number) {
+    const copy = [...this.microbesFlattenedQueryArr];
+    this.microbesFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
+    for (let i = 0; i < copy.length; i++) {
+      if (copy[i].index > indexToRemove) {
+        copy[i].index--;
+      }
+    }
+  }
+
+  test(e: any, indexToHighlight: number) {
+    if (e.stopPropagation) e.stopPropagation();
+    
+    const lol:any = document.getElementsByClassName('q-row')[indexToHighlight]
+    if (lol) {
+      this.focusedFilterRow ? this.focusedFilterRow.style.background = 'none' : null;
+      this.focusedFilterRow = lol;
+      lol.style.background = 'pink';
+    }
+
+    console.log(e, 'do i get the event?')
+  }
+
 
   microbeQueryFilter() {
     if (this.behindTheScenesLoading) {
       return alert("Still loading microbes. Please try again in a few seconds.");
     }
     if (!this.microbeQuery.rules.length) {
-      console.log(this.microbeQuery.rules, 'the nested rules?')
       this.currentMicrobeQuery = '';
       this.currentMicrobeReadableQuery = '';
     } else {
+      this.flattenQuery(this.microbeQuery.rules, 0, this.microbeQuery.condition, 'microbes', 0);
+      console.log(this.microbesFlattenedQueryArr, 'finshed flattneed arr?');
       this.microbeMetadata = [];
 
       /* logical 'or' operator */
@@ -218,6 +280,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       for (let i: number = 0; i < this.microbeQuery.rules.length; i++) {
         if (this.microbeQuery.rules[i].field) {
           let { field, operator, value } = this.microbeQuery.rules[i];
+          let val: any = value;
 
           let type: string;
           if (field !== 'library' && field !== 'volume_l') {
@@ -226,8 +289,8 @@ export class MapComponent implements OnInit, AfterViewInit {
             type = 'number';
           }
 
-          const statement = this.evaluateOperation(operator, value, type);
-          const readable = this.parseReadable(operator, value, type);
+          const statement = this.evaluateOperation(operator, val, type);
+          const readable = this.parseReadable(operator, val, type);
           result[0] += `{'value.${field}'${statement}}`;
           i <= this.microbeQuery.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
           result[1] += `${field} ${readable}`;
@@ -456,6 +519,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   resetMicrobeQuery() {
     this.currentMicrobeQuery = '';
     this.currentMicrobeReadableQuery = '';
+    this.microbesFlattenedQueryArr = [];
 
     this.findData();
     this.toggleFilterBar();
