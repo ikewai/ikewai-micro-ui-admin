@@ -153,8 +153,10 @@ export class MapComponent implements OnInit, AfterViewInit {
       },
       library: { name: 'Library', type: 'number' },
       date: { name: 'Date', type: 'date' },
+      collection_time: { name: 'Collection Time', type: 'time' },
       site: { name: 'Site', type: 'string' },
       id: { name: 'Name', type: 'string' },
+      volume_l: { name: 'Volume', type: 'number' },
       lifestyle: {
         name: 'Lifestyle',
         type: 'category',
@@ -230,7 +232,8 @@ export class MapComponent implements OnInit, AfterViewInit {
           result[1] += `${field} ${readable}`;
           i === 0 ?  (result[1] += readableCondition2) : null;
         }
-        if (this.microbeQuery.rules[i].condition) {
+        const queryObject: any = this.microbeQuery.rules[i];
+        if (queryObject.condition) {
           this.microbeQueryFilterRecursive(this.microbeQuery.rules[i], result);
         }
           i !== this.microbeQuery.rules.length - 1 ? (result[0] += ', ') : null;
@@ -238,6 +241,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       result[0] += ']}';
       this.currentMicrobeQuery = ', ' + result[0];
       this.currentMicrobeReadableQuery = result[1];
+      console.log(result[0], 'wait what?')
 
       /* END previous attempt to create a front end filter */
     }
@@ -256,10 +260,10 @@ export class MapComponent implements OnInit, AfterViewInit {
         let { field, operator, value } = query.rules[i];
 
         let type: string;
-        if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'agar_type') {
-          type = 'number';
-        } else {
+        if (field !== 'library' && field !== 'volume_l') {
           type = 'string';
+        } else {
+          type = 'number';
         }
 
         const statement = this.evaluateOperation(operator, value, type);
@@ -352,7 +356,8 @@ export class MapComponent implements OnInit, AfterViewInit {
           result[1] += `${field} ${readable}`;
           i === 0 ?  (result[1] += readableCondition2) : null;
         }
-        if (this.sampleQuery.rules[i].condition) {
+        const queryObject: any = this.sampleQuery.rules[i];
+        if (queryObject.condition) {
           this.sampleQueryFilterRecursive(this.sampleQuery.rules[i], result);
         }
           i !== this.sampleQuery.rules.length - 1 ? (result[0] += ', ') : null;
