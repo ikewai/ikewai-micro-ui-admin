@@ -199,6 +199,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       return alert("Still loading microbes. Please try again in a few seconds.");
     }
     if (!this.microbeQuery.rules.length) {
+      console.log(this.microbeQuery.rules, 'the nested rules?')
       this.currentMicrobeQuery = '';
       this.currentMicrobeReadableQuery = '';
     } else {
@@ -241,7 +242,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       result[0] += ']}';
       this.currentMicrobeQuery = ', ' + result[0];
       this.currentMicrobeReadableQuery = result[1];
-      console.log(result[0], 'wait what?')
 
       /* END previous attempt to create a front end filter */
     }
