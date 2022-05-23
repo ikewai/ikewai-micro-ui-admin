@@ -1434,7 +1434,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           }
         },
       });
-      this.filterData = this.metadata2;
+      this.filterData = this.metadata2; // contains state of water samples in UI
       this.dtTrigger.next();
     }
     this.loading = false;
