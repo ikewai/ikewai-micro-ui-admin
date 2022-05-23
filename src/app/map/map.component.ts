@@ -659,6 +659,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   microGPSData: Array<Object>;
 
   isSiteDateGeoFilter: Boolean = true;
+
+  siteDateGeoMap: Object = {}; // Map created from current metadata2/samples state
+
   microbeMetadata: Metadata[]; // current microbes state
   cfuMetadata: any; // current cfu data state
 
@@ -922,6 +925,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.metadata2 = [];
     this.filterData = [];
     this.microGPSData = [];
+    this.siteDateGeoMap = {};
     this.loading = true;
 
     let bounds = this.map.getBounds(); //  e.layer.getBounds();
@@ -1061,11 +1065,11 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public queryMicrobes() {
     /* create a hashmap to detect id to nest microbes without using a nested for loop (chaz) */
-    const siteDateGeoMap: Object = {};
     this.metadata2.map((siteDateGeo: any) => {
-      if (!siteDateGeoMap[siteDateGeo.value.id]) {
-        siteDateGeoMap[siteDateGeo.value.id] = siteDateGeo.value;
-        siteDateGeoMap[siteDateGeo.value.id].microbes = [];
+      if (!this.siteDateGeoMap[siteDateGeo.value.id]) {
+        this.siteDateGeoMap[siteDateGeo.value.id] = siteDateGeo.value;
+        this.siteDateGeoMap[siteDateGeo.value.id].microbes = [];
+        this.siteDateGeoMap[siteDateGeo.value.id].cfu = []; // create cfu array for upcoming cfu query
       } else {
         console.error('duplicate ID found in siteDateGeochem - ' + siteDateGeo.value.id);
       }
@@ -1096,9 +1100,9 @@ export class MapComponent implements OnInit, AfterViewInit {
         }
 
         microbeData.map((microbes: any) => {
-          if (siteDateGeoMap[microbes.value.id]) {
-            microbes.value = { ...microbes.value, ...siteDateGeoMap[microbes.value.id] };
-            siteDateGeoMap[microbes.value.id].microbes.push({ ...microbes.value });
+          if (this.siteDateGeoMap[microbes.value.id]) {
+            microbes.value = { ...microbes.value, ...this.siteDateGeoMap[microbes.value.id] };
+            this.siteDateGeoMap[microbes.value.id].microbes.push({ ...microbes.value });
           } else {
             console.log('No matching Site_Date_Geochem for ' + microbes.value.id + ' inside Microbes document');
           }
@@ -1251,19 +1255,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public queryCFU() {
-    /* create a hashmap to detect id to nest microbes without using a nested for loop (chaz) */
-    const siteDateGeoMap: Object = {};
-    this.metadata2.map((siteDateGeo: any) => {
-      if (!siteDateGeoMap[siteDateGeo.value.id]) {
-        siteDateGeoMap[siteDateGeo.value.id] = siteDateGeo.value;
-        siteDateGeoMap[siteDateGeo.value.id].cfu = [];
-      } else {
-        // duplicate mapping found
-        // console.error('duplicate ID found in siteDateGeochem - ' + siteDateGeo.value.id);
-      }
-    });
 
-    this.microbeMetadata = [];
+    this.cfuMetadata = [];
 
     let microbeStream: any = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id), this.currentMicrobeQuery);
 
