@@ -37,7 +37,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   sampleQueryCtrl = new FormControl('');
   microbeQueryCtrl = new FormControl('');
   currentSampleQuery: string = '';
-  currentMicrobeQuery: string = '';
+  currentMicrobeQuery: string = ''; // state of current microbe query
+  currentCFUQuery: string = ''; // state of current CFU query
+
   currentSampleReadableQuery: string = '';
   currentMicrobeReadableQuery: string = '';
   loading: boolean = false;
@@ -1258,7 +1260,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     this.cfuMetadata = [];
 
-    let microbeStream: any = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id), this.currentMicrobeQuery);
+    let cfuStream: any = this.queryHandler.cfuSearch(this.metadata2.map((item: any) => item.value.id), this.currentMicrobeQuery);
 
     if (microbeStream.data) {
       /* look for a better to fix this within query handler */

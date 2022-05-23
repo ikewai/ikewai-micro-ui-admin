@@ -277,6 +277,23 @@ export class QueryHandlerService {
     }
   }
 
+  cfuSearch(locations: string[], filterQuery: string): any {
+
+    let subjects = [];
+    let query: string;
+      
+    query = "{'$and': [{'name':{'$in':['TEST_CFU']}, 'value.id': {'$in':" + JSON.stringify(locations) +"}}" + filterQuery +"] }";
+
+    let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+    if (stored) {
+      return stored;
+    } else {
+      subjects.push(this.handleQuery(query));
+      return new QueryController(subjects);
+    }
+  }
+
+
   //deal with case where same query running multiple times before complete
   private handleQuery(query: string): BehaviorSubject<QueryResponse> {
     let dataStream = new BehaviorSubject<QueryResponse>({status: null, data: []});
