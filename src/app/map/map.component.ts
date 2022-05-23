@@ -39,6 +39,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   currentSampleQuery: string = '';
   currentMicrobeQuery: string = ''; // state of current microbe query
   currentCFUQuery: string = ''; // state of current CFU query
+  currentQPCRQuery: string = ''; // state of the current QPCR query
 
   currentSampleReadableQuery: string = '';
   currentMicrobeReadableQuery: string = '';
@@ -48,6 +49,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   globalLoading: boolean = false;
   behindTheScenesLoading: boolean = false;
   behindTheScenesLoading2: boolean = false;
+  behindTheScenesLoading3: boolean = false;
 
   currentMicrobeLayer: any = null;
   currentSampleLayer: any = null;
@@ -82,9 +84,12 @@ export class MapComponent implements OnInit, AfterViewInit {
   siteDateStream: any = null;
   microbeStream: any = null; // state of current microbe query
   cfuStream: any = null; // state of current cfu query
+  qpcrStream: any = null; // state of current qpcr query
 
   microbesFilterToggled: boolean = false;
   cfuFilterToggled: boolean = false;
+  qpcrFilterToggled: boolean = false;
+
   showFilterBar: boolean = false;
 
   sampleQuery = {
@@ -391,6 +396,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (this.cfuFilterToggled) {
       this.currentSampleQuery !== "" || this.currentCFUQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
     }
+    if (this.qpcrFilterToggled) {
+      this.currentSampleQuery !== "" || this.currentMicrobeQuery !== "" || this.currentQPCRQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
+    }
   }
   
   toggleMicrobes() {
@@ -403,6 +411,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.microbesFilterToggled = true;
     this.isSiteDateGeoFilter = false;
     this.cfuFilterToggled = false;
+    this.qpcrFilterToggled = false;
     this.toggleFilterBar();
   }
 
@@ -416,6 +425,23 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.microbesFilterToggled = false;
     this.isSiteDateGeoFilter = false;
     this.cfuFilterToggled = true;
+    this.qpcrFilterToggled = false;
+
+    this.toggleFilterBar(); // controls the state of the filters showing
+    // ^ dependent on parent state as well
+  }
+
+  toggleQPCR() {
+    if (this.behindTheScenesLoading3) {
+      return alert("Still loading cultured qPCR. Please try again in a few seconds.");
+    }
+    this.clearMapLayers();
+    
+    this.drawQPCR();
+    this.microbesFilterToggled = false;
+    this.isSiteDateGeoFilter = false;
+    this.cfuFilterToggled = false;
+    this.qpcrFilterToggled = true;
 
     this.toggleFilterBar(); // controls the state of the filters showing
     // ^ dependent on parent state as well
@@ -432,6 +458,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.microbesFilterToggled = false;
       this.isSiteDateGeoFilter = true;
       this.cfuFilterToggled = false;
+      this.qpcrFilterToggled = false;
       this.toggleFilterBar();
     }
     
@@ -677,6 +704,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   microbeMetadata: Metadata[]; // current microbes state
   cfuMetadata: any; // current cfu data state
+  qpcrMetadata: any; // current state of qpcr data
 
   metadata: any; // need to specify type
   metadata2: any; // current samples state
@@ -933,6 +961,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.globalLoading = true;
     this.behindTheScenesLoading = true;
     this.behindTheScenesLoading2 = true;
+    this.behindTheScenesLoading3 = true;
 
     this.metadata = [];
     this.metadata2 = [];
@@ -1306,7 +1335,67 @@ export class MapComponent implements OnInit, AfterViewInit {
 
         if (asyncStatus.finished) { 
           this.behindTheScenesLoading2 = false;
-          console.log(this.cfuMetadata, 'this is the cfu metadata?')
+
+          if (this.cfuFilterToggled) {
+        
+            this.drawCFU();
+          }
+        }
+      });
+    }
+  }
+
+  public queryQPCR() {
+
+    this.qpcrMetadata = [];
+
+    const microbesMap = {};
+
+    this.metadata2.map((microbe: any) => {
+      if (!microbesMap[microbe.value.id]) {
+        microbesMap[microbe.value.id] = microbe.value;
+        microbesMap[microbe.value.id].qpcr = [];
+      } else {
+        // duplicate found - currently disabled to not flood console:
+        // console.error('duplicate ID found in microbe - ' + microbe.value.id);
+      }
+    });
+
+    let qpcrStream: any = this.queryHandler.cfuSearch(this.microbeMetadata.map((item: any) => item.value.id), this.currentQPCRQuery);
+
+    if (qpcrStream.data) {
+      this.qpcrStream = [...qpcrStream.data];
+
+      if (this.qpcrFilterToggled) {    
+        this.drawQPCR(); /* draw qcpr points  - should be able to reuse function */
+      }
+      
+      this.behindTheScenesLoading3 = false;
+    } else {
+      this.qpcrStream = qpcrStream;
+      qpcrStream.getQueryObserver().subscribe((qcprData: any) => {
+        const asyncStatus: any = qcprData.status;
+        qcprData = qcprData.data;
+
+        if (qcprData == null) {
+          return;
+        }
+
+        qcprData.map((qcpr: any) => {
+          if (microbesMap[qcpr.value.sample_replicate]) {
+            qcpr.value = { ...qcpr.value, ...microbesMap[qcpr.value.sample_replicate] };
+            microbesMap[qcpr.value.sample_replicate].qcpr.push({ ...qcpr.value });
+          } else {
+            console.log('No matching microbe for ' + qcpr.value.sample_replicate + ' inside qcpr document');
+          }
+
+          this.qpcrMetadata.push({ ...qcpr });
+        });
+
+
+        if (asyncStatus.finished) { 
+          this.behindTheScenesLoading3 = false;
+          console.log(this.qpcrMetadata, 'this is the qcpr metadata?')
 
           if (this.cfuFilterToggled) {
         
@@ -1318,6 +1407,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public drawCFU() {
+  }
+
+  public drawQPCR() {
   }
 
   public drawMapPoints() {
