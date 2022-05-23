@@ -105,8 +105,8 @@
         <tr >
             <th class='header'></th>
             <th class='header'></th>
-            <th class='header'>Name</th>
-            <th class='header'>Site</th>
+            <th class='header'>Sample</th>
+            <th class='header'>Agar Type</th>
         </tr>
         <tr *ngFor="let metadatum of cfuMetadata">
             <td >
@@ -116,10 +116,10 @@
               <button id="{{metadatum.value.microGPS_ID}}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalSite(metadatum)">View</button>
             </td>
             <td width="40%">
-              <span #entries>{{metadatum.value.sample_replicate}}</span>
+              <span #entries>{{metadatum.value.id}}</span>
             </td>
             <td width="40%">
-              <span #entries>{{metadatum.value.site}}</span>
+              <span #entries>{{metadatum.value.agar_type}}</span>
             </td>
           </tr>
         </table>

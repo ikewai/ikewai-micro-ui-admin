@@ -1304,6 +1304,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
         if (asyncStatus.finished) { 
           this.behindTheScenesLoading2 = false;
+          console.log(this.cfuMetadata, 'this is the cfu metadata?')
 
           if (this.cfuFilterToggled) {
         
