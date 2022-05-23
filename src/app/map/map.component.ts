@@ -78,7 +78,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   gpsStream: any = null;
   siteDateStream: any = null;
-  microbeStream: any = null;
+  microbeStream: any = null; // state of current microbe query
+  cfuStream: any = null; // state of current cfu query
 
   microbesFilterToggled: boolean = false;
   cfuFilterToggled: boolean = false;
@@ -1260,57 +1261,51 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     this.cfuMetadata = [];
 
-    let cfuStream: any = this.queryHandler.cfuSearch(this.metadata2.map((item: any) => item.value.id), this.currentMicrobeQuery);
+    let cfuStream: any = this.queryHandler.cfuSearch(this.metadata2.map((item: any) => item.value.id), this.currentCFUQuery);
 
-    if (microbeStream.data) {
-      /* look for a better to fix this within query handler */
+    if (cfuStream.data) {
+      this.cfuMetadata = [...cfuStream.data];
 
-      this.microbeMetadata = [...microbeStream.data];
-
-      if (this.microbesFilterToggled) {    
-        this.drawMicrobes();
+      if (this.cfuFilterToggled) {    
+        this.drawCFU(); /* draw cfu points  - should be able to reuse function */
       }
       
-      this.behindTheScenesLoading = false;
+      this.behindTheScenesLoading2 = false;
     } else {
-      this.microbeStream = microbeStream;
-      microbeStream.getQueryObserver().subscribe((microbeData: any) => {
-        const asyncStatus: any = microbeData.status;
-        microbeData = microbeData.data;
+      this.cfuStream = cfuStream;
+      cfuStream.getQueryObserver().subscribe((cfuData: any) => {
+        const asyncStatus: any = cfuData.status;
+        cfuData = cfuData.data;
 
-        if (microbeData == null) {
+        if (cfuData == null) {
           return;
         }
 
-        microbeData.map((microbes: any) => {
-          if (siteDateGeoMap[microbes.value.id]) {
-            microbes.value = { ...microbes.value, ...siteDateGeoMap[microbes.value.id] };
-            siteDateGeoMap[microbes.value.id].microbes.push({ ...microbes.value });
+        cfuData.map((cfu: any) => {
+          if (this.siteDateGeoMap[cfu.value.id]) {
+            cfu.value = { ...cfu.value, ...this.siteDateGeoMap[cfu.value.id] };
+            this.siteDateGeoMap[cfu.value.id].cfu.push({ ...cfu.value });
           } else {
-            console.log('No matching Site_Date_Geochem for ' + microbes.value.id + ' inside Microbes document');
+            console.log('No matching Site_Date_Geochem for ' + cfu.value.id + ' inside CFU document');
           }
 
-          this.microbeMetadata.push({ ...microbes });
+          this.cfuMetadata.push({ ...cfu });
         });
 
 
         if (asyncStatus.finished) { 
-          /* I tried to cancel data that is being fetched when a new
-           * findData() instance is called, however, when I cancel, this causes incomplete 
-           * data to be cached. Because of race conditions with UI loading and the query component,
-           * I have opted to use a simple UI blocker in the meantime
-           */
+          this.behindTheScenesLoading2 = false;
 
-          // this.globalLoading = false;
-          this.behindTheScenesLoading = false;
-
-          if (this.microbesFilterToggled) {
+          if (this.cfuFilterToggled) {
         
-            this.drawMicrobes();
+            this.drawCFU();
           }
         }
       });
     }
+  }
+
+  public drawCFU() {
   }
 
   public drawMapPoints() {

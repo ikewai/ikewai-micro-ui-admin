@@ -111,10 +111,10 @@
 
     <div *ngIf="cfuFilterToggled" class="col-md-6">
       <div *ngIf="microbeMetadata.length == 0" style="height:500px;">
-        <h5>No Microbe Results For Current Area.</h5>
+        <h5>No Cultured Bacteria Results For Current Area.</h5>
       </div>
-      <div *ngIf="microbeMetadata.length > 0" style="height:500px;">
-      <h5>Microbe Results {{microbeMetadata.length}}</h5>
+      <div *ngIf="cfuMetadata.length > 0" style="height:500px;">
+      <h5>Cultured Bacteria Results {{cfuMetadata.length}}</h5>
       <div style="overflow: auto; height:468px;" class="table-responsive">
       <table  class="table row-border hover table-striped">
         <tr >
@@ -123,7 +123,7 @@
             <th class='header'>Name</th>
             <th class='header'>Site</th>
         </tr>
-        <tr *ngFor="let metadatum of microbeMetadata">
+        <tr *ngFor="let metadatum of cfuMetadata">
             <td >
               <button id="linked-{{metadatum.value.microGPS_ID}}" class="btn btn-primary" type="button" (click)="openLinkedPopup(metadatum)">Find</button>
             </td>
