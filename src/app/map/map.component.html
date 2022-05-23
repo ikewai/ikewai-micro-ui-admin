@@ -113,7 +113,7 @@
         <div *ngIf="isSiteDateGeoFilter">
           <div>
             <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
-            <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">Cultured Bacteria Filter</button>
+            <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
           </div>
           <h5>Sample Filter</h5>
           <query-builder [(ngModel)]='sampleQuery' [config]='sampleConfig' [formControl]='sampleQueryCtrl'>
@@ -130,7 +130,7 @@
       <div *ngIf="microbesFilterToggled">
         <div>
           <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleSiteDateGeo()">Sample Filter</button>
-          <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">Cultured Bacteria Filter</button>
+          <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
         </div>
         <h5>Microbes Filter</h5>
         <query-builder [(ngModel)]='microbeQuery' [config]='microbeConfig' [formControl]='microbeQueryCtrl'>
@@ -144,6 +144,23 @@
           </div>
         </div>
     </div>
+    <div *ngIf="cfuFilterToggled">
+      <div>
+        <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleSiteDateGeo()">Sample Filter</button>
+        <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
+      </div>
+      <h5>Cultured Bacteria Filter</h5>
+      <query-builder [(ngModel)]='microbeQuery' [config]='microbeConfig' [formControl]='microbeQueryCtrl'>
+      </query-builder>
+      <div class="container" style="margin-top: 10px; margin-bottom: 10px">
+        <div class="row">
+          <div class="col text-center mx-auto">
+            <button class="btn btn-primary center" type="button" (click)="microbeQueryFilter()">Query</button>
+            <button style="margin-left: 5px" class="btn btn-primary center" type="button" (click)="resetMicrobeQuery()">Reset</button>
+          </div>
+        </div>
+      </div>
+  </div>
   </div>
   <div class="p-20 animated fadeInLeft" [ngClass]="{'d-none': !showFilterBar, 'd-block': showFilterBar}" style="padding-top: 47px; width: 30%">
     <h5>Applied Filters</h5>

@@ -43,6 +43,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   loading: boolean = false;
   globalLoading: boolean = false;
   behindTheScenesLoading: boolean = false;
+  behindTheScenesLoading2: boolean = false;
+
   currentMicrobeLayer: any = null;
   currentSampleLayer: any = null;
   allAhupuaaData: any = null;
@@ -77,6 +79,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   microbeStream: any = null;
 
   microbesFilterToggled: boolean = false;
+  cfuFilterToggled: boolean = false;
   showFilterBar: boolean = false;
 
   sampleQuery = {
@@ -394,6 +397,18 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.toggleFilterBar();
   }
 
+  toggleCFU() {
+    if (this.behindTheScenesLoading2) {
+      return alert("Still loading cultured bacteria. Please try again in a few seconds.");
+    }
+    // this.clearMapLayers();
+    
+    // this.drawMicrobes();
+    this.cfuFilterToggled = true;
+    // this.isSiteDateGeoFilter = false;
+    // this.toggleFilterBar();
+  }
+
   toggleSiteDateGeo() {
     this.clearMapLayers();
     
@@ -647,6 +662,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   microbeMetadata: Metadata[];
   metadata: any; // need to specify type
   metadata2: any; // need to specify type
+  cfuMetadata: any;
+
   filterData: Metadata[];
   selectedMetadata: Metadata;
   currentUser: User;
@@ -898,6 +915,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     this.globalLoading = true;
     this.behindTheScenesLoading = true;
+    this.behindTheScenesLoading2 = true;
 
     this.metadata = [];
     this.metadata2 = [];
@@ -1229,6 +1247,74 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
     this.loading = false;
     this.globalLoading = false;
+  }
+
+  public queryCFU() {
+    /* create a hashmap to detect id to nest microbes without using a nested for loop (chaz) */
+    const siteDateGeoMap: Object = {};
+    this.cfuMetadata.map((siteDateGeo: any) => {
+      if (!siteDateGeoMap[siteDateGeo.value.id]) {
+        siteDateGeoMap[siteDateGeo.value.id] = siteDateGeo.value;
+        siteDateGeoMap[siteDateGeo.value.id].cfu = [];
+      } else {
+        // duplicate mapping found
+        // console.error('duplicate ID found in siteDateGeochem - ' + siteDateGeo.value.id);
+      }
+    });
+
+    this.microbeMetadata = [];
+
+    let microbeStream: any = this.queryHandler.microbeSearch(this.metadata2.map((item: any) => item.value.id), this.currentMicrobeQuery);
+
+    if (microbeStream.data) {
+      /* look for a better to fix this within query handler */
+
+      this.microbeMetadata = [...microbeStream.data];
+
+      if (this.microbesFilterToggled) {    
+        this.drawMicrobes();
+      }
+      
+      this.behindTheScenesLoading = false;
+    } else {
+      this.microbeStream = microbeStream;
+      microbeStream.getQueryObserver().subscribe((microbeData: any) => {
+        const asyncStatus: any = microbeData.status;
+        microbeData = microbeData.data;
+
+        if (microbeData == null) {
+          return;
+        }
+
+        microbeData.map((microbes: any) => {
+          if (siteDateGeoMap[microbes.value.id]) {
+            microbes.value = { ...microbes.value, ...siteDateGeoMap[microbes.value.id] };
+            siteDateGeoMap[microbes.value.id].microbes.push({ ...microbes.value });
+          } else {
+            console.log('No matching Site_Date_Geochem for ' + microbes.value.id + ' inside Microbes document');
+          }
+
+          this.microbeMetadata.push({ ...microbes });
+        });
+
+
+        if (asyncStatus.finished) { 
+          /* I tried to cancel data that is being fetched when a new
+           * findData() instance is called, however, when I cancel, this causes incomplete 
+           * data to be cached. Because of race conditions with UI loading and the query component,
+           * I have opted to use a simple UI blocker in the meantime
+           */
+
+          // this.globalLoading = false;
+          this.behindTheScenesLoading = false;
+
+          if (this.microbesFilterToggled) {
+        
+            this.drawMicrobes();
+          }
+        }
+      });
+    }
   }
 
   public drawMapPoints() {
