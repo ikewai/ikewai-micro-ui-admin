@@ -386,6 +386,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (this.microbesFilterToggled) {
       this.currentSampleQuery !== "" || this.currentMicrobeQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
     }
+    if (this.cfuFilterToggled) {
+      this.currentSampleQuery !== "" || this.currentCFUQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
+    }
   }
   
   toggleMicrobes() {
@@ -411,8 +414,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.microbesFilterToggled = false;
     this.isSiteDateGeoFilter = false;
     this.cfuFilterToggled = true;
-    // this.isSiteDateGeoFilter = false;
-    // this.toggleFilterBar();
+
+    this.toggleFilterBar(); // controls the state of the filters showing
+    // ^ dependent on parent state as well
   }
 
   toggleSiteDateGeo() {
