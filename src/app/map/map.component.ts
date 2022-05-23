@@ -42,6 +42,8 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   currentSampleReadableQuery: string = '';
   currentMicrobeReadableQuery: string = '';
+  
+  /* loading vars */
   loading: boolean = false;
   globalLoading: boolean = false;
   behindTheScenesLoading: boolean = false;
@@ -1720,6 +1722,15 @@ export class MapComponent implements OnInit, AfterViewInit {
         site.value.site_enviro;
     }
     if (site.name == 'TEST_Microbes') {
+      details.innerHTML =
+        '<br/>Name: ' +
+        site.value.location +
+        '<br/>Watershed: ' +
+        site.value.watershed +
+        '<br/>Site_Enviro: ' +
+        site.value.site_enviro;
+    }
+    if (site.name == 'TEST_CFU') {
       details.innerHTML =
         '<br/>Name: ' +
         site.value.location +

@@ -133,6 +133,7 @@
           <div>
             <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
+            <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
           </div>
           <h5>Sample Filter</h5>
           <query-builder [(ngModel)]='sampleQuery' [config]='sampleConfig' [formControl]='sampleQueryCtrl'>
@@ -150,6 +151,7 @@
         <div>
           <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleSiteDateGeo()">Sample Filter</button>
           <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
+          <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
         </div>
         <h5>Microbes Filter</h5>
         <query-builder [(ngModel)]='microbeQuery' [config]='microbeConfig' [formControl]='microbeQueryCtrl'>
@@ -167,6 +169,7 @@
       <div>
         <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleSiteDateGeo()">Sample Filter</button>
         <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
+        <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
       </div>
       <h5>Cultured Bacteria Filter</h5>
       <query-builder [(ngModel)]='microbeQuery' [config]='microbeConfig' [formControl]='microbeQueryCtrl'>
@@ -331,15 +334,14 @@
                 <span *ngIf="selectedMetadata.value.sample_replicate"><b>Sample Replicate: </b>&nbsp;{{selectedMetadata.value.sample_replicate}}<br/></span>
                 <span *ngIf="selectedMetadata.value.sample_no"><b>Sample No: </b>&nbsp;{{selectedMetadata.value.sample_no}}<br/></span>
                 <span *ngIf="selectedMetadata.value.library"><b>Library: </b>&nbsp;{{selectedMetadata.value.library}}<br/></span>
-
-
-                <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
-                  <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 
-                     (click)="downloadClick(link.href)">
-                      <img class="images" src="assets/fileicons/{{link.href.split('.').pop()}}.png" height="40px"/>
-                      Download {{link.href.split('/').slice(-1)[0]}}</a>
-                </div>
-                </div>
+              </div>
+              <div *ngIf="selectedMetadata.name === 'TEST_CFU'" class="col-md-4">
+                <b>ID:</b>&nbsp;{{selectedMetadata.value.id}}<br/>
+                <b>Date:</b>&nbsp;{{selectedMetadata.value.date}}<br/>
+                <span *ngIf="selectedMetadata.value.agar_type"><b>Agar Type: </b>&nbsp;{{selectedMetadata.value.agar_type}}<br/></span>
+                <span *ngIf="selectedMetadata.value.location"><b>Location: </b>&nbsp;{{selectedMetadata.value.location}}<br/></span>
+                <span *ngIf="selectedMetadata.value.cfu_100ml"><b>CFU 100ml: </b>&nbsp;{{selectedMetadata.value.cfu_100ml}}<br/></span>
+              </div>
             </div>
           </div>
 <!--
