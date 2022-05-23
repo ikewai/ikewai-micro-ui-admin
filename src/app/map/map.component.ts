@@ -52,6 +52,12 @@ export class MapComponent implements OnInit, AfterViewInit {
   focusedFilterRow: any = null;
 
   microbesFlattenedQueryArr: Array<any> = [];
+  samplesFlattenedQueryArr: Array<any> = [];
+
+  filterToDisplayFilterChainMicrobes: boolean = false;
+  filterToDisplayFilterChainSamples: boolean = false;
+
+  flagShown: boolean = false;
 
   toggleAhupuaa() {
     this.ahupuaaToggled = !this.ahupuaaToggled;
@@ -101,7 +107,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   sampleConfig: QueryBuilderConfig = {
     fields: {
-      id: { name: 'Name', type: 'string' },
+      id: { name: 'Id', type: 'string' },
       location: { name: 'Location', type: 'string' },
       date: { name: 'Date', type: 'date' },
       season: {
@@ -114,6 +120,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           { name: 'Spring', value: 'SPRING' },
         ],
       },
+      watershed: { name: 'Watershed', type: 'string'},
       year: { name: 'Year', type: 'number' },
       time: { name: 'Time', type: 'time' },
       temp_c: { name: 'TEMP_C', type: 'number' },
@@ -204,34 +211,39 @@ export class MapComponent implements OnInit, AfterViewInit {
     agar_type: 'TEST_CFU',
   };
 
-  flattenQuery(queryArray: Array<any>, level: number, condition: string, filterTable: string, num: number) {
-    if (level === 0) this.microbesFlattenedQueryArr = [];
+  flattenQuery(queryArray: Array<any>, level: number, condition: string, filterTable: string, num: number, resultArr: Array<any>) {
+    if (level === 0) resultArr = [];
     for (let i = 0; i < queryArray.length; i++) {
-      const querySubject: any = queryArray[i];
+      const querySubject: any = {...queryArray[i]};
       if (querySubject.condition) {
-        this.flattenQuery(querySubject.rules, level + 1, querySubject.condition, filterTable, num + 2);
+        this.flattenQuery(querySubject.rules, level + 1, querySubject.condition, filterTable, num + 2, resultArr);
       } else {
         querySubject.level = level;
         querySubject.subjectCondition = condition.toUpperCase();
         querySubject.table = filterTable;
-        if (this.microbesFlattenedQueryArr.length) {
-          querySubject.index = Math.max(num + i, this.microbesFlattenedQueryArr[this.microbesFlattenedQueryArr.length - 1].index + 1);
+        if (resultArr.length) {
+          querySubject.index = Math.max(num + i, resultArr[resultArr.length - 1].index + 1);
         } else {
           querySubject.index = num + i;
         }
-        this.microbesFlattenedQueryArr.push(querySubject);
+        resultArr.push(querySubject);
       }
     }
+    return resultArr;
   }
 
   removeMicrobeFilter(filterTable: any, indexToRemove: number) {
 
-    const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
-    button.click();
-    this.removeElement(indexToRemove);
+    if (this.filterToDisplayFilterChainMicrobes) {
+      const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
+      this.removeMicrobeElement(indexToRemove);
+      button.click();
+    } else {
+      this.removeMicrobeElement(indexToRemove);
+    }
   }
 
-  removeElement(indexToRemove: number) {
+  removeMicrobeElement(indexToRemove: number) {
     const copy = [...this.microbesFlattenedQueryArr];
     this.microbesFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
     for (let i = 0; i < copy.length; i++) {
@@ -241,8 +253,36 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
-  test(e: any, indexToHighlight: number) {
+  removeSampleFilter(filterTable: any, indexToRemove: number) {
+
+    if (this.filterToDisplayFilterChainSamples) {
+      
+      if (!this.isSiteDateGeoFilter) {
+        this.microbesFilterToggled = false;
+        this.isSiteDateGeoFilter = true;
+      }
+
+      const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
+      this.removeSampleElement(indexToRemove);
+      button.click();
+    } else {
+      this.removeSampleElement(indexToRemove);
+    }
+  }
+
+  removeSampleElement(indexToRemove: number) {
+    const copy = [...this.samplesFlattenedQueryArr];
+    this.samplesFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
+    for (let i = 0; i < copy.length; i++) {
+      if (copy[i].index > indexToRemove) {
+        copy[i].index--;
+      }
+    }
+  }
+
+  highlightRowMicrobes(e: any, indexToHighlight: number) {
     if (e.stopPropagation) e.stopPropagation();
+    if (!this.filterToDisplayFilterChainMicrobes) return;
     
     const lol:any = document.getElementsByClassName('q-row')[indexToHighlight]
     if (lol) {
@@ -251,10 +291,178 @@ export class MapComponent implements OnInit, AfterViewInit {
       lol.style.background = 'pink';
     }
 
-    console.log(e, 'do i get the event?')
+  }
+
+  highlightRowSamples(e: any, indexToHighlight: number) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (!this.filterToDisplayFilterChainSamples) return;
+    if (!this.isSiteDateGeoFilter) {
+      this.microbesFilterToggled = false;
+      this.isSiteDateGeoFilter = true;
+    }
+    
+    const lol:any = document.getElementsByClassName('q-row')[indexToHighlight]
+    if (lol) {
+      this.focusedFilterRow ? this.focusedFilterRow.style.background = 'none' : null;
+      this.focusedFilterRow = lol;
+      lol.style.background = 'pink';
+    }
+
+  }
+
+  checkIfChangesWereMade(changes: any, currentState: any) {
+    if (!currentState.length) {
+      return;
+    } else {
+      const changesArr: Array<any> = this.flattenQuery(changes.rules, 0, changes.condition, 'microbes', 0, []);
+      for (let i = 0; i < changesArr.length; i++) {
+        if (changesArr[i].field !== currentState[i].field ||
+            changesArr[i].index !== currentState[i].index ||
+            changesArr[i].operator !== currentState[i].operator ||
+            changesArr[i].subjectCondition !== currentState[i].subjectCondition ||
+            changesArr[i].value !== currentState[i].value
+          ) {
+          changesArr[i].table === 'microbes' ? (this.filterToDisplayFilterChainMicrobes = false) : (this.filterToDisplayFilterChainSamples = false);
+          if (this.focusedFilterRow) this.focusedFilterRow.style.background = 'none';
+          return this.showAlertFlag();
+        }
+      }
+    }
+  }
+
+  showAlertFlag() {
+    if (!this.flagShown) {
+      document.getElementById('alert').className = 'd-flex justify-content-between alert alert-warning alert-dismissible fade position-sticky show';
+    }
   }
 
 
+  
+  microbeQueryFilterRecursive(query: any, result: Array<any>) {
+    let nestedQuery: Array<any> = ['', ''];
+    let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
+    let readableCondition: string = query.condition === 'and' ? ' and ' : ' or ';
+    result[0] += condition;
+    result[1] += '(';
+    for (let i: number = 0; i < query.rules.length; i++) {
+      if (query.rules[i].field) {
+        let { field, operator, value } = query.rules[i];
+        
+        let type: string;
+        if (field !== 'library' && field !== 'volume_l') {
+          type = 'string';
+        } else {
+          type = 'number';
+        }
+        
+        const statement = this.evaluateOperation(operator, value, type);
+        const readable = this.parseReadable(operator, value, type);
+        nestedQuery[0] += `{'value.${field}'${statement}}`;
+        nestedQuery[1] += `${field} ${readable}`;
+        i !== query.rules.length - 1 ? (nestedQuery[0] += ', ') : null;
+        i !== query.rules.length - 1 ? (nestedQuery[1] += readableCondition) : null;
+      }
+      if (query.rules[i].condition) {
+        this.microbeQueryFilterRecursive(query.rules[i], nestedQuery);
+      }
+    }
+    result[0] += nestedQuery[0];
+    result[0] += ']}';
+    result[1] += nestedQuery[1];
+    result[1] += ')';
+  }
+  
+  
+  toggleFilterBar() {
+    if (this.isSiteDateGeoFilter) {
+      this.currentSampleQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
+    }
+    if (this.microbesFilterToggled) {
+      this.currentSampleQuery !== "" || this.currentMicrobeQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
+    }
+  }
+  
+  toggleMicrobes() {
+    if (this.behindTheScenesLoading) {
+      return alert("Still loading microbes. Please try again in a few seconds.");
+    }
+    this.clearMapLayers();
+    
+    this.drawMicrobes();
+    this.microbesFilterToggled = true;
+    this.isSiteDateGeoFilter = false;
+    this.toggleFilterBar();
+  }
+
+  toggleSiteDateGeo() {
+    this.clearMapLayers();
+    
+    this.microGPSData = this.microGPSData.filter(
+      (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
+      );
+      
+      this.drawMapPoints();
+      this.microbesFilterToggled = false;
+      this.isSiteDateGeoFilter = true;
+      this.toggleFilterBar();
+    }
+    
+    sampleQueryFilter() {
+      if (this.behindTheScenesLoading) {
+      return alert("Still loading microbes. Please try again in a few seconds.");
+    }
+    if (!this.sampleQuery.rules.length) {
+      this.currentSampleQuery = '';
+      this.currentSampleReadableQuery = '';
+    } else {
+      this.filterToDisplayFilterChainSamples = true;
+      this.samplesFlattenedQueryArr = this.flattenQuery(this.sampleQuery.rules, 0, this.sampleQuery.condition, 'samples', 0, this.samplesFlattenedQueryArr);
+      this.metadata2 = [];
+      
+      /* logical 'or' operator */
+      let result: Array<any> = ['', ''];
+      let condition: string = this.sampleQuery.condition === 'and' ? " {'$and': [" : " {'$or':  [";
+      let readableCondition: string =
+      this.sampleQuery.condition === 'and'
+      ? 'Where all samples meet each criteria: '
+      : 'Where all samples meet one of these criteria: ';
+      let readableCondition2: string = this.sampleQuery.condition === 'and' ? ' and ' : ' or ';
+      result[0] += condition;
+      result[1] += readableCondition;
+      for (let i: number = 0; i < this.sampleQuery.rules.length; i++) {
+        if (this.sampleQuery.rules[i].field) {
+          let { field, operator, value } = this.sampleQuery.rules[i];
+          
+          let type: string;
+          if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'id' && field !== 'location') {
+            type = 'number';
+          } else {
+            type = 'string';
+          }
+          
+          const statement = this.evaluateOperation(operator, value, type);
+          const readable = this.parseReadable(operator, value, type);
+          result[0] += `{'value.${field}'${statement}}`;
+          i <= this.sampleQuery.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
+          result[1] += `${field} ${readable}`;
+          i === 0 ?  (result[1] += readableCondition2) : null;
+        }
+        const queryObject: any = this.sampleQuery.rules[i];
+        if (queryObject.condition) {
+          this.sampleQueryFilterRecursive(this.sampleQuery.rules[i], result);
+        }
+        i !== this.sampleQuery.rules.length - 1 ? (result[0] += ', ') : null;
+      }  
+      result[0] += ']}';
+      this.currentSampleQuery = ', ' + result[0];
+      this.currentSampleReadableQuery = result[1];
+      
+      /* END previous attempt to create a front end filter */
+    }
+    this.findData();
+    this.toggleFilterBar();
+  }
+  
   microbeQueryFilter() {
     if (this.behindTheScenesLoading) {
       return alert("Still loading microbes. Please try again in a few seconds.");
@@ -263,8 +471,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.currentMicrobeQuery = '';
       this.currentMicrobeReadableQuery = '';
     } else {
-      this.flattenQuery(this.microbeQuery.rules, 0, this.microbeQuery.condition, 'microbes', 0);
-      console.log(this.microbesFlattenedQueryArr, 'finshed flattneed arr?');
+      this.filterToDisplayFilterChainMicrobes = true;
+      this.microbesFlattenedQueryArr = this.flattenQuery(this.microbeQuery.rules, 0, this.microbeQuery.condition, 'microbes', 0, this.microbesFlattenedQueryArr);
       this.microbeMetadata = [];
 
       /* logical 'or' operator */
@@ -311,130 +519,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.toggleFilterBar();
     this.findData();
   }
-
-  microbeQueryFilterRecursive(query: any, result: Array<any>) {
-    let nestedQuery: Array<any> = ['', ''];
-    let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
-    let readableCondition: string = query.condition === 'and' ? ' and ' : ' or ';
-    result[0] += condition;
-    result[1] += '(';
-    for (let i: number = 0; i < query.rules.length; i++) {
-      if (query.rules[i].field) {
-        let { field, operator, value } = query.rules[i];
-
-        let type: string;
-        if (field !== 'library' && field !== 'volume_l') {
-          type = 'string';
-        } else {
-          type = 'number';
-        }
-
-        const statement = this.evaluateOperation(operator, value, type);
-        const readable = this.parseReadable(operator, value, type);
-        nestedQuery[0] += `{'value.${field}'${statement}}`;
-        nestedQuery[1] += `${field} ${readable}`;
-        i !== query.rules.length - 1 ? (nestedQuery[0] += ', ') : null;
-        i !== query.rules.length - 1 ? (nestedQuery[1] += readableCondition) : null;
-      }
-      if (query.rules[i].condition) {
-        this.microbeQueryFilterRecursive(query.rules[i], nestedQuery);
-      }
-    }
-    result[0] += nestedQuery[0];
-    result[0] += ']}';
-    result[1] += nestedQuery[1];
-    result[1] += ')';
-  }
-
-
-  toggleFilterBar() {
-    if (this.isSiteDateGeoFilter) {
-      this.currentSampleQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
-    }
-    if (this.microbesFilterToggled) {
-      this.currentSampleQuery !== "" || this.currentMicrobeQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
-    }
-  }
-
-  toggleMicrobes() {
-    if (this.behindTheScenesLoading) {
-      return alert("Still loading microbes. Please try again in a few seconds.");
-    }
-    this.clearMapLayers();
-
-    this.drawMicrobes();
-    this.microbesFilterToggled = true;
-    this.isSiteDateGeoFilter = false;
-    this.toggleFilterBar();
-  }
-
-  toggleSiteDateGeo() {
-    this.clearMapLayers();
-
-    this.microGPSData = this.microGPSData.filter(
-      (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
-    );
-
-    this.drawMapPoints();
-    this.microbesFilterToggled = false;
-    this.isSiteDateGeoFilter = true;
-    this.toggleFilterBar();
-  }
-
-  sampleQueryFilter() {
-    if (this.behindTheScenesLoading) {
-      return alert("Still loading microbes. Please try again in a few seconds.");
-    }
-    if (!this.sampleQuery.rules.length) {
-      this.currentSampleQuery = '';
-      this.currentSampleReadableQuery = '';
-    } else {
-      this.metadata2 = [];
-
-      /* logical 'or' operator */
-      let result: Array<any> = ['', ''];
-      let condition: string = this.sampleQuery.condition === 'and' ? " {'$and': [" : " {'$or':  [";
-      let readableCondition: string =
-        this.sampleQuery.condition === 'and'
-          ? 'Where all samples meet each criteria: '
-          : 'Where all samples meet one of these criteria: ';
-      let readableCondition2: string = this.sampleQuery.condition === 'and' ? ' and ' : ' or ';
-      result[0] += condition;
-      result[1] += readableCondition;
-      for (let i: number = 0; i < this.sampleQuery.rules.length; i++) {
-        if (this.sampleQuery.rules[i].field) {
-          let { field, operator, value } = this.sampleQuery.rules[i];
-
-          let type: string;
-          if (field !== 'season' && field !== 'date' && field !== 'time' && field !== 'id' && field !== 'location') {
-            type = 'number';
-          } else {
-            type = 'string';
-          }
-
-          const statement = this.evaluateOperation(operator, value, type);
-          const readable = this.parseReadable(operator, value, type);
-          result[0] += `{'value.${field}'${statement}}`;
-          i <= this.sampleQuery.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
-          result[1] += `${field} ${readable}`;
-          i === 0 ?  (result[1] += readableCondition2) : null;
-        }
-        const queryObject: any = this.sampleQuery.rules[i];
-        if (queryObject.condition) {
-          this.sampleQueryFilterRecursive(this.sampleQuery.rules[i], result);
-        }
-          i !== this.sampleQuery.rules.length - 1 ? (result[0] += ', ') : null;
-      }  
-      result[0] += ']}';
-      this.currentSampleQuery = ', ' + result[0];
-      this.currentSampleReadableQuery = result[1];
-
-      /* END previous attempt to create a front end filter */
-    }
-    this.findData();
-    this.toggleFilterBar();
-  }
-
+  
   sampleQueryFilterRecursive(query: any, result: Array<any>) {
     let nestedQuery: Array<any> = ['', ''];
     let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
@@ -512,6 +597,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   resetSampleQuery() {
     this.currentSampleQuery = '';
     this.currentSampleReadableQuery = '';
+    this.samplesFlattenedQueryArr = [];
+    if (this.focusedFilterRow) this.focusedFilterRow.style.background = 'none';
     this.findData();
     this.toggleFilterBar();
   }
@@ -520,7 +607,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.currentMicrobeQuery = '';
     this.currentMicrobeReadableQuery = '';
     this.microbesFlattenedQueryArr = [];
-
+    if (this.focusedFilterRow) this.focusedFilterRow.style.background = 'none';
     this.findData();
     this.toggleFilterBar();
   }
@@ -592,6 +679,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     zoom: 10,
     center: latLng(21.48, -157.9104),
     attributionControl: false,
+    scrollWheelZoom: false,
   };
 
   optionsZoomed: L.MapOptions = {
@@ -778,6 +866,9 @@ export class MapComponent implements OnInit, AfterViewInit {
     //this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
 
+    this.microbeQueryCtrl.valueChanges.subscribe(selectedValue => this.checkIfChangesWereMade(selectedValue, this.microbesFlattenedQueryArr))
+    this.sampleQueryCtrl.valueChanges.subscribe(selectedValue => this.checkIfChangesWereMade(selectedValue, this.samplesFlattenedQueryArr))
+
     //this.findData()
     //console.log(this.defaultFilterHandle);
     //this.defaultFilterSource = this.queryHandler.getFilterObserver(this.defaultFilterHandle);
@@ -869,6 +960,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   public querySiteDateGeo() {
     /* create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
     const locationHashmap: any = {};
+    const watershedHashmap: any = {};
     this.microGPSData.map((microGPS: any) => {
       if (!locationHashmap[microGPS.value.location]) {
         locationHashmap[microGPS.value.location] = microGPS.value;

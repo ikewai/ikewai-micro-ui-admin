@@ -18,6 +18,10 @@ export class HomeComponent {
 
     constructor() { }
 
+    removeAlert() {
+      document.getElementById('alert').className = "d-flex justify-content-between alert alert-warning alert-dismissible fade position-absolute hide";
+    }
+
     ngOnInit() {
 
     }
