@@ -659,10 +659,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   microGPSData: Array<Object>;
 
   isSiteDateGeoFilter: Boolean = true;
-  microbeMetadata: Metadata[];
+  microbeMetadata: Metadata[]; // current microbes state
+  cfuMetadata: any; // current cfu data state
+
   metadata: any; // need to specify type
-  metadata2: any; // need to specify type
-  cfuMetadata: any;
+  metadata2: any; // current samples state
 
   filterData: Metadata[];
   selectedMetadata: Metadata;
@@ -1252,7 +1253,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   public queryCFU() {
     /* create a hashmap to detect id to nest microbes without using a nested for loop (chaz) */
     const siteDateGeoMap: Object = {};
-    this.cfuMetadata.map((siteDateGeo: any) => {
+    this.metadata2.map((siteDateGeo: any) => {
       if (!siteDateGeoMap[siteDateGeo.value.id]) {
         siteDateGeoMap[siteDateGeo.value.id] = siteDateGeo.value;
         siteDateGeoMap[siteDateGeo.value.id].cfu = [];

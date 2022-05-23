@@ -107,7 +107,56 @@
         </table>
         </div>
         </div>
+    </div>
+
+    <div *ngIf="cfuFilterToggled" class="col-md-6">
+      <div *ngIf="microbeMetadata.length == 0" style="height:500px;">
+        <h5>No Microbe Results For Current Area.</h5>
       </div>
+      <div *ngIf="microbeMetadata.length > 0" style="height:500px;">
+      <h5>Microbe Results {{microbeMetadata.length}}</h5>
+      <div style="overflow: auto; height:468px;" class="table-responsive">
+      <table  class="table row-border hover table-striped">
+        <tr >
+            <th class='header'></th>
+            <th class='header'></th>
+            <th class='header'>Name</th>
+            <th class='header'>Site</th>
+        </tr>
+        <tr *ngFor="let metadatum of microbeMetadata">
+            <td >
+              <button id="linked-{{metadatum.value.microGPS_ID}}" class="btn btn-primary" type="button" (click)="openLinkedPopup(metadatum)">Find</button>
+            </td>
+            <td >
+              <button id="{{metadatum.value.microGPS_ID}}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalSite(metadatum)">View</button>
+            </td>
+            <td width="40%">
+              <span #entries>{{metadatum.value.sample_replicate}}</span>
+            </td>
+            <td width="40%">
+              <span #entries>{{metadatum.value.site}}</span>
+            </td>
+            <td >
+              <span *ngIf="metadatum.name == 'Well'">
+                {{metadatum.value.yr_drilled}}</span>
+                <span *ngIf="metadatum.name == 'Water_Quality_Site'">{{metadatum.value.ProviderName}}</span>
+            </td>
+            <td width="20%">
+                <span *ngIf="metadatum.name == 'Water_Quality_Site' && metadatum.value.resultCount > 0">
+                    <a class="btn btn-success" href='https://www.waterqualitydata.us/Result/search?siteid={{metadatum.value.MonitoringLocationIdentifier}}&mimeType=csv&zip=yes&sorted=no' target="_blank" > Download {{metadatum.value.resultCount}} Measurements</a>
+                </span>
+              <div *ngIf="metadatum.name == 'Well'">
+                  <span *ngFor="let link of metadatum._links.associationIds ">
+                    <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" (click)="downloadClick(link.href)">Download {{link.href.split('/').slice(-1)[0]}}</a>
+                  </span>
+              </div>
+            </td>
+          </tr>
+        </table>
+        </div>
+        </div>
+    </div>
+
     <div style="width: 100%; margin-bottom: 5px" class="row flex-nowrap">
       <div style="padding-top: 10px;" class="row flex-nowrap" [ngStyle]="{'width': showFilterBar ? '75%' : '100%'}">
         <div *ngIf="isSiteDateGeoFilter">
