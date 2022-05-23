@@ -397,6 +397,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.drawMicrobes();
     this.microbesFilterToggled = true;
     this.isSiteDateGeoFilter = false;
+    this.cfuFilterToggled = false;
     this.toggleFilterBar();
   }
 
@@ -404,9 +405,11 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (this.behindTheScenesLoading2) {
       return alert("Still loading cultured bacteria. Please try again in a few seconds.");
     }
-    // this.clearMapLayers();
+    this.clearMapLayers();
     
-    // this.drawMicrobes();
+    this.drawCFU();
+    this.microbesFilterToggled = false;
+    this.isSiteDateGeoFilter = false;
     this.cfuFilterToggled = true;
     // this.isSiteDateGeoFilter = false;
     // this.toggleFilterBar();
@@ -422,6 +425,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.drawMapPoints();
       this.microbesFilterToggled = false;
       this.isSiteDateGeoFilter = true;
+      this.cfuFilterToggled = false;
       this.toggleFilterBar();
     }
     
@@ -1061,6 +1065,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           }
 
           this.queryMicrobes();
+          this.queryCFU();
         }
       });
     }
