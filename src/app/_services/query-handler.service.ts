@@ -293,6 +293,26 @@ export class QueryHandlerService {
     }
   }
 
+  qpcrSearch(microbes: string[], filterQuery: string): any {
+
+    let subjects = [];
+    let query: string;
+
+    if (microbes.length > 50) return alert("please query smaller")
+      
+    query = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(microbes) +"}}" + filterQuery +"] }";
+
+
+    console.log(query, 'what is my query?')
+    let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+    if (stored) {
+      return stored;
+    } else {
+      subjects.push(this.handleQuery(query));
+      return new QueryController(subjects);
+    }
+  }
+
 
   //deal with case where same query running multiple times before complete
   private handleQuery(query: string): BehaviorSubject<QueryResponse> {
@@ -648,3 +668,4 @@ export interface RequestStatus {
   loadedResults: number;
   finished: boolean;
 }
+

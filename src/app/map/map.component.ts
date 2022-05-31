@@ -49,7 +49,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   globalLoading: boolean = false;
   behindTheScenesLoading: boolean = false;
   behindTheScenesLoading2: boolean = false;
-  behindTheScenesLoading3: boolean = false;
 
   currentMicrobeLayer: any = null;
   currentSampleLayer: any = null;
@@ -432,16 +431,13 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   toggleQPCR() {
-    if (this.behindTheScenesLoading3) {
-      return alert("Still loading cultured qPCR. Please try again in a few seconds.");
-    }
+    this.queryQPCR();
     this.clearMapLayers();
     
     this.drawQPCR();
     this.microbesFilterToggled = false;
     this.isSiteDateGeoFilter = false;
     this.cfuFilterToggled = false;
-    this.qpcrFilterToggled = true;
 
     this.toggleFilterBar(); // controls the state of the filters showing
     // ^ dependent on parent state as well
@@ -728,6 +724,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     waterQualitySites: L.FeatureGroup;
     MicroGPS: L.FeatureGroup;
     microbes: L.FeatureGroup;
+    cfu: L.FeatureGroup;
   };
 
   options: L.MapOptions = {
@@ -832,6 +829,10 @@ export class MapComponent implements OnInit, AfterViewInit {
       }),
       microbes: L.markerClusterGroup({
         iconCreateFunction: iconCreateFunction('Microbes'),
+        disableClusteringAtZoom: 4,
+      }),
+      cfu: L.markerClusterGroup({
+        iconCreateFunction: iconCreateFunction('CFU'),
         disableClusteringAtZoom: 4,
       }),
       wells: L.markerClusterGroup({ iconCreateFunction: iconCreateFunction('wells'), disableClusteringAtZoom: 12 }),
@@ -961,7 +962,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.globalLoading = true;
     this.behindTheScenesLoading = true;
     this.behindTheScenesLoading2 = true;
-    this.behindTheScenesLoading3 = true;
 
     this.metadata = [];
     this.metadata2 = [];
@@ -1352,25 +1352,25 @@ export class MapComponent implements OnInit, AfterViewInit {
     const microbesMap = {};
 
     this.metadata2.map((microbe: any) => {
-      if (!microbesMap[microbe.value.id]) {
-        microbesMap[microbe.value.id] = microbe.value;
-        microbesMap[microbe.value.id].qpcr = [];
+      if (!microbesMap[microbe.value.sample_replicate]) {
+        microbesMap[microbe.value.sample_replicate] = microbe.value;
+        microbesMap[microbe.value.sample_replicate].qpcr = [];
       } else {
         // duplicate found - currently disabled to not flood console:
         // console.error('duplicate ID found in microbe - ' + microbe.value.id);
       }
     });
 
-    let qpcrStream: any = this.queryHandler.cfuSearch(this.microbeMetadata.map((item: any) => item.value.id), this.currentQPCRQuery);
+    let qpcrStream: any = this.queryHandler.qpcrSearch(this.microbeMetadata.map((item: any) => item.value.sample_replicate), this.currentQPCRQuery);
 
     if (qpcrStream.data) {
-      this.qpcrStream = [...qpcrStream.data];
+      this.qpcrMetadata = [...qpcrStream.data];
 
       if (this.qpcrFilterToggled) {    
         this.drawQPCR(); /* draw qcpr points  - should be able to reuse function */
       }
-      
-      this.behindTheScenesLoading3 = false;
+
+      this.qpcrFilterToggled = true;
     } else {
       this.qpcrStream = qpcrStream;
       qpcrStream.getQueryObserver().subscribe((qcprData: any) => {
@@ -1394,19 +1394,82 @@ export class MapComponent implements OnInit, AfterViewInit {
 
 
         if (asyncStatus.finished) { 
-          this.behindTheScenesLoading3 = false;
-          console.log(this.qpcrMetadata, 'this is the qcpr metadata?')
+          console.log(this.qpcrMetadata, 'wait am i getting anything?')
 
-          if (this.cfuFilterToggled) {
+          if (this.qpcrFilterToggled) {
         
-            this.drawCFU();
+            this.drawQPCR();
           }
+          this.qpcrFilterToggled = true;
         }
       });
     }
   }
 
   public drawCFU() {
+        /* END make another query using query handler (Chaz) */
+
+        let indices = Object.keys(this.cfuMetadata);
+        let i: number;
+        for (i = 0; i < indices.length; i++) {
+          let index = Number(indices[i]);
+          let datum: any = this.cfuMetadata[index];
+          this.metadata.push(datum);
+          console.log(datum.name, 'name?')
+          let group = NameGroupMap[datum.name];
+          console.log(group, 'group?')
+          //console.log(datum.value.loc);
+          let geod = datum.value.loc;
+          //console.log(geod)
+          let prop = {};
+          prop['uuid'] = datum.uuid;
+          geod.properties = prop;
+          let geojson = L.geoJSON(geod, {
+            style: this.getStyleByGroup(group),
+            pointToLayer: (feature, latlng) => {
+              let icon = this.getIconByGroup(group);
+              return L.circleMarker(latlng, { radius: 5, opacity: 1, fillOpacity: 0.9, color: 'purple' });
+              //return L.marker(latlng, {icon: icon});
+            },
+            onEachFeature: (feature, layer) => {
+              //  let header = L.DomUtil.create("h6")
+              let wrapper = L.DomUtil.create('div');
+              let details = L.DomUtil.create('div');
+              let download = L.DomUtil.create('div');
+              let goto = L.DomUtil.create('span', 'entry-link');
+
+              if (datum.name == 'TEST_CFU') {
+                details.innerHTML =
+                  '<br/>Location: ' +
+                  datum.value.location +
+                  '<br/>Watershed: ' +
+                  datum.value.watershed +
+                  '<br/>Site_Enviro: ' +
+                  datum.value.site_enviro;
+              }
+
+              let popup: L.Popup = new L.Popup({ autoPan: false });
+              wrapper.append(details);
+    
+              popup.setContent(wrapper);
+              layer.bindPopup(popup);
+    
+              layer.on('mouseover', function () {
+                layer.openPopup();
+              });
+              layer.on('click', this.markerClick.bind(this));
+
+              if (this.dataGroups[group] != undefined) {
+                this.currentMicrobeLayer = layer;
+                this.dataGroups[group].addLayer(layer);
+              }
+            },
+          });
+          this.filterData = this.metadata2;
+          this.dtTrigger.next();
+        }
+        this.loading = false;
+        this.globalLoading = false;
   }
 
   public drawQPCR() {
@@ -1943,7 +2006,8 @@ enum NameGroupMap {
   Site = 'sites',
   Well = 'wells',
   TEST_Micro_GPS = 'MicroGPS',
-  TEST_Microbes = 'microbes'
+  TEST_Microbes = 'microbes',
+  TEST_CFU = 'cfu'
 }
 
 enum GroupLabelMap {
@@ -1951,5 +2015,6 @@ enum GroupLabelMap {
   sites = 'Sites',
   wells = 'Wells',
   TEST_Micro_GPS = 'MicroGPS',
-  TEST_Microbes = 'microbes'
+  TEST_Microbes = 'microbes',
+  TEST_CFU = 'cfu'
 }

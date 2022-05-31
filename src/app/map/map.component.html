@@ -95,7 +95,7 @@
     </div>
 
     <div *ngIf="cfuFilterToggled" class="col-md-6">
-      <div *ngIf="microbeMetadata.length == 0" style="height:500px;">
+      <div *ngIf="cfuMetadata.length == 0" style="height:500px;">
         <h5>No Cultured Bacteria Results For Current Area.</h5>
       </div>
       <div *ngIf="cfuMetadata.length > 0" style="height:500px;">
@@ -120,6 +120,39 @@
             </td>
             <td width="40%">
               <span #entries>{{metadatum.value.agar_type}}</span>
+            </td>
+          </tr>
+        </table>
+        </div>
+        </div>
+    </div>
+
+    <div *ngIf="qpcrFilterToggled" class="col-md-6">
+      <div *ngIf="qpcrMetadata.length == 0" style="height:500px;">
+        <h5>No qPCR Bacteria Results For Current Area.</h5>
+      </div>
+      <div *ngIf="qpcrMetadata.length > 0" style="height:500px;">
+      <h5>qPCR Bacteria Results {{qpcrMetadata.length}}</h5>
+      <div style="overflow: auto; height:468px;" class="table-responsive">
+      <table  class="table row-border hover table-striped">
+        <tr >
+            <th class='header'></th>
+            <th class='header'></th>
+            <th class='header'>Replicate</th>
+            <th class='header'>femA 100ml</th>
+        </tr>
+        <tr *ngFor="let metadatum of qpcrMetadata">
+            <td >
+              <button id="linked-{{metadatum.value.microGPS_ID}}" class="btn btn-primary" type="button" (click)="openLinkedPopup(metadatum)">Find</button>
+            </td>
+            <td >
+              <button id="{{metadatum.value.microGPS_ID}}" class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalSite(metadatum)">View</button>
+            </td>
+            <td width="40%">
+              <span #entries>{{metadatum.value.sample_replicate}}</span>
+            </td>
+            <td width="40%">
+              <span #entries>{{metadatum.value.fema_100ml}}</span>
             </td>
           </tr>
         </table>
