@@ -77,6 +77,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   clearMapLayers() {
     this.dataGroups.MicroGPS.clearLayers();
     this.dataGroups.microbes.clearLayers();
+    this.dataGroups.cfu.clearLayers();
   }
 
   gpsStream: any = null;
@@ -1468,8 +1469,6 @@ export class MapComponent implements OnInit, AfterViewInit {
           this.filterData = this.metadata2;
           this.dtTrigger.next();
         }
-        this.loading = false;
-        this.globalLoading = false;
   }
 
   public drawQPCR() {
