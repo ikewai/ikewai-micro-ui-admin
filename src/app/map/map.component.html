@@ -201,11 +201,11 @@
     <div *ngIf="cfuFilterToggled">
       <div>
         <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleSiteDateGeo()">Sample Filter</button>
-        <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
+        <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
         <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
       </div>
       <h5>Cultured Bacteria Filter</h5>
-      <query-builder [(ngModel)]='microbeQuery' [config]='microbeConfig' [formControl]='microbeQueryCtrl'>
+      <query-builder [(ngModel)]='microbeQuery' [config]='cfuConfig' [formControl]='microbeQueryCtrl'>
       </query-builder>
       <div class="container" style="margin-top: 10px; margin-bottom: 10px">
         <div class="row">

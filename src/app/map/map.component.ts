@@ -36,6 +36,8 @@ import { connectableObservableDescriptor } from 'rxjs/internal/observable/Connec
 export class MapComponent implements OnInit, AfterViewInit {
   sampleQueryCtrl = new FormControl('');
   microbeQueryCtrl = new FormControl('');
+  cfuQueryCtrl = new FormControl('');
+
   currentSampleQuery: string = '';
   currentMicrobeQuery: string = ''; // state of current microbe query
   currentCFUQuery: string = ''; // state of current CFU query
@@ -58,6 +60,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   focusedFilterRow: any = null;
 
+  cfuFlattenedQueryArr: Array<any> = [];
   microbesFlattenedQueryArr: Array<any> = [];
   samplesFlattenedQueryArr: Array<any> = [];
 
@@ -117,6 +120,10 @@ export class MapComponent implements OnInit, AfterViewInit {
       }]
     }, {field: 'volume_l', operator: '=', value: 0.25, type: 'number'}],
   };
+
+  cfuQuery = {
+
+  }
 
   sampleConfig: QueryBuilderConfig = {
     fields: {
@@ -220,9 +227,13 @@ export class MapComponent implements OnInit, AfterViewInit {
     },
   };
 
-  queryOptions = {
-    agar_type: 'TEST_CFU',
+  cfuConfig: QueryBuilderConfig = {
+    fields: {
+      id: { name: 'Id', type: 'string' },
+      location: { name: 'Location', type: 'string' },
+    }
   };
+
 
   flattenQuery(queryArray: Array<any>, level: number, condition: string, filterTable: string, num: number, resultArr: Array<any>) {
     if (level === 0) resultArr = [];
@@ -259,6 +270,27 @@ export class MapComponent implements OnInit, AfterViewInit {
   removeMicrobeElement(indexToRemove: number) {
     const copy = [...this.microbesFlattenedQueryArr];
     this.microbesFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
+    for (let i = 0; i < copy.length; i++) {
+      if (copy[i].index > indexToRemove) {
+        copy[i].index--;
+      }
+    }
+  }
+
+  removeCFUFilter(filterTable: any, indexToRemove: number) {
+
+    if (this.filterToDisplayFilterChainMicrobes) {
+      const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
+      this.removeMicrobeElement(indexToRemove);
+      button.click();
+    } else {
+      this.removeMicrobeElement(indexToRemove);
+    }
+  }
+
+  removeCFUElement(indexToRemove: number) {
+    const copy = [...this.cfuFlattenedQueryArr];
+    this.cfuFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
     for (let i = 0; i < copy.length; i++) {
       if (copy[i].index > indexToRemove) {
         copy[i].index--;
@@ -518,6 +550,63 @@ export class MapComponent implements OnInit, AfterViewInit {
   microbeQueryFilter() {
     if (this.behindTheScenesLoading) {
       return alert("Still loading microbes. Please try again in a few seconds.");
+    }
+    if (!this.microbeQuery.rules.length) {
+      this.currentMicrobeQuery = '';
+      this.currentMicrobeReadableQuery = '';
+    } else {
+      this.filterToDisplayFilterChainMicrobes = true;
+      this.microbesFlattenedQueryArr = this.flattenQuery(this.microbeQuery.rules, 0, this.microbeQuery.condition, 'microbes', 0, this.microbesFlattenedQueryArr);
+      this.microbeMetadata = [];
+
+      /* logical 'or' operator */
+      let result: Array<any> = ['', ''];
+      let condition: string = this.microbeQuery.condition === 'and' ? " {'$and': [" : " {'$or':  [";
+      let readableCondition: string =
+        this.microbeQuery.condition === 'and'
+          ? 'Where all microbes meet each criteria: '
+          : 'Where all microbes meet one of these criteria: ';
+      let readableCondition2: string = this.microbeQuery.condition === 'and' ? ' and ' : ' or ';
+      result[0] += condition;
+      result[1] += readableCondition;
+      for (let i: number = 0; i < this.microbeQuery.rules.length; i++) {
+        if (this.microbeQuery.rules[i].field) {
+          let { field, operator, value } = this.microbeQuery.rules[i];
+          let val: any = value;
+
+          let type: string;
+          if (field !== 'library' && field !== 'volume_l') {
+            type = 'string';
+          } else {
+            type = 'number';
+          }
+
+          const statement = this.evaluateOperation(operator, val, type);
+          const readable = this.parseReadable(operator, val, type);
+          result[0] += `{'value.${field}'${statement}}`;
+          i <= this.microbeQuery.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
+          result[1] += `${field} ${readable}`;
+          i === 0 ?  (result[1] += readableCondition2) : null;
+        }
+        const queryObject: any = this.microbeQuery.rules[i];
+        if (queryObject.condition) {
+          this.microbeQueryFilterRecursive(this.microbeQuery.rules[i], result);
+        }
+          i !== this.microbeQuery.rules.length - 1 ? (result[0] += ', ') : null;
+      }  
+      result[0] += ']}';
+      this.currentMicrobeQuery = ', ' + result[0];
+      this.currentMicrobeReadableQuery = result[1];
+
+      /* END previous attempt to create a front end filter */
+    }
+    this.toggleFilterBar();
+    this.findData();
+  }
+
+  cfuQueryFilter() {
+    if (this.behindTheScenesLoading2) {
+      return alert("Still loading cultured bacteria. Please try again in a few seconds.");
     }
     if (!this.microbeQuery.rules.length) {
       this.currentMicrobeQuery = '';
@@ -930,6 +1019,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     //this.queryHandler.initFilterListener(this.filters.filterMonitor);
     this.defaultFilterHandle = this.filters.registerFilter();
 
+    this.cfuQueryCtrl.valueChanges.subscribe(selectedValue => this.checkIfChangesWereMade(selectedValue, this.cfuFlattenedQueryArr))
     this.microbeQueryCtrl.valueChanges.subscribe(selectedValue => this.checkIfChangesWereMade(selectedValue, this.microbesFlattenedQueryArr))
     this.sampleQueryCtrl.valueChanges.subscribe(selectedValue => this.checkIfChangesWereMade(selectedValue, this.samplesFlattenedQueryArr))
 
@@ -1408,67 +1498,63 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public drawCFU() {
-        /* END make another query using query handler (Chaz) */
+    let indices = Object.keys(this.cfuMetadata);
+    let i: number;
+    for (i = 0; i < indices.length; i++) {
+      let index = Number(indices[i]);
+      let datum: any = this.cfuMetadata[index];
+      this.metadata.push(datum);
+      let group = NameGroupMap[datum.name];
+      //console.log(datum.value.loc);
+      let geod = datum.value.loc;
+      //console.log(geod)
+      let prop = {};
+      prop['uuid'] = datum.uuid;
+      geod.properties = prop;
+      let geojson = L.geoJSON(geod, {
+        style: this.getStyleByGroup(group),
+        pointToLayer: (feature, latlng) => {
+          let icon = this.getIconByGroup(group);
+          return L.circleMarker(latlng, { radius: 5, opacity: 1, fillOpacity: 0.9, color: 'purple' });
+          //return L.marker(latlng, {icon: icon});
+        },
+        onEachFeature: (feature, layer) => {
+          //  let header = L.DomUtil.create("h6")
+          let wrapper = L.DomUtil.create('div');
+          let details = L.DomUtil.create('div');
+          let download = L.DomUtil.create('div');
+          let goto = L.DomUtil.create('span', 'entry-link');
 
-        let indices = Object.keys(this.cfuMetadata);
-        let i: number;
-        for (i = 0; i < indices.length; i++) {
-          let index = Number(indices[i]);
-          let datum: any = this.cfuMetadata[index];
-          this.metadata.push(datum);
-          console.log(datum.name, 'name?')
-          let group = NameGroupMap[datum.name];
-          console.log(group, 'group?')
-          //console.log(datum.value.loc);
-          let geod = datum.value.loc;
-          //console.log(geod)
-          let prop = {};
-          prop['uuid'] = datum.uuid;
-          geod.properties = prop;
-          let geojson = L.geoJSON(geod, {
-            style: this.getStyleByGroup(group),
-            pointToLayer: (feature, latlng) => {
-              let icon = this.getIconByGroup(group);
-              return L.circleMarker(latlng, { radius: 5, opacity: 1, fillOpacity: 0.9, color: 'purple' });
-              //return L.marker(latlng, {icon: icon});
-            },
-            onEachFeature: (feature, layer) => {
-              //  let header = L.DomUtil.create("h6")
-              let wrapper = L.DomUtil.create('div');
-              let details = L.DomUtil.create('div');
-              let download = L.DomUtil.create('div');
-              let goto = L.DomUtil.create('span', 'entry-link');
+          if (datum.name == 'TEST_CFU') {
+            details.innerHTML =
+              '<br/>Location: ' +
+              datum.value.location +
+              '<br/>Watershed: ' +
+              datum.value.watershed +
+              '<br/>Site_Enviro: ' +
+              datum.value.site_enviro;
+          }
 
-              if (datum.name == 'TEST_CFU') {
-                details.innerHTML =
-                  '<br/>Location: ' +
-                  datum.value.location +
-                  '<br/>Watershed: ' +
-                  datum.value.watershed +
-                  '<br/>Site_Enviro: ' +
-                  datum.value.site_enviro;
-              }
+          let popup: L.Popup = new L.Popup({ autoPan: false });
+          wrapper.append(details);
 
-              let popup: L.Popup = new L.Popup({ autoPan: false });
-              wrapper.append(details);
-    
-              popup.setContent(wrapper);
-              layer.bindPopup(popup);
-    
-              layer.on('mouseover', function () {
-                layer.openPopup();
-              });
-              layer.on('click', this.markerClick.bind(this));
+          popup.setContent(wrapper);
+          layer.bindPopup(popup);
 
-              if (this.dataGroups[group] != undefined) {
-                this.currentMicrobeLayer = layer;
-                this.dataGroups[group].addLayer(layer);
-              }
-            },
+          layer.on('mouseover', function () {
+            layer.openPopup();
           });
-          this.filterData = this.metadata2;
-          this.dtTrigger.next();
-        }
+          layer.on('click', this.markerClick.bind(this));
+
+          if (this.dataGroups[group] != undefined) {
+            this.currentMicrobeLayer = layer;
+            this.dataGroups[group].addLayer(layer);
+          }
+        },
+      });
+      this.filterData = this.metadata2;
+      this.dtTrigger.next();
+    }
   }
 
   public drawQPCR() {
