@@ -298,7 +298,7 @@ export class QueryHandlerService {
     let subjects = [];
     let query: string;
 
-    if (microbes.length > 50) return alert("please query smaller")
+    if (microbes.length > 50) return alert("please query a smaller subset")
       
     query = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(microbes) +"}}" + filterQuery +"] }";
 
