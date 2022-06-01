@@ -298,19 +298,21 @@ export class QueryHandlerService {
     let subjects = [];
     let query: string;
 
-    if (microbes.length > 50) return alert("please query a smaller subset")
+    // if (microbes.length > 50) return alert("please query a smaller subset")
       
     query = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(microbes) +"}}" + filterQuery +"] }";
 
+    console.log('\n\n', 'number of characters: ', query.length, '\n\n\n')
 
-    console.log(query, 'what is my query?')
-    let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
-    if (stored) {
-      return stored;
-    } else {
-      subjects.push(this.handleQuery(query));
-      return new QueryController(subjects);
-    }
+
+    // console.log(query, 'what is my query?')
+    // let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+    // if (stored) {
+    //   return stored;
+    // } else {
+    //   subjects.push(this.handleQuery(query));
+    //   return new QueryController(subjects);
+    // }
   }
 
 
