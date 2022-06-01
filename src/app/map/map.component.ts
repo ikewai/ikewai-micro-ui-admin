@@ -649,10 +649,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.currentCFUQuery = '';
       this.currentCFUReadableQuery = '';
     } else {
-      console.log("Dook?")
       this.filterToDisplayFilterChainCFU = true;
       this.cfuFlattenedQueryArr = this.flattenQuery(this.cfuQuery.rules, 0, this.cfuQuery.condition, 'cfu', 0, this.cfuFlattenedQueryArr);
-      console.log(this.cfuFlattenedQueryArr, '?>')
       this.cfuMetadata = [];
 
       /* logical 'or' operator */
@@ -671,7 +669,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           let val: any = value;
 
           let type: string;
-          if (field !== 'library' && field !== 'volume_l') {
+          if (field !== 'cfu_100ml') {
             type = 'string';
           } else {
             type = 'number';
@@ -692,7 +690,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       }  
       result[0] += ']}';
       this.currentCFUQuery = ', ' + result[0];
-      this.currentMicrobeReadableQuery = result[1];
+      this.currentCFUReadableQuery = result[1];
 
       /* END previous attempt to create a front end filter */
     }
@@ -1439,7 +1437,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   public queryCFU() {
     console.log("This was executed")
     this.cfuMetadata = [];
-
+    console.log("hello query", this.currentCFUQuery)
     let cfuStream: any = this.queryHandler.cfuSearch(this.metadata2.map((item: any) => item.value.id), this.currentCFUQuery);
 
     if (cfuStream.data) {
