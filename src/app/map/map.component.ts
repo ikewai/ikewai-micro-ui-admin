@@ -287,7 +287,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.removeMicrobeElement(indexToRemove);
       button.click();
     } else {
-      this.removeMicrobeElement(indexToRemove);
+      this.removeCFUElement(indexToRemove);
     }
   }
 
@@ -326,6 +326,19 @@ export class MapComponent implements OnInit, AfterViewInit {
         copy[i].index--;
       }
     }
+  }
+
+  highlightRowCFU(e: any, indexToHighlight: number) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (!this.filterToDisplayFilterChainCFU) return;
+    
+    const lol:any = document.getElementsByClassName('q-row')[indexToHighlight]
+    if (lol) {
+      this.focusedFilterRow ? this.focusedFilterRow.style.background = 'none' : null;
+      this.focusedFilterRow = lol;
+      lol.style.background = 'pink';
+    }
+
   }
 
   highlightRowMicrobes(e: any, indexToHighlight: number) {
@@ -431,7 +444,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         let { field, operator, value } = query.rules[i];
         
         let type: string;
-        if (field !== 'library' && field !== 'volume_l') {
+        if (field !== 'cfu_100ml') {
           type = 'string';
         } else {
           type = 'number';
@@ -691,9 +704,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       result[0] += ']}';
       this.currentCFUQuery = ', ' + result[0];
       this.currentCFUReadableQuery = result[1];
-
-      console.log(this.currentCFUQuery, 'da ef?')
-
       /* END previous attempt to create a front end filter */
     }
     this.toggleFilterBar();
@@ -793,6 +803,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   resetCFUQuery() {
+    console.log('is this being fired somehow?')
     this.currentCFUQuery = '';
     this.currentCFUReadableQuery = '';
     this.cfuFlattenedQueryArr = [];
@@ -1205,6 +1216,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
 
       this.queryMicrobes();
+      this.queryCFU();
     } else {
       this.siteDateStream = siteDateStream;
       siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
@@ -1437,9 +1449,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public queryCFU() {
-    console.log("This was executed")
     this.cfuMetadata = [];
-    console.log("hello query", this.currentCFUQuery)
     let cfuStream: any = this.queryHandler.cfuSearch(this.metadata2.map((item: any) => item.value.id), this.currentCFUQuery);
 
     if (cfuStream.data) {
@@ -1455,6 +1465,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       cfuStream.getQueryObserver().subscribe((cfuData: any) => {
         const asyncStatus: any = cfuData.status;
         cfuData = cfuData.data;
+        console.log(cfuData, 'data?')
 
         if (cfuData == null) {
           return;
@@ -1603,6 +1614,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.filterData = this.metadata2;
       this.dtTrigger.next();
     }
+    this.loading = false;
+    this.globalLoading = false;
   }
 
   public drawQPCR() {

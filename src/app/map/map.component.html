@@ -250,6 +250,21 @@
 
       </div>  
     </div>
+
+    <h6 *ngIf="cfuFlattenedQueryArr.length && cfuFilterToggled">Cultured Bacteria</h6>
+    <div *ngIf="cfuFlattenedQueryArr.length && cfuFilterToggled" class="d-flex flex-wrap">
+      <div id="cfu-{{query.index}}" class="d-flex flex-wrap" *ngFor="let query of cfuFlattenedQueryArr" style="width: fit-content">
+        <div (click)="highlightRowCFU($event, query.index)" style="position: relative; float: left; margin: 5px 10px 5px 5px; padding: 12px 22px 12px 22px; border-radius: 10px; cursor: pointer" [ngStyle]="{'background': query.subjectCondition === 'AND' ? 'rgb(24, 103, 88)' : '#0d6efd'}">
+          <span *ngIf="query.level" style="position: absolute; top: 38px; left: 50%; font-size: 10px; line-height: 0.3; color: rgba(255,255,255,0.8)">Level {{query.level}}</span>
+          <span style="position: absolute; top: 32px; left: 27px; font-size: 10px; color: white" >{{query.subjectCondition}}</span>
+          <div style="color: white">
+            <span>{{query.field}} {{query.operator}} {{query.value}}</span>
+            <span (click)="removeCFUFilter(cfuFlattenedQueryArr, query.index)" style="position: relative; left: 10px; color: #FF7F7F">x</span>
+          </div>
+        </div>
+
+    </div>  
+  </div>
   </div>
 </div>
 </div>
