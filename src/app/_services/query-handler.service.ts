@@ -284,6 +284,7 @@ export class QueryHandlerService {
       
     query = "{'$and': [{'name':{'$in':['TEST_CFU']}, 'value.id': {'$in':" + JSON.stringify(locations) +"}}" + filterQuery +"] }";
 
+      console.log(filterQuery, 'is it coming through?')
     let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
     if (stored) {
       return stored;
