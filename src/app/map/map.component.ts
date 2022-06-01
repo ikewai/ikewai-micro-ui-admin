@@ -692,6 +692,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.currentCFUQuery = ', ' + result[0];
       this.currentCFUReadableQuery = result[1];
 
+      console.log(this.currentCFUQuery, 'da ef?')
+
       /* END previous attempt to create a front end filter */
     }
     this.toggleFilterBar();
