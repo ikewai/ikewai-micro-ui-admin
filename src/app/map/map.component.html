@@ -205,13 +205,13 @@
         <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
       </div>
       <h5>Cultured Bacteria Filter</h5>
-      <query-builder [(ngModel)]='microbeQuery' [config]='cfuConfig' [formControl]='microbeQueryCtrl'>
+      <query-builder [(ngModel)]='cfuQuery' [config]='cfuConfig' [formControl]='cfuQueryCtrl'>
       </query-builder>
       <div class="container" style="margin-top: 10px; margin-bottom: 10px">
         <div class="row">
           <div class="col text-center mx-auto">
-            <button class="btn btn-primary center" type="button" (click)="microbeQueryFilter()">Query</button>
-            <button style="margin-left: 5px" class="btn btn-primary center" type="button" (click)="resetMicrobeQuery()">Reset</button>
+            <button class="btn btn-primary center" type="button" (click)="cfuQueryFilter()">Query</button>
+            <button style="margin-left: 5px" class="btn btn-primary center" type="button" (click)="resetCFUQuery()">Reset</button>
           </div>
         </div>
       </div>

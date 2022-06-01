@@ -45,6 +45,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   currentSampleReadableQuery: string = '';
   currentMicrobeReadableQuery: string = '';
+  currentCFUReadableQuery: string = '';
   
   /* loading vars */
   loading: boolean = false;
@@ -64,6 +65,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   microbesFlattenedQueryArr: Array<any> = [];
   samplesFlattenedQueryArr: Array<any> = [];
 
+  filterToDisplayFilterChainCFU: boolean = false;
   filterToDisplayFilterChainMicrobes: boolean = false;
   filterToDisplayFilterChainSamples: boolean = false;
 
@@ -122,7 +124,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   };
 
   cfuQuery = {
-
+    condition: 'and',
+    rules: [{field: 'cfu_100ml', operator: '>', value: 0, type: 'number'}]
   }
 
   sampleConfig: QueryBuilderConfig = {
@@ -163,18 +166,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       cor_po4_umol_l: {name: 'COR_PO4_umol.L', type: 'number'},
       cor_nox_umol_l: {name: 'COR_NOX_umol.L', type: 'number'},
       cor_nh4_umol_l: {name: 'COR_NH4_umol.L', type: 'number'},
-      /* CFU */
-      // agar_type: {
-      //   name: 'agar_type',
-      //   type: 'category',
-      //   options: [
-      //     { name: 'CHROM - Staphylococcus', value: 'CHROM' },
-      //     { name: 'mEI - enterococus', value: 'mEI' },
-      //     { name: 'MI - Eschericia coli>', value: 'MI' },
-      //     { name: 'MI_UV - total coliform', value: 'MI_UV' },
-      //     { name: 'LB - Heterotrophs', value: 'LB' },
-      //   ],
-      // },
     },
   };
 
@@ -231,6 +222,18 @@ export class MapComponent implements OnInit, AfterViewInit {
     fields: {
       id: { name: 'Id', type: 'string' },
       location: { name: 'Location', type: 'string' },
+      agar_type: {
+        name: 'agar_type',
+        type: 'category',
+        options: [
+          { name: 'CHROM - Staphylococcus', value: 'CHROM' },
+          { name: 'mEI - enterococus', value: 'mEI' },
+          { name: 'MI - Eschericia coli>', value: 'MI' },
+          { name: 'MI_UV - total coliform', value: 'MI_UV' },
+          { name: 'LB - Heterotrophs', value: 'LB' },
+        ],
+      },
+      cfu_100ml: { name: 'cfu_100ml', type: 'number' },
     }
   };
 
@@ -409,6 +412,40 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
       if (query.rules[i].condition) {
         this.microbeQueryFilterRecursive(query.rules[i], nestedQuery);
+      }
+    }
+    result[0] += nestedQuery[0];
+    result[0] += ']}';
+    result[1] += nestedQuery[1];
+    result[1] += ')';
+  }
+
+  cfuQueryFilterRecursive(query: any, result: Array<any>) {
+    let nestedQuery: Array<any> = ['', ''];
+    let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
+    let readableCondition: string = query.condition === 'and' ? ' and ' : ' or ';
+    result[0] += condition;
+    result[1] += '(';
+    for (let i: number = 0; i < query.rules.length; i++) {
+      if (query.rules[i].field) {
+        let { field, operator, value } = query.rules[i];
+        
+        let type: string;
+        if (field !== 'library' && field !== 'volume_l') {
+          type = 'string';
+        } else {
+          type = 'number';
+        }
+        
+        const statement = this.evaluateOperation(operator, value, type);
+        const readable = this.parseReadable(operator, value, type);
+        nestedQuery[0] += `{'value.${field}'${statement}}`;
+        nestedQuery[1] += `${field} ${readable}`;
+        i !== query.rules.length - 1 ? (nestedQuery[0] += ', ') : null;
+        i !== query.rules.length - 1 ? (nestedQuery[1] += readableCondition) : null;
+      }
+      if (query.rules[i].condition) {
+        this.cfuQueryFilterRecursive(query.rules[i], nestedQuery);
       }
     }
     result[0] += nestedQuery[0];
@@ -608,27 +645,29 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (this.behindTheScenesLoading2) {
       return alert("Still loading cultured bacteria. Please try again in a few seconds.");
     }
-    if (!this.microbeQuery.rules.length) {
-      this.currentMicrobeQuery = '';
-      this.currentMicrobeReadableQuery = '';
+    if (!this.cfuQuery.rules.length) {
+      this.currentCFUQuery = '';
+      this.currentCFUReadableQuery = '';
     } else {
-      this.filterToDisplayFilterChainMicrobes = true;
-      this.microbesFlattenedQueryArr = this.flattenQuery(this.microbeQuery.rules, 0, this.microbeQuery.condition, 'microbes', 0, this.microbesFlattenedQueryArr);
-      this.microbeMetadata = [];
+      console.log("Dook?")
+      this.filterToDisplayFilterChainCFU = true;
+      this.cfuFlattenedQueryArr = this.flattenQuery(this.cfuQuery.rules, 0, this.cfuQuery.condition, 'cfu', 0, this.cfuFlattenedQueryArr);
+      console.log(this.cfuFlattenedQueryArr, '?>')
+      this.cfuMetadata = [];
 
       /* logical 'or' operator */
       let result: Array<any> = ['', ''];
-      let condition: string = this.microbeQuery.condition === 'and' ? " {'$and': [" : " {'$or':  [";
+      let condition: string = this.cfuQuery.condition === 'and' ? " {'$and': [" : " {'$or':  [";
       let readableCondition: string =
-        this.microbeQuery.condition === 'and'
-          ? 'Where all microbes meet each criteria: '
-          : 'Where all microbes meet one of these criteria: ';
-      let readableCondition2: string = this.microbeQuery.condition === 'and' ? ' and ' : ' or ';
+        this.cfuQuery.condition === 'and'
+          ? 'Where all cultured bacteria meet each criteria: '
+          : 'Where all cultured bacteria meet one of these criteria: ';
+      let readableCondition2: string = this.cfuQuery.condition === 'and' ? ' and ' : ' or ';
       result[0] += condition;
       result[1] += readableCondition;
-      for (let i: number = 0; i < this.microbeQuery.rules.length; i++) {
-        if (this.microbeQuery.rules[i].field) {
-          let { field, operator, value } = this.microbeQuery.rules[i];
+      for (let i: number = 0; i < this.cfuQuery.rules.length; i++) {
+        if (this.cfuQuery.rules[i].field) {
+          let { field, operator, value } = this.cfuQuery.rules[i];
           let val: any = value;
 
           let type: string;
@@ -641,18 +680,18 @@ export class MapComponent implements OnInit, AfterViewInit {
           const statement = this.evaluateOperation(operator, val, type);
           const readable = this.parseReadable(operator, val, type);
           result[0] += `{'value.${field}'${statement}}`;
-          i <= this.microbeQuery.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
+          i <= this.cfuQuery.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
           result[1] += `${field} ${readable}`;
           i === 0 ?  (result[1] += readableCondition2) : null;
         }
-        const queryObject: any = this.microbeQuery.rules[i];
+        const queryObject: any = this.cfuQuery.rules[i];
         if (queryObject.condition) {
-          this.microbeQueryFilterRecursive(this.microbeQuery.rules[i], result);
+          this.cfuQueryFilterRecursive(this.cfuQuery.rules[i], result);
         }
-          i !== this.microbeQuery.rules.length - 1 ? (result[0] += ', ') : null;
+          i !== this.cfuQuery.rules.length - 1 ? (result[0] += ', ') : null;
       }  
       result[0] += ']}';
-      this.currentMicrobeQuery = ', ' + result[0];
+      this.currentCFUQuery = ', ' + result[0];
       this.currentMicrobeReadableQuery = result[1];
 
       /* END previous attempt to create a front end filter */
@@ -748,6 +787,15 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.currentMicrobeQuery = '';
     this.currentMicrobeReadableQuery = '';
     this.microbesFlattenedQueryArr = [];
+    if (this.focusedFilterRow) this.focusedFilterRow.style.background = 'none';
+    this.findData();
+    this.toggleFilterBar();
+  }
+
+  resetCFUQuery() {
+    this.currentCFUQuery = '';
+    this.currentCFUReadableQuery = '';
+    this.cfuFlattenedQueryArr = [];
     if (this.focusedFilterRow) this.focusedFilterRow.style.background = 'none';
     this.findData();
     this.toggleFilterBar();
@@ -1389,7 +1437,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public queryCFU() {
-
+    console.log("This was executed")
     this.cfuMetadata = [];
 
     let cfuStream: any = this.queryHandler.cfuSearch(this.metadata2.map((item: any) => item.value.id), this.currentCFUQuery);
