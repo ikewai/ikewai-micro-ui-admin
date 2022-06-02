@@ -47,11 +47,31 @@ export class MapComponent implements OnInit, AfterViewInit {
   currentMicrobeReadableQuery: string = '';
   currentCFUReadableQuery: string = '';
   
-  /* loading vars */
+  /* Loading Variables 
+   * 
+   * Since data flows down like a waterfall, these loading states
+   * reflect whether the user can toggle to the microbes view,
+   * cultured bacteria view, and the qPCR bacteria view respectively.
+   * 
+   * To illustrate my point of view, an example is when the user
+   * moves the map view. When the map is moved, findData() is triggered 
+   * to find Micro_GPS data. Site_Date data relies on the specific Micro_GPS
+   * results that comes back from the database. Likewise, the microbe query
+   * depends on Site_Date_Geochem data, and qPCR relies on microbes.
+   * 
+   * Therefore, the user must wait until parent data is queried in the 
+   * waterfall prior to making any state changes within a specific view.
+   * 
+   * Better approach: A better approach may be to flatten the data in a way
+   * where all child data inherently contains it's parent data. In this way,
+   * I could query GPS data directly from a child's table. 
+   * 
+   * Author: Chaz | 6-1-22 
+   */
   loading: boolean = false;
   globalLoading: boolean = false;
-  behindTheScenesLoading: boolean = false;
-  behindTheScenesLoading2: boolean = false;
+  microbesLoading: boolean = false;
+  cfuLoading: boolean = false;
 
   currentMicrobeLayer: any = null;
   currentSampleLayer: any = null;
@@ -484,7 +504,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
   
   toggleMicrobes() {
-    if (this.behindTheScenesLoading) {
+    if (this.microbesLoading) {
       return alert("Still loading microbes. Please try again in a few seconds.");
     }
     this.clearMapLayers();
@@ -498,7 +518,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   toggleCFU() {
-    if (this.behindTheScenesLoading2) {
+    if (this.cfuLoading) {
       return alert("Still loading cultured bacteria. Please try again in a few seconds.");
     }
     this.clearMapLayers();
@@ -543,7 +563,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
     
     sampleQueryFilter() {
-      if (this.behindTheScenesLoading) {
+      if (this.microbesLoading) {
       return alert("Still loading microbes. Please try again in a few seconds.");
     }
     if (!this.sampleQuery.rules.length) {
@@ -599,7 +619,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
   
   microbeQueryFilter() {
-    if (this.behindTheScenesLoading) {
+    if (this.microbesLoading) {
       return alert("Still loading microbes. Please try again in a few seconds.");
     }
     if (!this.microbeQuery.rules.length) {
@@ -656,7 +676,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   cfuQueryFilter() {
-    if (this.behindTheScenesLoading2) {
+    if (this.cfuLoading) {
       return alert("Still loading cultured bacteria. Please try again in a few seconds.");
     }
     if (!this.cfuQuery.rules.length) {
@@ -1111,8 +1131,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.clearMapLayers();
 
     this.globalLoading = true;
-    this.behindTheScenesLoading = true;
-    this.behindTheScenesLoading2 = true;
+    this.microbesLoading = true;
+    this.cfuLoading = true;
 
     this.metadata = [];
     this.metadata2 = [];
@@ -1283,7 +1303,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.drawMicrobes();
       }
       
-      this.behindTheScenesLoading = false;
+      this.microbesLoading = false;
     } else {
       this.microbeStream = microbeStream;
       microbeStream.getQueryObserver().subscribe((microbeData: any) => {
@@ -1314,7 +1334,7 @@ export class MapComponent implements OnInit, AfterViewInit {
            */
 
           // this.globalLoading = false;
-          this.behindTheScenesLoading = false;
+          this.microbesLoading = false;
 
           if (this.microbesFilterToggled) {
         
@@ -1460,7 +1480,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.drawCFU(); /* draw cfu points  - should be able to reuse function */
       }
       
-      this.behindTheScenesLoading2 = false;
+      this.cfuLoading = false;
     } else {
       this.cfuStream = cfuStream;
       cfuStream.getQueryObserver().subscribe((cfuData: any) => {
@@ -1484,7 +1504,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
 
         if (asyncStatus.finished) { 
-          this.behindTheScenesLoading2 = false;
+          this.cfuLoading = false;
 
           if (this.cfuFilterToggled) {
         
@@ -1618,6 +1638,65 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public drawQPCR() {
+    let indices = Object.keys(this.cfuMetadata);
+    let i: number;
+    for (i = 0; i < indices.length; i++) {
+      let index = Number(indices[i]);
+      let datum: any = this.cfuMetadata[index];
+      this.metadata.push(datum);
+      let group = NameGroupMap[datum.name];
+      //console.log(datum.value.loc);
+      let geod = datum.value.loc;
+      //console.log(geod)
+      let prop = {};
+      prop['uuid'] = datum.uuid;
+      geod.properties = prop;
+      let geojson = L.geoJSON(geod, {
+        style: this.getStyleByGroup(group),
+        pointToLayer: (feature, latlng) => {
+          let icon = this.getIconByGroup(group);
+          return L.circleMarker(latlng, { radius: 5, opacity: 1, fillOpacity: 0.9, color: 'purple' });
+          //return L.marker(latlng, {icon: icon});
+        },
+        onEachFeature: (feature, layer) => {
+          //  let header = L.DomUtil.create("h6")
+          let wrapper = L.DomUtil.create('div');
+          let details = L.DomUtil.create('div');
+          let download = L.DomUtil.create('div');
+          let goto = L.DomUtil.create('span', 'entry-link');
+
+          if (datum.name == 'TEST_CFU') {
+            details.innerHTML =
+              '<br/>Location: ' +
+              datum.value.location +
+              '<br/>Watershed: ' +
+              datum.value.watershed +
+              '<br/>Site_Enviro: ' +
+              datum.value.site_enviro;
+          }
+
+          let popup: L.Popup = new L.Popup({ autoPan: false });
+          wrapper.append(details);
+
+          popup.setContent(wrapper);
+          layer.bindPopup(popup);
+
+          layer.on('mouseover', function () {
+            layer.openPopup();
+          });
+          layer.on('click', this.markerClick.bind(this));
+
+          if (this.dataGroups[group] != undefined) {
+            this.currentMicrobeLayer = layer;
+            this.dataGroups[group].addLayer(layer);
+          }
+        },
+      });
+      this.filterData = this.metadata2;
+      this.dtTrigger.next();
+    }
+    this.loading = false;
+    this.globalLoading = false;
   }
 
   public drawMapPoints() {
