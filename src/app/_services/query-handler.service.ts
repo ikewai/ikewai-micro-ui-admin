@@ -297,31 +297,40 @@ export class QueryHandlerService {
 
     let subjects = [];
     let results = [];
+    let cachedQueries = [];
     let query: string;
+
+    let cachedStatus = false;
 
     if (microbes.length > 100) {
       while (microbes.length) {
         const sliced = microbes.slice(0, 100);
         const newQuery = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(sliced) +"}}" + filterQuery +"] }";
+        cachedQueries.push(newQuery);
         subjects.push(this.handleQuery(newQuery));
         microbes.splice(0, 100);
       }
     } else {
       query = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(microbes) +"}}" + filterQuery +"] }";
+      cachedQueries.push(query);
       subjects.push(this.handleQuery(query));
     }
 
-    if (subjects.length > 1) {
+    if (cachedQueries.length > 1) {
       for (let i = 0; i < subjects.length; i++) {
-        let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(subjects[i]);
+        let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(cachedQueries[i]);
+        if (stored.data.length) cachedStatus = true;
         results.push(stored);
       }
-    } else if (subjects.length === 1) {
+    } else if (cachedQueries.length === 1) {
       let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+      if (stored.data.length) cachedStatus = true;
       results.push(stored);
     }
 
-    if (results[0]) return results;
+    if (cachedStatus) {
+      return results;
+    }
     return new QueryController(subjects);
 
   }

@@ -536,6 +536,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   toggleQPCR() {
+    if (this.microbesLoading) {
+      return alert("Still loading qPCR bacteria. Please try again in a few seconds.");
+    }
     this.queryQPCR();
     this.clearMapLayers();
     
@@ -1539,7 +1542,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
 
     let qpcrStream: any = this.queryHandler.qpcrSearch(this.microbeMetadata.map((item: any) => item.value.sample_replicate), this.currentQPCRQuery);
-
+    if (qpcrStream) console.log(qpcrStream, 'hello?')
     if (qpcrStream.data) {
       this.qpcrMetadata = [...qpcrStream.data];
 
