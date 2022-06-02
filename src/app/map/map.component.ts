@@ -1542,9 +1542,10 @@ export class MapComponent implements OnInit, AfterViewInit {
     });
 
     let qpcrStream: any = this.queryHandler.qpcrSearch(this.microbeMetadata.map((item: any) => item.value.sample_replicate), this.currentQPCRQuery);
-    if (qpcrStream) console.log(qpcrStream, 'hello?')
-    if (qpcrStream.data) {
-      this.qpcrMetadata = [...qpcrStream.data];
+    if (qpcrStream.length) {
+      const newMap = []
+      qpcrStream.map((item:any) => item.data.map((qpcrItem: any) => newMap.push(qpcrItem)))
+      this.qpcrMetadata = newMap;
 
       if (this.qpcrFilterToggled) {    
         this.drawQPCR(); /* draw qcpr points  - should be able to reuse function */
