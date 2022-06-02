@@ -26,6 +26,7 @@ import { FormControl } from '@angular/forms';
 
 import { QueryBuilderConfig } from 'angular2-query-builder';
 import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
+import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 
 @Component({
@@ -66,12 +67,13 @@ export class MapComponent implements OnInit, AfterViewInit {
    * where all child data inherently contains it's parent data. In this way,
    * I could query GPS data directly from a child's table. 
    * 
-   * Author: Chaz | 6-1-22 
    */
+
   loading: boolean = false;
   globalLoading: boolean = false;
   microbesLoading: boolean = false;
   cfuLoading: boolean = false;
+  qpcrLoading: boolean = false;
 
   currentMicrobeLayer: any = null;
   currentSampleLayer: any = null;
@@ -1470,6 +1472,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public queryCFU() {
+    
     this.cfuMetadata = [];
     let cfuStream: any = this.queryHandler.cfuSearch(this.metadata2.map((item: any) => item.value.id), this.currentCFUQuery);
 
@@ -1516,6 +1519,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public queryQPCR() {
+
+    this.loading = true;
+    this.globalLoading = true;
+    this.qpcrLoading = true;
 
     this.qpcrMetadata = [];
 
@@ -1638,7 +1645,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public drawQPCR() {
-    let indices = Object.keys(this.cfuMetadata);
+    let indices = Object.keys(this.qpcrMetadata);
     let i: number;
     for (i = 0; i < indices.length; i++) {
       let index = Number(indices[i]);
@@ -1697,6 +1704,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
     this.loading = false;
     this.globalLoading = false;
+    this.qpcrLoading = false;
   }
 
   public drawMapPoints() {
