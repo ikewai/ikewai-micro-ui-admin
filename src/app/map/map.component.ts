@@ -1465,7 +1465,6 @@ export class MapComponent implements OnInit, AfterViewInit {
       cfuStream.getQueryObserver().subscribe((cfuData: any) => {
         const asyncStatus: any = cfuData.status;
         cfuData = cfuData.data;
-        console.log(cfuData, 'data?')
 
         if (cfuData == null) {
           return;
@@ -1476,7 +1475,7 @@ export class MapComponent implements OnInit, AfterViewInit {
             cfu.value = { ...cfu.value, ...this.siteDateGeoMap[cfu.value.id] };
             this.siteDateGeoMap[cfu.value.id].cfu.push({ ...cfu.value });
           } else {
-            console.log('No matching Site_Date_Geochem for ' + cfu.value.id + ' inside CFU document');
+            //console.log('No matching Site_Date_Geochem for ' + cfu.value.id + ' inside CFU document');
           }
 
           this.cfuMetadata.push({ ...cfu });
@@ -1536,7 +1535,7 @@ export class MapComponent implements OnInit, AfterViewInit {
             qcpr.value = { ...qcpr.value, ...microbesMap[qcpr.value.sample_replicate] };
             microbesMap[qcpr.value.sample_replicate].qcpr.push({ ...qcpr.value });
           } else {
-            console.log('No matching microbe for ' + qcpr.value.sample_replicate + ' inside qcpr document');
+            //console.log('No matching microbe for ' + qcpr.value.sample_replicate + ' inside qcpr document');
           }
 
           this.qpcrMetadata.push({ ...qcpr });

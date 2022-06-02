@@ -296,24 +296,49 @@ export class QueryHandlerService {
   qpcrSearch(microbes: string[], filterQuery: string): any {
 
     let subjects = [];
+
+    const rawSubjects = [];
+    let results = [];
     let query: string;
+    console.log(microbes.length, 'ORIGINAL LENGTH?')
+    if (microbes.length > 100) {
+      while (microbes.length) {
+        const sliced = microbes.slice(0, 100);
+        const newQuery = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(sliced) +"}}" + filterQuery +"] }";
+        subjects.push(this.handleQuery(newQuery));
+        rawSubjects.push(sliced);
+        microbes.splice(0, 100);
+      }
+      console.log(subjects, 'ALL THE SUBJECTS ??')
+      console.log(rawSubjects, 'hello?')
+    } else {
+      query = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(microbes) +"}}" + filterQuery +"] }";
+      subjects.push(this.handleQuery(query));
+    }
 
-    // if (microbes.length > 50) return alert("please query a smaller subset")
-      
-    query = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(microbes) +"}}" + filterQuery +"] }";
+    if (subjects.length > 1) {
+      for (let i = 0; i < subjects.length; i++) {
+        let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(subjects[i]);
+        results.push(stored);
+      }
+    } else if (subjects.length === 1) {
+      let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+      results.push(stored);
+    }
 
-    console.log('\n\n', 'number of characters: ', query.length, '\n\n\n')
+    if (results[0]) return results;
+    return new QueryController(subjects);
 
-
-    // console.log(query, 'what is my query?')
-    // let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
-    // if (stored) {
-    //   return stored;
-    // } else {
-    //   subjects.push(this.handleQuery(query));
-    //   return new QueryController(subjects);
-    // }
   }
+
+  
+  // return the populated subjects array
+  // divideQuery(arrayToDivide, subjects, queryStringStart, queryStringEnd) {
+    
+
+
+  //   return subjects;
+  // }
 
 
   //deal with case where same query running multiple times before complete
