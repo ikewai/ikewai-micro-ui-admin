@@ -521,6 +521,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.microbesFilterToggled = false;
     this.isSiteDateGeoFilter = false;
     this.cfuFilterToggled = false;
+    this.qpcrFilterToggled = true;
 
     this.toggleFilterBar(); // controls the state of the filters showing
     // ^ dependent on parent state as well
@@ -1540,7 +1541,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
           this.qpcrMetadata.push({ ...qcpr });
         });
-
 
         if (asyncStatus.finished) { 
           console.log(this.qpcrMetadata, 'wait am i getting anything?')

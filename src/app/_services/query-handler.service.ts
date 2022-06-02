@@ -296,21 +296,16 @@ export class QueryHandlerService {
   qpcrSearch(microbes: string[], filterQuery: string): any {
 
     let subjects = [];
-
-    const rawSubjects = [];
     let results = [];
     let query: string;
-    console.log(microbes.length, 'ORIGINAL LENGTH?')
+
     if (microbes.length > 100) {
       while (microbes.length) {
         const sliced = microbes.slice(0, 100);
         const newQuery = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(sliced) +"}}" + filterQuery +"] }";
         subjects.push(this.handleQuery(newQuery));
-        rawSubjects.push(sliced);
         microbes.splice(0, 100);
       }
-      console.log(subjects, 'ALL THE SUBJECTS ??')
-      console.log(rawSubjects, 'hello?')
     } else {
       query = "{'$and': [{'name':{'$in':['TEST_Fem_A']}, 'value.sample_replicate': {'$in':" + JSON.stringify(microbes) +"}}" + filterQuery +"] }";
       subjects.push(this.handleQuery(query));
@@ -608,7 +603,7 @@ export class QueryController {
             error: response.status.error,
             message: response.status.message,
             loadedResults: loadedResults,
-            finished: false
+            finished: false,
           };
           let outResponse: QueryResponse = {
             status: outStatus,
@@ -619,9 +614,10 @@ export class QueryController {
             completed++;
           }
           //if all completed set query status to finished
-          if(completed == querySubjects.length) {
+          if(completed == querySubjects.length || (querySubjects.length > 1 && completed == querySubjects.length - 1)) {
             outStatus.finished = true;
           }
+
           this.queryOutput.next(outResponse);
           //check if failed and cancel query if it did (stop if any part of query fails)
           if(response.status.error) {
