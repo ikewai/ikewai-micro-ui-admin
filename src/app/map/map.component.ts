@@ -512,10 +512,10 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.clearMapLayers();
     
     this.drawMicrobes();
-    this.microbesFilterToggled = true;
     this.isSiteDateGeoFilter = false;
     this.cfuFilterToggled = false;
     this.qpcrFilterToggled = false;
+    this.microbesFilterToggled = true;
     this.toggleFilterBar();
   }
 
@@ -528,15 +528,15 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.drawCFU();
     this.microbesFilterToggled = false;
     this.isSiteDateGeoFilter = false;
-    this.cfuFilterToggled = true;
     this.qpcrFilterToggled = false;
+    this.cfuFilterToggled = true;
 
     this.toggleFilterBar(); // controls the state of the filters showing
     // ^ dependent on parent state as well
   }
 
   toggleQPCR() {
-    if (this.microbesLoading) {
+    if (this.qpcrLoading) {
       return alert("Still loading qPCR bacteria. Please try again in a few seconds.");
     }
     this.clearMapLayers();
@@ -560,9 +560,9 @@ export class MapComponent implements OnInit, AfterViewInit {
       
       this.drawMapPoints();
       this.microbesFilterToggled = false;
-      this.isSiteDateGeoFilter = true;
       this.cfuFilterToggled = false;
       this.qpcrFilterToggled = false;
+      this.isSiteDateGeoFilter = true;
       this.toggleFilterBar();
     }
     
