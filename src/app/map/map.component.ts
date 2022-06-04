@@ -1137,6 +1137,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.globalLoading = true;
     this.microbesLoading = true;
     this.cfuLoading = true;
+    this.qpcrLoading = true;
 
     this.metadata = [];
     this.metadata2 = [];
