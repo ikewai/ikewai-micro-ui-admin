@@ -539,7 +539,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (this.microbesLoading) {
       return alert("Still loading qPCR bacteria. Please try again in a few seconds.");
     }
-    this.queryQPCR();
     this.clearMapLayers();
     
     this.drawQPCR();
@@ -1309,6 +1308,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       }
       
       this.microbesLoading = false;
+      this.queryQPCR();
+
     } else {
       this.microbeStream = microbeStream;
       microbeStream.getQueryObserver().subscribe((microbeData: any) => {
@@ -1345,6 +1346,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         
             this.drawMicrobes();
           }
+          this.queryQPCR();
         }
       });
     }
@@ -1523,10 +1525,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   public queryQPCR() {
 
-    this.loading = true;
-    this.globalLoading = true;
-    this.qpcrLoading = true;
-
     this.qpcrMetadata = [];
 
     const microbesMap = {};
@@ -1551,7 +1549,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.drawQPCR(); /* draw qcpr points  - should be able to reuse function */
       }
 
-      this.qpcrFilterToggled = true;
+      this.qpcrLoading = false;
     } else {
       this.qpcrStream = qpcrStream;
       qpcrStream.getQueryObserver().subscribe((qcprData: any) => {
@@ -1580,7 +1578,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         
             this.drawQPCR();
           }
-          this.qpcrFilterToggled = true;
+          this.qpcrLoading = false;
         }
       });
     }
@@ -1708,7 +1706,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
     this.loading = false;
     this.globalLoading = false;
-    this.qpcrLoading = false;
   }
 
   public drawMapPoints() {
