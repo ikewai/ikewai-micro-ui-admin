@@ -1224,41 +1224,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
-  createPostit(file_url): Observable<any> {
-    let url =
-      AppConfig.settings.aad.tenant + '/postits/v2/?url=' + encodeURI(file_url) + '&method=GET&lifetime=600&maxUses=1';
-    let head = new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded');
-    let bodyString = JSON.stringify({});
-    let params: HttpParams = new HttpParams().append('method', 'POST');
-    let options = {
-      headers: head,
-      observe: <any>'response',
-      //params: params
-    };
-    // console.log(url);
-
-    return this.http.post<any>(url, {}, options).pipe(map((response: any) => response));
-  }
-
-  tableSearch(term: string) {
-    if (!term) {
-      this.filterData = this.metadata2;
-    } else {
-      this.filterData = this.metadata2.filter((x) => {
-        for (var obj in x.value) {
-          if (x.value[obj] != null) {
-            if (typeof x.value[obj] == 'string') {
-              if (x.value[obj].trim().toLowerCase().includes(term.trim().toLowerCase())) {
-                return true;
-              }
-            }
-          }
-        }
-      });
-      this.dtTrigger.next();
-    }
-  }
-
   ngAfterViewInit() {
     let ahupuaaData: any = this.queryHandler.ahupuaaSearch();
     ahupuaaData.getQueryObserver().subscribe((ahupuaaData: any) => {
