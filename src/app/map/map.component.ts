@@ -335,48 +335,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     return resultArr;
   }
 
-  removeMicrobeFilter(filterTable: any, indexToRemove: number) {
-
-    if (this.filterToDisplayFilterChainMicrobes) {
-      const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
-      this.removeMicrobeElement(indexToRemove);
-      button.click();
-    } else {
-      this.removeMicrobeElement(indexToRemove);
-    }
-  }
-
-  removeMicrobeElement(indexToRemove: number) {
-    const copy = [...this.microbesFlattenedQueryArr];
-    this.microbesFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
-    for (let i = 0; i < copy.length; i++) {
-      if (copy[i].index > indexToRemove) {
-        copy[i].index--;
-      }
-    }
-  }
-
-  removeCFUFilter(filterTable: any, indexToRemove: number) {
-
-    if (this.filterToDisplayFilterChainMicrobes) {
-      const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
-      this.removeMicrobeElement(indexToRemove);
-      button.click();
-    } else {
-      this.removeCFUElement(indexToRemove);
-    }
-  }
-
-  removeCFUElement(indexToRemove: number) {
-    const copy = [...this.cfuFlattenedQueryArr];
-    this.cfuFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
-    for (let i = 0; i < copy.length; i++) {
-      if (copy[i].index > indexToRemove) {
-        copy[i].index--;
-      }
-    }
-  }
-
   removeSampleFilter(filterTable: any, indexToRemove: number) {
 
     if (this.filterToDisplayFilterChainSamples) {
@@ -394,6 +352,28 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
+  removeMicrobeFilter(filterTable: any, indexToRemove: number) {
+
+    if (this.filterToDisplayFilterChainMicrobes) {
+      const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
+      this.removeMicrobeElement(indexToRemove);
+      button.click();
+    } else {
+      this.removeMicrobeElement(indexToRemove);
+    }
+  }
+
+  removeCFUFilter(filterTable: any, indexToRemove: number) {
+
+    if (this.filterToDisplayFilterChainMicrobes) {
+      const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
+      this.removeMicrobeElement(indexToRemove);
+      button.click();
+    } else {
+      this.removeCFUElement(indexToRemove);
+    }
+  }
+
   removeSampleElement(indexToRemove: number) {
     const copy = [...this.samplesFlattenedQueryArr];
     this.samplesFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
@@ -404,9 +384,33 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
-  highlightRowCFU(e: any, indexToHighlight: number) {
+  removeMicrobeElement(indexToRemove: number) {
+    const copy = [...this.microbesFlattenedQueryArr];
+    this.microbesFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
+    for (let i = 0; i < copy.length; i++) {
+      if (copy[i].index > indexToRemove) {
+        copy[i].index--;
+      }
+    }
+  }
+  
+  removeCFUElement(indexToRemove: number) {
+    const copy = [...this.cfuFlattenedQueryArr];
+    this.cfuFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
+    for (let i = 0; i < copy.length; i++) {
+      if (copy[i].index > indexToRemove) {
+        copy[i].index--;
+      }
+    }
+  }
+
+  highlightRowSamples(e: any, indexToHighlight: number) {
     if (e.stopPropagation) e.stopPropagation();
-    if (!this.filterToDisplayFilterChainCFU) return;
+    if (!this.filterToDisplayFilterChainSamples) return;
+    if (!this.samplesFilterToggled) {
+      this.microbesFilterToggled = false;
+      this.samplesFilterToggled = true;
+    }
     
     const lol:any = document.getElementsByClassName('q-row')[indexToHighlight]
     if (lol) {
@@ -416,7 +420,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
 
   }
-
+  
   highlightRowMicrobes(e: any, indexToHighlight: number) {
     if (e.stopPropagation) e.stopPropagation();
     if (!this.filterToDisplayFilterChainMicrobes) return;
@@ -430,13 +434,9 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   }
 
-  highlightRowSamples(e: any, indexToHighlight: number) {
+  highlightRowCFU(e: any, indexToHighlight: number) {
     if (e.stopPropagation) e.stopPropagation();
-    if (!this.filterToDisplayFilterChainSamples) return;
-    if (!this.samplesFilterToggled) {
-      this.microbesFilterToggled = false;
-      this.samplesFilterToggled = true;
-    }
+    if (!this.filterToDisplayFilterChainCFU) return;
     
     const lol:any = document.getElementsByClassName('q-row')[indexToHighlight]
     if (lol) {
@@ -473,8 +473,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
-
-  
   microbeQueryFilterRecursive(query: any, result: Array<any>) {
     let nestedQuery: Array<any> = ['', ''];
     let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
@@ -543,7 +541,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     result[1] += ')';
   }
   
-  
   toggleFilterBar() {
     if (this.samplesFilterToggled) {
       this.currentSampleQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
@@ -605,7 +602,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     // ^ dependent on parent state as well
   }
 
-  toggleSiteDateGeo() {
+  toggleSamples() {
     this.clearMapLayers();
     
     this.microGPSData = this.microGPSData.filter(
