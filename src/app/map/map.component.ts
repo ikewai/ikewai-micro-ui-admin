@@ -1528,13 +1528,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       });
     }
   }
-
-  toggleSanity() {
-    console.log(this.microbesFilterToggled, 'micro filter');
-    console.log(this.cfuFilterToggled, 'cfu filter');
-    console.log(this.qpcrFilterToggled, 'qpcr filter');
-  }
-
+  
   public queryQPCR() {
 
     this.qpcrMetadata = [];
@@ -1579,7 +1573,6 @@ export class MapComponent implements OnInit, AfterViewInit {
           } else {
             //console.log('No matching microbe for ' + qcpr.value.sample_replicate + ' inside qcpr document');
           }
-          console.log(qcpr, 'hello?')
           this.qpcrMetadata.push({ ...qcpr });
         });
 

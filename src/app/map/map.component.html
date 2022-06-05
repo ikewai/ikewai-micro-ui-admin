@@ -254,8 +254,8 @@
       </div>  
     </div>
       <!-- <p *ngIf="microbesFilterToggled">{{this.currentMicrobeReadableQuery}}</p> -->
-      <h6 *ngIf="microbesFlattenedQueryArr.length && microbesFilterToggled">Microbes</h6>
-      <div *ngIf="microbesFlattenedQueryArr.length && microbesFilterToggled" class="d-flex flex-wrap">
+      <h6 *ngIf="microbesFlattenedQueryArr.length && (microbesFilterToggled || qpcrFilterToggled)">Microbes</h6>
+      <div *ngIf="microbesFlattenedQueryArr.length && (microbesFilterToggled || qpcrFilterToggled)" class="d-flex flex-wrap">
         <div id="microbe-{{query.index}}" class="d-flex flex-wrap" *ngFor="let query of microbesFlattenedQueryArr" style="width: fit-content">
           <div (click)="highlightRowMicrobes($event, query.index)" style="position: relative; float: left; margin: 5px 10px 5px 5px; padding: 12px 22px 12px 22px; border-radius: 10px; cursor: pointer" [ngStyle]="{'background': query.subjectCondition === 'AND' ? 'rgb(24, 103, 88)' : '#0d6efd'}">
             <span *ngIf="query.level" style="position: absolute; top: 38px; left: 50%; font-size: 10px; line-height: 0.3; color: rgba(255,255,255,0.8)">Level {{query.level}}</span>
@@ -286,7 +286,6 @@
   </div>
 </div>
 </div>
-<button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleSanity()">TOGGLE SANITY</button>
 
 
 <!-- modal -->
