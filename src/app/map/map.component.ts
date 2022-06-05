@@ -25,8 +25,6 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { FormControl } from '@angular/forms';
 
 import { QueryBuilderConfig } from 'angular2-query-builder';
-import { connectableObservableDescriptor } from 'rxjs/internal/observable/ConnectableObservable';
-import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 
 @Component({
