@@ -291,6 +291,22 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   };
 
+  dataGroups: {
+    sites: L.FeatureGroup;
+    wells: L.FeatureGroup;
+    waterQualitySites: L.FeatureGroup;
+    MicroGPS: L.FeatureGroup;
+    microbes: L.FeatureGroup;
+    cfu: L.FeatureGroup;
+    qpcr: L.FeatureGroup;
+  };
+
+  clearMapLayers() {
+    this.dataGroups.MicroGPS.clearLayers();
+    this.dataGroups.microbes.clearLayers();
+    this.dataGroups.cfu.clearLayers();
+    this.dataGroups.qpcr.clearLayers();
+  }
 
   toggleAhupuaa() {
     this.ahupuaaToggled = !this.ahupuaaToggled;
@@ -300,11 +316,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.ahupuaaToggled = false;
   }
 
-  clearMapLayers() {
-    this.dataGroups.MicroGPS.clearLayers();
-    this.dataGroups.microbes.clearLayers();
-    this.dataGroups.cfu.clearLayers();
-  }
 
   flattenQuery(queryArray: Array<any>, level: number, condition: string, filterTable: string, num: number, resultArr: Array<any>) {
     if (level === 0) resultArr = [];
@@ -935,16 +946,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   mapZoomed: L.Map; // small map for modal screen
   mapZoomedLatLng: any; // tracks the current LatLon for the small map for modal screen
   mapZoomedCircle: any; // tracks the drawn circle on the small map for modal screen
-
-  dataGroups: {
-    sites: L.FeatureGroup;
-    wells: L.FeatureGroup;
-    waterQualitySites: L.FeatureGroup;
-    MicroGPS: L.FeatureGroup;
-    microbes: L.FeatureGroup;
-    cfu: L.FeatureGroup;
-    qpcr: L.FeatureGroup;
-  };
 
   options: L.MapOptions = {
     layers: [
