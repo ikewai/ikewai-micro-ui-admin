@@ -92,21 +92,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   filterToDisplayFilterChainSamples: boolean = false;
 
   flagShown: boolean = false;
-
-  toggleAhupuaa() {
-    this.ahupuaaToggled = !this.ahupuaaToggled;
-  }
-
-  toggleAhupuaaClosed() {
-    this.ahupuaaToggled = false;
-  }
-
-  clearMapLayers() {
-    this.dataGroups.MicroGPS.clearLayers();
-    this.dataGroups.microbes.clearLayers();
-    this.dataGroups.cfu.clearLayers();
-  }
-
   gpsStream: any = null;
   siteDateStream: any = null;
   microbeStream: any = null; // state of current microbe query
@@ -118,7 +103,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   qpcrFilterToggled: boolean = false;
 
   showFilterBar: boolean = false;
-
+  
   sampleQuery = {
     condition: 'and',
     rules: [
@@ -259,6 +244,38 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   };
 
+  qpcrConfig: QueryBuilderConfig = {
+    fields: {
+      sample_no: { name: 'Sample Number', type: 'string' },
+      sample_replicate: { name: 'Sample Replicate', type: 'string' },
+      target_name: {
+        name: 'target name',
+        type: 'category',
+        options: [
+          { name: 'femA', value: 'femA' },
+        ],
+      },
+      fema_100ml: { name: 'femA_100ml', type: 'number' },
+      fema_g: { name: 'femA_g', type: 'number' },
+      log_fema_100ml: { name: 'log_femA_100ml', type: 'number' },
+      log_fema_g: { name: 'log_femA_G', type: 'number' },
+    }
+  };
+
+
+  toggleAhupuaa() {
+    this.ahupuaaToggled = !this.ahupuaaToggled;
+  }
+
+  toggleAhupuaaClosed() {
+    this.ahupuaaToggled = false;
+  }
+
+  clearMapLayers() {
+    this.dataGroups.MicroGPS.clearLayers();
+    this.dataGroups.microbes.clearLayers();
+    this.dataGroups.cfu.clearLayers();
+  }
 
   flattenQuery(queryArray: Array<any>, level: number, condition: string, filterTable: string, num: number, resultArr: Array<any>) {
     if (level === 0) resultArr = [];
@@ -1530,7 +1547,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   public queryQPCR() {
-
     this.qpcrMetadata = [];
 
     const microbesMap = {};
@@ -1555,7 +1571,6 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.drawQPCR(); /* draw qcpr points  - should be able to reuse function */
       }
 
-      this.qpcrLoading = false;
     } else {
       this.qpcrStream = qpcrStream;
       qpcrStream.getQueryObserver().subscribe((qcprData: any) => {
@@ -1576,17 +1591,18 @@ export class MapComponent implements OnInit, AfterViewInit {
           this.qpcrMetadata.push({ ...qcpr });
         });
 
-        if (asyncStatus.finished) { 
+        if (asyncStatus.finished) {
+           
           console.log(this.qpcrMetadata, 'wait am i getting anything?')
 
           if (this.qpcrFilterToggled) {
         
             this.drawQPCR();
           }
-          this.qpcrLoading = false;
         }
       });
     }
+    this.qpcrLoading = false;
   }
 
   public drawCFU() {
