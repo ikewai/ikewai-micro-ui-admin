@@ -102,10 +102,12 @@ export class MapComponent implements OnInit, AfterViewInit {
   filterToDisplayFilterChainSamples: boolean = false;
   filterToDisplayFilterChainMicrobes: boolean = false;
   filterToDisplayFilterChainCFU: boolean = false;
+  filterToDisplayFilterChainQPCR: boolean = false;
 
   flagShown: boolean = false;
+
   gpsStream: any = null;
-  siteDateStream: any = null;
+  sampleStream: any = null;
   microbeStream: any = null; // state of current microbe query
   cfuStream: any = null; // state of current cfu query
   qpcrStream: any = null; // state of current qpcr query
@@ -123,12 +125,12 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   samplesMap: Object = {}; // Map created from current metadata2/samples state
 
+  metadata2: any; // current samples state
   microbeMetadata: Metadata[]; // current microbes state
   cfuMetadata: any; // current cfu data state
   qpcrMetadata: any; // current state of qpcr data
 
-  metadata: any; // need to specify type
-  metadata2: any; // current samples state
+  metadata: any; // array that leaflet uses to render points
 
   filterData: Metadata[];
   selectedMetadata: Metadata;
@@ -461,12 +463,23 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   removeCFUFilter(filterTable: any, indexToRemove: number) {
 
-    if (this.filterToDisplayFilterChainMicrobes) {
+    if (this.filterToDisplayFilterChainCFU) {
       const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
-      this.removeMicrobeElement(indexToRemove);
+      this.removeCFUElement(indexToRemove);
       button.click();
     } else {
       this.removeCFUElement(indexToRemove);
+    }
+  }
+
+  removeQPCRFilter(filterTable: any, indexToRemove: number) {
+
+    if (this.filterToDisplayFilterChainQPCR) {
+      const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
+      this.removeQPCRElement(indexToRemove);
+      button.click();
+    } else {
+      this.removeQPCRElement(indexToRemove);
     }
   }
 
@@ -493,6 +506,16 @@ export class MapComponent implements OnInit, AfterViewInit {
   removeCFUElement(indexToRemove: number) {
     const copy = [...this.cfuFlattenedQueryArr];
     this.cfuFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
+    for (let i = 0; i < copy.length; i++) {
+      if (copy[i].index > indexToRemove) {
+        copy[i].index--;
+      }
+    }
+  }
+
+  removeQPCRElement(indexToRemove: number) {
+    const copy = [...this.qpcrFlattenedQueryArr];
+    this.qpcrFlattenedQueryArr = copy.filter(element => element.index !== indexToRemove);
     for (let i = 0; i < copy.length; i++) {
       if (copy[i].index > indexToRemove) {
         copy[i].index--;
@@ -540,7 +563,18 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.focusedFilterRow = lol;
       lol.style.background = 'pink';
     }
+  }
 
+  highlightRowQPCR(e: any, indexToHighlight: number) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (!this.filterToDisplayFilterChainQPCR) return;
+    
+    const lol:any = document.getElementsByClassName('q-row')[indexToHighlight]
+    if (lol) {
+      this.focusedFilterRow ? this.focusedFilterRow.style.background = 'none' : null;
+      this.focusedFilterRow = lol;
+      lol.style.background = 'pink';
+    }
   }
 
   checkIfChangesWereMade(changes: any, currentState: any) {
@@ -813,6 +847,62 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.toggleFilterBar();
     this.findData();
   }
+
+  qpcrQueryFilter() {
+    if (this.qpcrLoading) {
+      return alert("Still loading qPCR bacteria. Please try again in a few seconds.");
+    }
+    if (!this.qpcrQuery.rules.length) {
+      this.currentQPCRQuery = '';
+      this.currentQPCRReadableQuery = '';
+    } else {
+      this.filterToDisplayFilterChainQPCR = true;
+      this.qpcrFlattenedQueryArr = this.flattenQuery(this.qpcrQuery.rules, 0, this.qpcrQuery.condition, 'qpcr', 0, this.qpcrFlattenedQueryArr);
+      this.qpcrMetadata = [];
+
+      /* logical 'or' operator */
+      let result: Array<any> = ['', ''];
+      let condition: string = this.qpcrQuery.condition === 'and' ? " {'$and': [" : " {'$or':  [";
+      let readableCondition: string =
+        this.qpcrQuery.condition === 'and'
+          ? 'Where all qPCR bacteria meet each criteria: '
+          : 'Where all qPCR bacteria meet one of these criteria: ';
+      let readableCondition2: string = this.qpcrQuery.condition === 'and' ? ' and ' : ' or ';
+      result[0] += condition;
+      result[1] += readableCondition;
+      for (let i: number = 0; i < this.qpcrQuery.rules.length; i++) {
+        if (this.qpcrQuery.rules[i].field) {
+          let { field, operator, value } = this.qpcrQuery.rules[i];
+          let val: any = value;
+
+          let type: string;
+          if (field === 'sample_no' || field === 'sample_replicate' || field === 'target_name') {
+            type = 'string';
+          } else {
+            type = 'number';
+          }
+
+          const statement = this.evaluateOperation(operator, val, type);
+          const readable = this.parseReadable(operator, val, type);
+          result[0] += `{'value.${field}'${statement}}`;
+          i <= this.qpcrQuery.rules.length - 1 && i !== 0 ? (result[1] += readableCondition2) : null;
+          result[1] += `${field} ${readable}`;
+          i === 0 ?  (result[1] += readableCondition2) : null;
+        }
+        const queryObject: any = this.qpcrQuery.rules[i];
+        if (queryObject.condition) {
+          this.qpcrQueryFilterRecursive(this.qpcrQuery.rules[i], result);
+        }
+          i !== this.qpcrQuery.rules.length - 1 ? (result[0] += ', ') : null;
+      }  
+      result[0] += ']}';
+      this.currentQPCRQuery = ', ' + result[0];
+      this.currentQPCRReadableQuery = result[1];
+      /* END previous attempt to create a front end filter */
+    }
+    this.toggleFilterBar();
+    this.findData();
+  }
   
   sampleQueryFilterRecursive(query: any, result: Array<any>) {
     let nestedQuery: Array<any> = ['', ''];
@@ -916,6 +1006,40 @@ export class MapComponent implements OnInit, AfterViewInit {
     result[1] += ')';
   }
 
+  qpcrQueryFilterRecursive(query: any, result: Array<any>) {
+    let nestedQuery: Array<any> = ['', ''];
+    let condition: string = query.condition === 'and' ? " {'$and': [" : " {'$or': [";
+    let readableCondition: string = query.condition === 'and' ? ' and ' : ' or ';
+    result[0] += condition;
+    result[1] += '(';
+    for (let i: number = 0; i < query.rules.length; i++) {
+      if (query.rules[i].field) {
+        let { field, operator, value } = query.rules[i];
+        
+        let type: string;
+        if (field === 'sample_no' || field === 'sample_replicate' || field === 'target_name') {
+          type = 'string';
+        } else {
+          type = 'number';
+        }
+        
+        const statement = this.evaluateOperation(operator, value, type);
+        const readable = this.parseReadable(operator, value, type);
+        nestedQuery[0] += `{'value.${field}'${statement}}`;
+        nestedQuery[1] += `${field} ${readable}`;
+        i !== query.rules.length - 1 ? (nestedQuery[0] += ', ') : null;
+        i !== query.rules.length - 1 ? (nestedQuery[1] += readableCondition) : null;
+      }
+      if (query.rules[i].condition) {
+        this.qpcrQueryFilterRecursive(query.rules[i], nestedQuery);
+      }
+    }
+    result[0] += nestedQuery[0];
+    result[0] += ']}';
+    result[1] += nestedQuery[1];
+    result[1] += ')';
+  }
+
   evaluateOperation(operator: string, value: string, type: string) {
     if (type !== 'number') { /* matches a string in database */
       switch (operator) {
@@ -975,10 +1099,18 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   resetCFUQuery() {
-    console.log('is this being fired somehow?')
     this.currentCFUQuery = '';
     this.currentCFUReadableQuery = '';
     this.cfuFlattenedQueryArr = [];
+    if (this.focusedFilterRow) this.focusedFilterRow.style.background = 'none';
+    this.findData();
+    this.toggleFilterBar();
+  }
+
+  resetQPCRQuery() {
+    this.currentQPCRQuery = '';
+    this.currentQPCRReadableQuery = '';
+    this.qpcrFlattenedQueryArr = [];
     if (this.focusedFilterRow) this.focusedFilterRow.style.background = 'none';
     this.findData();
     this.toggleFilterBar();
@@ -1092,12 +1224,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
-  downloadClick(metadatum_href) {
-    let downloadString = metadatum_href.replace('media', 'download/public');
-    // console.log(downloadString)
-    window.open(downloadString, '_blank');
-  }
-
   createPostit(file_url): Observable<any> {
     let url =
       AppConfig.settings.aad.tenant + '/postits/v2/?url=' + encodeURI(file_url) + '&method=GET&lifetime=600&maxUses=1';
@@ -1174,7 +1300,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   public findData() {
     /* cancel any previous queries */
     // this.gpsStream && this.gpsStream.cancel();
-    // this.siteDateStream && this.siteDateStream.cancel();
+    // this.sampleStream && this.sampleStream.cancel();
     // this.microbeStream && this.microbeStream.cancel();
     /* cancel any previous queries END (see microbes line 705) */
 
@@ -1263,15 +1389,15 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
 
-    let siteDateStream: any = this.queryHandler.siteDateSearch(
+    let sampleStream: any = this.queryHandler.siteDateSearch(
       this.microGPSData.map((item: any) => item.value.location),
       this.currentSampleQuery
     );
 
-    if (siteDateStream.data) {
+    if (sampleStream.data) {
       /* fix for preventing duplicate API calls */
 
-      this.metadata2 = [...siteDateStream.data];
+      this.metadata2 = [...sampleStream.data];
 
       this.metadata2.map((siteDateGeochem) => {
         if (locationHashmap[siteDateGeochem.value.location]) {
@@ -1291,8 +1417,8 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.queryMicrobes();
       this.queryCFU();
     } else {
-      this.siteDateStream = siteDateStream;
-      siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
+      this.sampleStream = sampleStream;
+      sampleStream.getQueryObserver().subscribe((siteDateData: any) => {
         const asyncStatus: any = siteDateData.status;
         siteDateData = siteDateData.data;
 
@@ -1466,19 +1592,6 @@ export class MapComponent implements OnInit, AfterViewInit {
               datum.value.watershed +
               '<br/>Site_Enviro: ' +
               datum.value.site_enviro;
-            //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
-            //+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
-            //"<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "
-            //+datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude
-            //+"<br/>Longitude: "+datum.value.longitude+
-            //'<br/><button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" onclick="document.getElementById('+"'"+datum.uuid+"'"+').click()">View</button>';
-
-            let j: number;
-            for (j = 0; j < datum._links.associationIds.length; j++) {
-              if (datum._links.associationIds[j].href.indexOf('ikewai-annotated') !== -1) {
-                //  download.innerHTML ='<a href="javascript:void(0);" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
-              }
-            }
           }
           let popup: L.Popup = new L.Popup({ autoPan: false });
           //  wrapper.append(header)
@@ -1817,19 +1930,6 @@ export class MapComponent implements OnInit, AfterViewInit {
               datum.value.watershed +
               '<br/>Site_Enviro: ' +
               datum.value.site_enviro;
-            //"<br/>Driller: "+datum.value.driller+"<br/>Year Drilled: "
-            //+datum.value.yr_drilled+"<br/>Surveyor: "+datum.value.surveyor+
-            //"<br/>Casing Diameter: "+datum.value.casing_dia+"<br/>Depth: "
-            //+datum.value.well_depth+"<br/>Latitude: "+datum.value.latitude
-            //+"<br/>Longitude: "+datum.value.longitude+
-            //'<br/><button class="btn btn-sm btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" onclick="document.getElementById('+"'"+datum.uuid+"'"+').click()">View</button>';
-
-            let j: number;
-            for (j = 0; j < datum._links.associationIds.length; j++) {
-              if (datum._links.associationIds[j].href.indexOf('ikewai-annotated') !== -1) {
-                //  download.innerHTML ='<a href="javascript:void(0);" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
-              }
-            }
           }
           let popup: L.Popup = new L.Popup({ autoPan: false });
           //  wrapper.append(header)
@@ -1926,11 +2026,11 @@ export class MapComponent implements OnInit, AfterViewInit {
       /* END create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
 
       /* make another query using query handler (Chaz) */
-      let siteDateStream: QueryController = this.queryHandler.siteDateSearch(
+      let sampleStream: QueryController = this.queryHandler.siteDateSearch(
         this.microGPSData.map((item: any) => item.value.location),
         this.currentSampleQuery
       );
-      siteDateStream.getQueryObserver().subscribe((siteDateData: any) => {
+      sampleStream.getQueryObserver().subscribe((siteDateData: any) => {
         siteDateData = siteDateData.data;
         if (siteDateData == null) {
           return;
@@ -2010,13 +2110,6 @@ export class MapComponent implements OnInit, AfterViewInit {
                 '<br/><button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#location-modal" (click)="openModalSite(' +
                 datum +
                 ')">View</button>';
-
-              let j: number;
-              for (j = 0; j < datum._links.associationIds.length; j++) {
-                if (datum._links.associationIds[j].href.indexOf('ikewai-annotated') !== -1) {
-                  //  download.innerHTML ='<a href="javascript:void(0);" class="btn btn-success" (click)="downloadClick(\''+datum._links.associationIds[j].href+'\')">Download '+datum._links.associationIds[j].href.split('/').slice(-1)[0]+'</a>'
-                }
-              }
             }
 
             let popup: L.Popup = new L.Popup();

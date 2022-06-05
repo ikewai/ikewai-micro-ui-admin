@@ -73,21 +73,6 @@
             <td width="40%">
               <span #entries>{{metadatum.value.site}}</span>
             </td>
-            <td >
-              <span *ngIf="metadatum.name == 'Well'">
-                {{metadatum.value.yr_drilled}}</span>
-                <span *ngIf="metadatum.name == 'Water_Quality_Site'">{{metadatum.value.ProviderName}}</span>
-            </td>
-            <td width="20%">
-                <span *ngIf="metadatum.name == 'Water_Quality_Site' && metadatum.value.resultCount > 0">
-                    <a class="btn btn-success" href='https://www.waterqualitydata.us/Result/search?siteid={{metadatum.value.MonitoringLocationIdentifier}}&mimeType=csv&zip=yes&sorted=no' target="_blank" > Download {{metadatum.value.resultCount}} Measurements</a>
-                </span>
-              <div *ngIf="metadatum.name == 'Well'">
-                  <span *ngFor="let link of metadatum._links.associationIds ">
-                    <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" (click)="downloadClick(link.href)">Download {{link.href.split('/').slice(-1)[0]}}</a>
-                  </span>
-              </div>
-            </td>
           </tr>
         </table>
         </div>
@@ -341,13 +326,6 @@
                   <span *ngIf="selectedMetadata.value.cor_PO4_umol_l"><b>COR PO4.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_PO4_umol_l}}<br/></span>
                   <span *ngIf="selectedMetadata.value.cor_nox_umol_l"><b>COR NOX.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_nox_umol_l}}<br/></span>
                   <span *ngIf="selectedMetadata.value.cor_nh4_umol_l"><b>COR NH4.umol.L :</b>&nbsp;{{selectedMetadata.value.cor_nh4_umol_l}}<br/></span>
-
-                  <div *ngFor="let link of selectedMetadata._links.associationIds " style="padding: 5px 0px 5px 0px;">
-                    <a href="#" *ngIf="link.href.indexOf('ikewai-annotated') !== -1" class="btn btn-success btn-sm" 
-                      (click)="downloadClick(link.href)">
-                        <img class="images" src="assets/fileicons/{{link.href.split('.').pop()}}.png" height="40px"/>
-                        Download {{link.href.split('/').slice(-1)[0]}}</a>
-                  </div>
                 </div>
                 <div *ngIf="ahupuaaToggled">
                   <span style="font-size: 11px" class="d-flex justify-content-between"><b>Corresponding Ahupua'a Data</b><a class="link-primary" (click)="toggleAhupuaa()">Back to Sample Data</a></span><br/>
