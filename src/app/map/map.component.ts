@@ -48,7 +48,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   currentMicrobeReadableQuery: string = '';
   currentCFUReadableQuery: string = '';
   
-  /* Loading Variables 
+  /*** 
+   * Loading Variables 
    * 
    * Since data flows down like a waterfall, these loading states
    * reflect whether the user can toggle to the microbes view,
@@ -67,7 +68,7 @@ export class MapComponent implements OnInit, AfterViewInit {
    * where all child data inherently contains it's parent data. In this way,
    * I could query GPS data directly from a child's table. 
    * 
-   */
+   ***/
 
   loading: boolean = false;
   globalLoading: boolean = false;
@@ -98,6 +99,16 @@ export class MapComponent implements OnInit, AfterViewInit {
   cfuStream: any = null; // state of current cfu query
   qpcrStream: any = null; // state of current qpcr query
 
+  /*** 
+   * Front-end (map.component.html) States
+   * 
+   * These variables control what state to show
+   * The four possible states are samples,
+   * microbes, cfu, and qPCR.
+   * 
+   ***/
+
+  samplesFilterToggled: boolean = true;
   microbesFilterToggled: boolean = false;
   cfuFilterToggled: boolean = false;
   qpcrFilterToggled: boolean = false;
@@ -344,9 +355,9 @@ export class MapComponent implements OnInit, AfterViewInit {
 
     if (this.filterToDisplayFilterChainSamples) {
       
-      if (!this.isSiteDateGeoFilter) {
+      if (!this.samplesFilterToggled) {
         this.microbesFilterToggled = false;
-        this.isSiteDateGeoFilter = true;
+        this.samplesFilterToggled = true;
       }
 
       const button: any = document.getElementsByClassName('q-button q-remove-button')[indexToRemove];
@@ -396,9 +407,9 @@ export class MapComponent implements OnInit, AfterViewInit {
   highlightRowSamples(e: any, indexToHighlight: number) {
     if (e.stopPropagation) e.stopPropagation();
     if (!this.filterToDisplayFilterChainSamples) return;
-    if (!this.isSiteDateGeoFilter) {
+    if (!this.samplesFilterToggled) {
       this.microbesFilterToggled = false;
-      this.isSiteDateGeoFilter = true;
+      this.samplesFilterToggled = true;
     }
     
     const lol:any = document.getElementsByClassName('q-row')[indexToHighlight]
@@ -508,7 +519,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   
   
   toggleFilterBar() {
-    if (this.isSiteDateGeoFilter) {
+    if (this.samplesFilterToggled) {
       this.currentSampleQuery !== "" ? this.showFilterBar = true : this.showFilterBar = false;
     }
     if (this.microbesFilterToggled) {
@@ -529,7 +540,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.clearMapLayers();
     
     this.drawMicrobes();
-    this.isSiteDateGeoFilter = false;
+    this.samplesFilterToggled = false;
     this.cfuFilterToggled = false;
     this.qpcrFilterToggled = false;
     this.microbesFilterToggled = true;
@@ -544,7 +555,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     
     this.drawCFU();
     this.microbesFilterToggled = false;
-    this.isSiteDateGeoFilter = false;
+    this.samplesFilterToggled = false;
     this.qpcrFilterToggled = false;
     this.cfuFilterToggled = true;
 
@@ -560,7 +571,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     
     this.drawQPCR();
     this.microbesFilterToggled = false;
-    this.isSiteDateGeoFilter = false;
+    this.samplesFilterToggled = false;
     this.cfuFilterToggled = false;
     this.qpcrFilterToggled = true;
 
@@ -579,7 +590,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       this.microbesFilterToggled = false;
       this.cfuFilterToggled = false;
       this.qpcrFilterToggled = false;
-      this.isSiteDateGeoFilter = true;
+      this.samplesFilterToggled = true;
       this.toggleFilterBar();
     }
     
@@ -884,8 +895,6 @@ export class MapComponent implements OnInit, AfterViewInit {
   highlightEntries: ElementRef[] = [];
 
   microGPSData: Array<Object>;
-
-  isSiteDateGeoFilter: Boolean = true;
 
   siteDateGeoMap: Object = {}; // Map created from current metadata2/samples state
 
@@ -1259,7 +1268,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
       );
 
-      if (this.isSiteDateGeoFilter) { /* only draw points if it's necessary */
+      if (this.samplesFilterToggled) { /* only draw points if it's necessary */
         this.drawMapPoints();
       }
 
@@ -1293,7 +1302,7 @@ export class MapComponent implements OnInit, AfterViewInit {
             (item: any) => item.value.siteDateGeochem && item.value.siteDateGeochem.length
           );
 
-          if (this.isSiteDateGeoFilter) {
+          if (this.samplesFilterToggled) {
             /* clean map to represent the filtered data */
             this.drawMapPoints();
           }

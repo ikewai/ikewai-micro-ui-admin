@@ -9,7 +9,7 @@
       </div>
     </div>
 
-    <div *ngIf="isSiteDateGeoFilter" class="col-md-6">
+    <div *ngIf="samplesFilterToggled" class="col-md-6">
     <div *ngIf="metadata.length == 0 && !loading" style="height:500px;">
       <h5>No Sample Site Results For Current Area.</h5>
     </div>
@@ -162,7 +162,7 @@
 
     <div style="width: 100%; margin-bottom: 5px" class="row flex-nowrap">
       <div style="padding-top: 10px;" class="row flex-nowrap" [ngStyle]="{'width': showFilterBar ? '75%' : '100%'}">
-        <div *ngIf="isSiteDateGeoFilter">
+        <div *ngIf="samplesFilterToggled">
           <div>
             <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
