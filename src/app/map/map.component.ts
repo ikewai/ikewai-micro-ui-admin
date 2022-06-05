@@ -316,7 +316,6 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.ahupuaaToggled = false;
   }
 
-
   flattenQuery(queryArray: Array<any>, level: number, condition: string, filterTable: string, num: number, resultArr: Array<any>) {
     if (level === 0) resultArr = [];
     for (let i = 0; i < queryArray.length; i++) {
@@ -1493,7 +1492,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
           let gotoWrapper = () => {
             console.log('click');
-            //this.gotoEntry(index);
           };
           //linkDiv[0].addEventListener("click", gotoWrapper);
           popup.setContent(wrapper);
@@ -1843,10 +1841,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
           //  let linkDiv = wrapper.getElementsByClassName("entry-link");
 
-          let gotoWrapper = () => {
-            console.log('click');
-            //this.gotoEntry(index);
-          };
           //linkDiv[0].addEventListener("click", gotoWrapper);
           popup.setContent(wrapper);
           layer.bindPopup(popup);
@@ -2213,81 +2207,12 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.mapZoomedLatLng = null;
   }
 
-  sanitizeLink(fileLink) {
-    var tempDiv = document.getElementById('tempDiv');
-    // if it's the same link, no need to sanitize
-    if (fileLink != tempDiv.innerHTML) {
-      // sanitize the given link. from http://shebang.mintern.net/foolproof-html-escaping-in-javascript/
-      tempDiv.innerHTML = '';
-      tempDiv.appendChild(document.createTextNode(fileLink));
-      fileLink = tempDiv.innerHTML;
-    }
-
-    // test resource URLs:
-    // return this.sanitizer.bypassSecurityTrustResourceUrl('https://view.officeapps.live.com/op/embed.aspx?src=http://www.hawaii.edu/elp/library/librarymaster-author-editor.xls');
-    // return this.sanitizer.bypassSecurityTrustResourceUrl('/assets/nsf-logo.png');
-
-    // to avoid the error that the text is not sanitized
-    return this.sanitizer.bypassSecurityTrustResourceUrl(fileLink);
-  }
-
   hideModal(): void {
     // this interferes with the small map.
     // this.selectedMetadata = null;
     //$("#location-modal").modal('hide');
   }
 
-  gotoEntry(index: number) {
-    //event.stopPropagation();
-    // this.queryHandler.requestData(this.defaultFilterHandle, index).then((range: [number, number]) => {
-    //   //yield control to allow observable to update entry list
-    //   setTimeout(() => {
-    //     // console.log(index);
-    //     // console.log(range);
-    //     //determine position of data on page
-    //     let entriesArr = this.entries.toArray();
-    //     console.log(entriesArr);
-    //     let pos = index - range[0];
-    //     //remove highlighting from already highlighted entries
-    //     let i;
-    //     for(i = 0; i < this.highlightEntries.length; i++) {
-    //       this.renderer.removeClass(this.highlightEntries[i].nativeElement, "highlight");
-    //     }
-    //     //reset list of highlighted entries
-    //     this.highlightEntries = [];
-    //     this.highlightEntries.push(entriesArr[pos]);
-    //     //highlight the selected entry
-    //     this.renderer.addClass(entriesArr[pos].nativeElement, "highlight");
-    //   }, 0);
-    // });
-  }
-
-  //  spatialSearch(geometry: any){
-
-  //     var query = "{'$and':[{'name':'Landuse'},{'value.name':'dataset12042018'},{'value.loc': {$geoWithin: {'$geometry':"+JSON.stringify(geometry.geometry).replace(/"/g,'\'')+"}}}]}";
-  //     console.log(query)
-  //     let url = AppConfig.settings.aad.tenant+"/meta/v2/data?q="+encodeURI(query)+"&limit=100000&offset=0";
-  //        //.set("Authorization", "Bearer " + currentUser.access_token)
-  //     let head = new HttpHeaders()
-  //     .set("Content-Type", "application/x-www-form-urlencoded");
-  //     let options = {
-  //       headers: head
-  //     };
-  // console.log("stuff1")
-  //     this.http.get<any>(url, options).subscribe(responseData => console.log(responseData.result));
-  //     /*.pipe(
-  //      map((data) => {
-  //        console.log("more")
-  //        return data.result as Metadata[];
-  //      }),
-  //      catchError((e) => {
-  //        console.log()
-  //        return Observable.throw(new Error(e.message));
-  //      })
-  //    );*/
-  //    console.log("stuff2")
-  //    //return response;
-  //   }
 }
 
 enum NameGroupMap {
