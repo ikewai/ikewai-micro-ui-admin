@@ -567,8 +567,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
     
     sampleQueryFilter() {
-      if (this.microbesLoading) {
-      return alert("Still loading microbes. Please try again in a few seconds.");
+      if (this.qpcrLoading) {
+      return alert("Still loading qPCR. Please try again in a few seconds.");
     }
     if (!this.sampleQuery.rules.length) {
       this.currentSampleQuery = '';
@@ -623,8 +623,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
   
   microbeQueryFilter() {
-    if (this.microbesLoading) {
-      return alert("Still loading microbes. Please try again in a few seconds.");
+    if (this.qpcrLoading) {
+      return alert("Still loading qPCR. Please try again in a few seconds.");
     }
     if (!this.microbeQuery.rules.length) {
       this.currentMicrobeQuery = '';
@@ -680,7 +680,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   cfuQueryFilter() {
-    if (this.cfuLoading) {
+    if (this.qpcrLoading) {
       return alert("Still loading cultured bacteria. Please try again in a few seconds.");
     }
     if (!this.cfuQuery.rules.length) {
@@ -1528,7 +1528,7 @@ export class MapComponent implements OnInit, AfterViewInit {
       });
     }
   }
-  
+
   public queryQPCR() {
 
     this.qpcrMetadata = [];
