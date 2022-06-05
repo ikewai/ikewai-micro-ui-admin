@@ -46,6 +46,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   sampleQueryCtrl = new FormControl('');
   microbeQueryCtrl = new FormControl('');
   cfuQueryCtrl = new FormControl('');
+  qpcrQueryCtrl = new FormControl('');
 
   currentSampleQuery: string = '';
   currentMicrobeQuery: string = ''; // state of current microbe query
@@ -55,7 +56,8 @@ export class MapComponent implements OnInit, AfterViewInit {
   currentSampleReadableQuery: string = '';
   currentMicrobeReadableQuery: string = '';
   currentCFUReadableQuery: string = '';
-  
+  currentQPCRReadableQuery: string = '';
+
   /*** 
    * Loading Variables 
    * 
@@ -84,21 +86,22 @@ export class MapComponent implements OnInit, AfterViewInit {
   cfuLoading: boolean = false;
   qpcrLoading: boolean = false;
 
-  currentMicrobeLayer: any = null;
   currentSampleLayer: any = null;
+  currentMicrobeLayer: any = null;
   allAhupuaaData: any = null;
   ahupuaaToggled: boolean = false;
   selectedAhupuaa: any = null;
 
   focusedFilterRow: any = null;
 
-  cfuFlattenedQueryArr: Array<any> = [];
-  microbesFlattenedQueryArr: Array<any> = [];
   samplesFlattenedQueryArr: Array<any> = [];
+  microbesFlattenedQueryArr: Array<any> = [];
+  cfuFlattenedQueryArr: Array<any> = [];
+  qpcrFlattenedQueryArr: Array<any> = [];
 
-  filterToDisplayFilterChainCFU: boolean = false;
-  filterToDisplayFilterChainMicrobes: boolean = false;
   filterToDisplayFilterChainSamples: boolean = false;
+  filterToDisplayFilterChainMicrobes: boolean = false;
+  filterToDisplayFilterChainCFU: boolean = false;
 
   flagShown: boolean = false;
   gpsStream: any = null;
