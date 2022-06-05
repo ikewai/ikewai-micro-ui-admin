@@ -899,6 +899,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     MicroGPS: L.FeatureGroup;
     microbes: L.FeatureGroup;
     cfu: L.FeatureGroup;
+    qpcr: L.FeatureGroup;
   };
 
   options: L.MapOptions = {
@@ -1007,6 +1008,10 @@ export class MapComponent implements OnInit, AfterViewInit {
       }),
       cfu: L.markerClusterGroup({
         iconCreateFunction: iconCreateFunction('CFU'),
+        disableClusteringAtZoom: 4,
+      }),
+      qpcr: L.markerClusterGroup({
+        iconCreateFunction: iconCreateFunction('qPCR'),
         disableClusteringAtZoom: 4,
       }),
       wells: L.markerClusterGroup({ iconCreateFunction: iconCreateFunction('wells'), disableClusteringAtZoom: 12 }),
@@ -1524,14 +1529,20 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
+  toggleSanity() {
+    console.log(this.microbesFilterToggled, 'micro filter');
+    console.log(this.cfuFilterToggled, 'cfu filter');
+    console.log(this.qpcrFilterToggled, 'qpcr filter');
+  }
+
   public queryQPCR() {
 
     this.qpcrMetadata = [];
 
     const microbesMap = {};
 
-    this.metadata2.map((microbe: any) => {
-      if (!microbesMap[microbe.value.sample_replicate]) {
+    this.microbeMetadata.map((microbe: any) => {
+      if (!(microbe.value.sample_replicate in microbesMap)) {
         microbesMap[microbe.value.sample_replicate] = microbe.value;
         microbesMap[microbe.value.sample_replicate].qpcr = [];
       } else {
@@ -1564,11 +1575,11 @@ export class MapComponent implements OnInit, AfterViewInit {
         qcprData.map((qcpr: any) => {
           if (microbesMap[qcpr.value.sample_replicate]) {
             qcpr.value = { ...qcpr.value, ...microbesMap[qcpr.value.sample_replicate] };
-            microbesMap[qcpr.value.sample_replicate].qcpr.push({ ...qcpr.value });
+            // microbesMap[qcpr.value.sample_replicate].qcpr.push({ ...qcpr.value }); // undefined issue
           } else {
             //console.log('No matching microbe for ' + qcpr.value.sample_replicate + ' inside qcpr document');
           }
-
+          console.log(qcpr, 'hello?')
           this.qpcrMetadata.push({ ...qcpr });
         });
 
@@ -1652,12 +1663,10 @@ export class MapComponent implements OnInit, AfterViewInit {
     let i: number;
     for (i = 0; i < indices.length; i++) {
       let index = Number(indices[i]);
-      let datum: any = this.cfuMetadata[index];
+      let datum: any = this.qpcrMetadata[index];
       this.metadata.push(datum);
       let group = NameGroupMap[datum.name];
-      //console.log(datum.value.loc);
       let geod = datum.value.loc;
-      //console.log(geod)
       let prop = {};
       prop['uuid'] = datum.uuid;
       geod.properties = prop;
@@ -1675,7 +1684,7 @@ export class MapComponent implements OnInit, AfterViewInit {
           let download = L.DomUtil.create('div');
           let goto = L.DomUtil.create('span', 'entry-link');
 
-          if (datum.name == 'TEST_CFU') {
+          if (datum.name == 'TEST_Fem_A') {
             details.innerHTML =
               '<br/>Location: ' +
               datum.value.location +
@@ -2128,6 +2137,15 @@ export class MapComponent implements OnInit, AfterViewInit {
         '<br/>Site_Enviro: ' +
         site.value.site_enviro;
     }
+    if (site.name == 'TEST_Fem_A') {
+      details.innerHTML =
+        '<br/>Name: ' +
+        site.value.location +
+        '<br/>Watershed: ' +
+        site.value.watershed +
+        '<br/>Site_Enviro: ' +
+        site.value.site_enviro;
+    }
     L.popup().setLatLng(tempLL).setContent(details).openOn(this.map);
   }
 
@@ -2241,7 +2259,8 @@ enum NameGroupMap {
   Well = 'wells',
   TEST_Micro_GPS = 'MicroGPS',
   TEST_Microbes = 'microbes',
-  TEST_CFU = 'cfu'
+  TEST_CFU = 'cfu',
+  TEST_Fem_A = 'qpcr'
 }
 
 enum GroupLabelMap {
@@ -2250,5 +2269,6 @@ enum GroupLabelMap {
   wells = 'Wells',
   TEST_Micro_GPS = 'MicroGPS',
   TEST_Microbes = 'microbes',
-  TEST_CFU = 'cfu'
+  TEST_CFU = 'cfu',
+  TEST_Fem_A = 'qpcr'
 }
