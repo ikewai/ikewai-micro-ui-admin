@@ -114,6 +114,19 @@ export class MapComponent implements OnInit, AfterViewInit {
   qpcrFilterToggled: boolean = false;
 
   showFilterBar: boolean = false;
+
+  /*** 
+   * Default filter query states
+   * 
+   * These variables control what the default
+   * state of what the filters look like on
+   * initial load. The user will ultimately 
+   * control the query states. 
+   * 
+   * A possible functionality could be to 
+   * allow the users to save previous query states.
+   * 
+   ***/
   
   sampleQuery = {
     condition: 'and',
@@ -144,6 +157,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   cfuQuery = {
     condition: 'and',
     rules: [{field: 'cfu_100ml', operator: '>', value: 0, type: 'number'}]
+  }
+
+  qpcrQuery = {
+    condition: 'and',
+    rules: [{field: 'fema_100ml', operator: '>', value: 0, type: 'number'}]
   }
 
   sampleConfig: QueryBuilderConfig = {
