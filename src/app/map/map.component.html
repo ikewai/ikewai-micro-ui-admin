@@ -25,6 +25,7 @@
           <th class='header'></th>
           <th class='header'>Name</th>
           <th class='header'>Watershed</th>
+          <th class='header'>Select</th>
       </tr>
       <tr *ngFor="let metadatum of filterData">
           <td >
@@ -38,6 +39,9 @@
           </td>
           <td width="40%">
             <span #entries>{{metadatum.value.watershed}}</span>
+          </td>
+          <td width="5%" style="text-align: center">
+            <input (click)="what($event)" type="checkbox" [checked]="metadatum.value.checked">
           </td>
         </tr>
       </table>
@@ -58,6 +62,7 @@
             <th class='header'></th>
             <th class='header'>Name</th>
             <th class='header'>Site</th>
+            <th class='header'>Select</th>
         </tr>
         <tr *ngFor="let metadatum of microbeMetadata">
             <td >
@@ -71,6 +76,9 @@
             </td>
             <td width="40%">
               <span #entries>{{metadatum.value.site}}</span>
+            </td>
+            <td width="5%" style="text-align: center">
+              <input type="checkbox" [checked]="metadatum.value.checked">
             </td>
           </tr>
         </table>
@@ -91,6 +99,7 @@
             <th class='header'></th>
             <th class='header'>Sample</th>
             <th class='header'>Agar Type</th>
+            <th class='header'>Select</th>
         </tr>
         <tr *ngFor="let metadatum of cfuMetadata">
             <td >
@@ -104,6 +113,9 @@
             </td>
             <td width="40%">
               <span #entries>{{metadatum.value.agar_type}}</span>
+            </td>
+            <td width="5%" style="text-align: center">
+              <input type="checkbox" [checked]="metadatum.value.checked">
             </td>
           </tr>
         </table>
@@ -124,6 +136,7 @@
             <th class='header'></th>
             <th class='header'>Replicate</th>
             <th class='header'>femA 100ml</th>
+            <th class='header'>Select</th>
         </tr>
         <tr *ngFor="let metadatum of qpcrMetadata">
             <td >
@@ -138,6 +151,9 @@
             <td width="40%">
               <span #entries>{{metadatum.value.fema_100ml}}</span>
             </td>
+            <td width="5%" style="text-align: center">
+              <input (click)="what($event)" type="checkbox" [checked]="metadatum.value.checked">
+            </td>
           </tr>
         </table>
         </div>
@@ -148,7 +164,8 @@
       <div style="padding-top: 10px;" class="row flex-nowrap" [ngStyle]="{'width': showFilterBar ? '75%' : '100%'}">
         <div *ngIf="samplesFilterToggled">
           <div>
-            <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
+            <button style="margin-bottom: 10px" class="btn btn-primary center" type="button">Sample Filter</button>
+            <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
           </div>
@@ -167,6 +184,7 @@
       <div *ngIf="microbesFilterToggled">
         <div>
           <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleSamples()">Sample Filter</button>
+          <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">Microbe Filter</button>
           <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
           <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
         </div>
@@ -186,6 +204,7 @@
       <div>
         <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleSamples()">Sample Filter</button>
         <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
+        <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">Cultured Bacteria Filter</button>
         <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
       </div>
       <h5>Cultured Bacteria Filter</h5>
@@ -205,6 +224,7 @@
       <button style="margin-bottom: 10px" class="btn btn-primary center" type="button" (click)="toggleSamples()">Sample Filter</button>
       <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
       <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
+      <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">qPCR Bacteria Filter</button>
     </div>
     <h5>qPCR Bacteria Filter</h5>
     <query-builder [(ngModel)]='qpcrQuery' [config]='qpcrConfig' [formControl]='qpcrQueryCtrl'>
@@ -267,7 +287,7 @@
     </div>  
   </div>
 
-  <h6 *ngIf="qpcrFlattenedQueryArr.length && qpcrFilterToggled">qPCR Bacteria</h6>
+  <h6 *ngIf="qpcrFlattenedQueryArr.length && qpcrFilterToggled" style="margin-top: 5px">qPCR Bacteria</h6>
   <div *ngIf="qpcrFlattenedQueryArr.length && qpcrFilterToggled" class="d-flex flex-wrap">
     <div id="qpcr-{{query.index}}" class="d-flex flex-wrap" *ngFor="let query of qpcrFlattenedQueryArr" style="width: fit-content">
       <div (click)="highlightRowQPCR($event, query.index)" style="position: relative; float: left; margin: 5px 10px 5px 5px; padding: 12px 22px 12px 22px; border-radius: 10px; cursor: pointer" [ngStyle]="{'background': query.subjectCondition === 'AND' ? 'rgb(24, 103, 88)' : '#0d6efd'}">
@@ -388,6 +408,17 @@
                 <span *ngIf="selectedMetadata.value.agar_type"><b>Agar Type: </b>&nbsp;{{selectedMetadata.value.agar_type}}<br/></span>
                 <span *ngIf="selectedMetadata.value.location"><b>Location: </b>&nbsp;{{selectedMetadata.value.location}}<br/></span>
                 <span *ngIf="selectedMetadata.value.cfu_100ml"><b>CFU 100ml: </b>&nbsp;{{selectedMetadata.value.cfu_100ml}}<br/></span>
+              </div>
+              <div *ngIf="selectedMetadata.name === 'TEST_Fem_A'" class="col-md-4">
+                <b>ID:</b>&nbsp;{{selectedMetadata.value.id}}<br/>
+                <b>Date:</b>&nbsp;{{selectedMetadata.value.date}}<br/>
+                <span *ngIf="selectedMetadata.value.sample_no"><b>Sample Number: </b>&nbsp;{{selectedMetadata.value.sample_no}}<br/></span>
+                <span *ngIf="selectedMetadata.value.sample_replicate"><b>Sample Replicate: </b>&nbsp;{{selectedMetadata.value.sample_replicate}}<br/></span>
+                <span *ngIf="selectedMetadata.value.target_name"><b>Target Name: </b>&nbsp;{{selectedMetadata.value.target_name}}<br/></span>
+                <span *ngIf="selectedMetadata.value.fema_100ml"><b>Fem A 100ml: </b>&nbsp;{{selectedMetadata.value.fema_100ml}}<br/></span>
+                <span *ngIf="selectedMetadata.value.fema_g"><b>Fem A grams: </b>&nbsp;{{selectedMetadata.value.fema_g}}<br/></span>
+                <span *ngIf="selectedMetadata.value.log_fema_100ml"><b>Log Fem A 100ml: </b>&nbsp;{{selectedMetadata.value.log_fema_100ml}}<br/></span>
+                <span *ngIf="selectedMetadata.value.log_fema_g"><b>Log Fem A grams: </b>&nbsp;{{selectedMetadata.value.log_fema_g}}<br/></span>
               </div>
             </div>
           </div>

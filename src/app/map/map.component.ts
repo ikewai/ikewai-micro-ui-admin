@@ -1336,6 +1336,10 @@ export class MapComponent implements OnInit, AfterViewInit {
     }
   }
 
+  what(e) {
+    console.log(e, 'wat?')
+  }
+
   public querySamples() {
     /* create a hashmap to detect gps location to nest sitedategeo without using a nested for loop (chaz) */
     const locationHashmap: any = {};
@@ -1393,7 +1397,7 @@ export class MapComponent implements OnInit, AfterViewInit {
 
         siteDateData.map((siteDateGeochem: any) => {
           if (locationHashmap[siteDateGeochem.value.location]) {
-            siteDateGeochem.value = { ...siteDateGeochem.value, ...locationHashmap[siteDateGeochem.value.location] };
+            siteDateGeochem.value = { ...siteDateGeochem.value, ...locationHashmap[siteDateGeochem.value.location], checked: false };
             locationHashmap[siteDateGeochem.value.location].siteDateGeochem.push({ ...siteDateGeochem.value });
           } else {
             console.log(
