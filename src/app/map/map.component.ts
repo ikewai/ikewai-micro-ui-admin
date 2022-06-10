@@ -1,3 +1,6 @@
+// breaking changes: banner notification no longer working
+// implement: banner queue?
+
 import {
   Component,
   OnInit,
