@@ -168,6 +168,8 @@
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
+
+            <button style="align-content: flex-end" class="btn btn-primary center" type="button" (click)="">Request Samples</button>
           </div>
           <h5>Sample Filter</h5>
           <query-builder [(ngModel)]='sampleQuery' [config]='sampleConfig' [formControl]='sampleQueryCtrl'>
