@@ -1116,18 +1116,8 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.toggleFilterBar();
   }
 
-  what(e, metadata) {
-    //console.log(e, 'wat?')
-
-    console.log(this.samplesMap, 'samples map')
-
-    //console.log(e.target.checked, 'hello??')
-    console.log(metadata, 'metadata??')
-    metadata.value.checked = e.target.checked;
-    //console.log(metadata.value.checked, 'did it work?')
-    const currentSample = this.metadata2.find(item => item.value.id === metadata.value.id).value;
-    if (currentSample.microbes.length) currentSample.microbes.forEach(microbe => microbe.checked = e.target.checked);
-    currentSample.checked = e.target.checked;
+  selectSample(e, metadata) {
+    this.samplesMap[metadata.value.id].checked = e.target.checked
   }
 
   parseReadable(operator: string, value: string, type: string) {

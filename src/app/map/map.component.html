@@ -41,7 +41,7 @@
             <span #entries>{{metadatum.value.watershed}}</span>
           </td>
           <td width="5%" style="text-align: center">
-            <input (click)="selectSample($event, metadatum)" type="checkbox" [checked]="metadatum.value.checked">
+            <input (click)="selectSample($event, metadatum)" type="checkbox" [checked]="samplesMap[metadatum.value.id].checked">
           </td>
         </tr>
       </table>
@@ -78,7 +78,7 @@
               <span #entries>{{metadatum.value.site}}</span>
             </td>
             <td width="5%" style="text-align: center">
-              <input (click)="selectSample($event, metadatum)" type="checkbox" [checked]="metadatum.value.checked">
+              <input (click)="selectSample($event, metadatum)" type="checkbox" [checked]="samplesMap[metadatum.value.id].checked">
             </td>
           </tr>
         </table>
@@ -115,7 +115,7 @@
               <span #entries>{{metadatum.value.agar_type}}</span>
             </td>
             <td width="5%" style="text-align: center">
-              <input (click)="selectSample($event, metadatum)" type="checkbox" [checked]="metadatum.value.checked">
+              <input (click)="selectSample($event, metadatum)" type="checkbox" [checked]="samplesMap[metadatum.value.id].checked">
             </td>
           </tr>
         </table>
@@ -152,7 +152,7 @@
               <span #entries>{{metadatum.value.fema_100ml}}</span>
             </td>
             <td width="5%" style="text-align: center">
-              <input (click)="selectSample($event, metadatum)" type="checkbox" [checked]="metadatum.value.checked">
+              <input (click)="selectSample($event, metadatum)" type="checkbox" [checked]="samplesMap[metadatum.value.id].checked">
             </td>
           </tr>
         </table>
