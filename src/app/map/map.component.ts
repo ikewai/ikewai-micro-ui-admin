@@ -1122,7 +1122,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     console.log(this.samplesMap, 'samples map')
 
     //console.log(e.target.checked, 'hello??')
-    //console.log(metadata, 'metadata??')
+    console.log(metadata, 'metadata??')
     metadata.value.checked = e.target.checked;
     //console.log(metadata.value.checked, 'did it work?')
     const currentSample = this.metadata2.find(item => item.value.id === metadata.value.id).value;
