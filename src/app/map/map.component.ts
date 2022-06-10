@@ -1116,6 +1116,20 @@ export class MapComponent implements OnInit, AfterViewInit {
     this.toggleFilterBar();
   }
 
+  what(e, metadata) {
+    //console.log(e, 'wat?')
+
+    console.log(this.samplesMap, 'samples map')
+
+    //console.log(e.target.checked, 'hello??')
+    //console.log(metadata, 'metadata??')
+    metadata.value.checked = e.target.checked;
+    //console.log(metadata.value.checked, 'did it work?')
+    const currentSample = this.metadata2.find(item => item.value.id === metadata.value.id).value;
+    if (currentSample.microbes.length) currentSample.microbes.forEach(microbe => microbe.checked = e.target.checked);
+    currentSample.checked = e.target.checked;
+  }
+
   parseReadable(operator: string, value: string, type: string) {
     switch (operator) {
       case '=':
@@ -1334,10 +1348,6 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.querySamples();
       });
     }
-  }
-
-  what(e) {
-    console.log(e, 'wat?')
   }
 
   public querySamples() {
@@ -1789,7 +1799,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         style: this.getStyleByGroup(group),
         pointToLayer: (feature, latlng) => {
           let icon = this.getIconByGroup(group);
-          return L.circleMarker(latlng, { radius: 5, opacity: 1, fillOpacity: 0.9, color: 'purple' });
+          return L.circleMarker(latlng, { radius: 5, opacity: 1, fillOpacity: 0.9, color: 'yellow' });
           //return L.marker(latlng, {icon: icon});
         },
         onEachFeature: (feature, layer) => {
