@@ -1699,8 +1699,6 @@ export class MapComponent implements OnInit, AfterViewInit {
 
         if (asyncStatus.finished) {
            
-          console.log(this.qpcrMetadata, 'wait am i getting anything?')
-
           if (this.qpcrFilterToggled) {
         
             this.drawQPCR();
