@@ -1134,6 +1134,9 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.samplesMap[sample].checked = !this.allSamplesSelected;
       }
       this.allSamplesSelected = !this.allSamplesSelected;
+      this.allMicrobesSelected = this.allSamplesSelected;
+      this.allCFUSelected = this.allSamplesSelected;
+      this.allQPCRSelected = this.allSamplesSelected;
     }
 
     // all current microbes
@@ -1143,6 +1146,7 @@ export class MapComponent implements OnInit, AfterViewInit {
         this.samplesMap[id].checked = !this.allMicrobesSelected;
       })
       this.allMicrobesSelected = !this.allMicrobesSelected;
+      this.allQPCRSelected = this.allMicrobesSelected;
     }
 
     // all current cfu
