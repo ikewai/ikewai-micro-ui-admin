@@ -1140,10 +1140,27 @@ export class MapComponent implements OnInit, AfterViewInit {
     if (type === 'microbes') {
       this.microbeMetadata.map(item => {
         const id = item.value.id;
-        console.log(id, ' i getting this?')
-        this.samplesMap[id] = !this.allMicrobesSelected;
+        this.samplesMap[id].checked = !this.allMicrobesSelected;
       })
       this.allMicrobesSelected = !this.allMicrobesSelected;
+    }
+
+    // all current cfu
+    if (type === 'cfu') {
+      this.cfuMetadata.map(item => {
+        const id = item.value.id;
+        this.samplesMap[id].checked = !this.allCFUSelected;
+      })
+      this.allCFUSelected = !this.allCFUSelected;
+    }
+
+    // all current qpcr
+    if (type === 'qpcr') {
+      this.qpcrMetadata.map(item => {
+        const id = item.value.id;
+        this.samplesMap[id].checked = !this.allQPCRSelected;
+      })
+      this.allQPCRSelected = !this.allQPCRSelected;
     }
   }
 
