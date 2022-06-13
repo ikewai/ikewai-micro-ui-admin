@@ -127,6 +127,10 @@ export class MapComponent implements OnInit, AfterViewInit {
   microGPSData: Array<Object>;
 
   samplesMap: Object = {}; // Map created from current metadata2/samples state
+  allSamplesSelected: boolean = false;
+  allMicrobesSelected: boolean = false;
+  allCFUSelected: boolean = false;
+  allQPCRSelected: boolean = false;
 
   metadata2: any; // current samples state
   microbeMetadata: Metadata[]; // current microbes state
@@ -1121,6 +1125,26 @@ export class MapComponent implements OnInit, AfterViewInit {
 
   selectSample(e, metadata) {
     this.samplesMap[metadata.value.id].checked = e.target.checked
+  }
+
+  selectAllSamples(type: string) {
+    // all current samples
+    if (type === 'samples') {
+      for (let sample in this.samplesMap) {
+        this.samplesMap[sample].checked = !this.allSamplesSelected;
+      }
+      this.allSamplesSelected = !this.allSamplesSelected;
+    }
+
+    // all current microbes
+    if (type === 'microbes') {
+      this.microbeMetadata.map(item => {
+        const id = item.value.id;
+        console.log(id, ' i getting this?')
+        this.samplesMap[id] = !this.allMicrobesSelected;
+      })
+      this.allMicrobesSelected = !this.allMicrobesSelected;
+    }
   }
 
   parseReadable(operator: string, value: string, type: string) {
