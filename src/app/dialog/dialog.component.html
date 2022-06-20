@@ -1,11 +1,18 @@
-<h1 mat-dialog-title>Hi {{data.name}}</h1>
-<div mat-dialog-content>
+<h1 mat-dialog-title>Requested Samples</h1>
+<!-- <div *ngIf="data.length" mat-dialog-content>
   <p>What's your favorite animal?</p>
   <mat-form-field>
     <input matInput [(ngModel)]="data.animal">
   </mat-form-field>
-</div>
-<div mat-dialog-actions>
+</div> -->
+<mat-dialog-content *ngIf="data.length" mat-dialog-actions>
+  <div *ngFor="let item of data">
+    <div>{{ item.value.id }}</div>
+  </div>
   <button mat-button (click)="onNoClick()">No Thanks</button>
+  <button mat-button [mat-dialog-close]="data.animal" cdkFocusInitial>Ok</button>
+</mat-dialog-content>
+<div *ngIf="!data.length" mat-dialog-actions>
+  <p>No Samples Selected</p>
   <button mat-button [mat-dialog-close]="data.animal" cdkFocusInitial>Ok</button>
 </div>

@@ -6,14 +6,15 @@ import { MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
     templateUrl: 'dialog.component.html',
   })
   export class DialogOverviewExampleDialog {
-  someValue: boolean = false;
   
   constructor(
    public dialogRef: MatDialogRef<DialogOverviewExampleDialog>,
-  @Inject(MAT_DIALOG_DATA) public data: any) { }
+  @Inject(MAT_DIALOG_DATA) public data: any) { 
+    console.log(data, '?')
+  }
   
   onNoClick(): void {
-    this.dialogRef.close(this.someValue);
+    this.dialogRef.close();
   }
   
   }

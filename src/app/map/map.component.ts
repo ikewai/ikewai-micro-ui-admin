@@ -59,10 +59,11 @@ export class MapComponent implements OnInit, AfterViewInit {
   animal: string;
   name: string;
 
-  openDialog(): void {
+  requestSamples(): void {
+
     const dialogRef = this.dialog.open(DialogOverviewExampleDialog, {
       width: '250px',
-      data: {name: this.name, animal: this.animal}
+      data: this.metadata2.filter((item: any) => item.value.checked)
     });
 
     dialogRef.afterClosed().subscribe(result => {
