@@ -8,7 +8,6 @@
         (leafletMapReady)="onMapReady($event)" >
       </div>
     </div>
-
     <div *ngIf="samplesFilterToggled" class="col-md-6">
     <div *ngIf="metadata.length == 0 && !loading" style="height:500px;">
       <h5>No Sample Site Results For Current Area.</h5>
@@ -168,8 +167,8 @@
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
             <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
-            <button style="margin-bottom: 10px; margin-left: 400px" class="btn btn-primary center" type="button" (click)="requestSamples('samples')">Request Samples</button>
-            <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="selectAllSamples('samples')"> {{!allSamplesSelected ? 'Select All Samples' : 'Unselect All Samples'}} </button>
+            <button style="position: absolute; margin-bottom: 10px; margin-left: 315px" class="btn btn-primary center" type="button" (click)="requestSamples('samples')">Request Samples</button>
+            <button style="position: absolute; margin-bottom: 10px; margin-left: 475px" class="btn btn-primary center" type="button" (click)="selectAllSamples('samples')"> {{!allSamplesSelected ? 'Select All Samples' : 'Unselect All Samples'}} </button>
           </div>
           <h5>Sample Filter</h5>
           <query-builder [(ngModel)]='sampleQuery' [config]='sampleConfig' [formControl]='sampleQueryCtrl'>
@@ -189,8 +188,8 @@
           <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">Microbe Filter</button>
           <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
           <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
-          <button style="margin-bottom: 10px; margin-left: 400px" class="btn btn-primary center" type="button" (click)="requestSamples('microbes')">Request Samples</button>
-          <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="selectAllSamples('microbes')"> {{!allMicrobesSelected ? 'Select All Microbes' : 'Unselect All Microbes'}} </button>
+          <button style="position: absolute; margin-bottom: 10px; margin-left: 315px" class="btn btn-primary center" type="button" (click)="requestSamples('microbes')">Request Samples</button>
+          <button style="position: absolute; margin-bottom: 10px; margin-left: 475px" class="btn btn-primary center" type="button" (click)="selectAllSamples('microbes')"> {{!allMicrobesSelected ? 'Select All Microbes' : 'Unselect All Microbes'}} </button>
         </div>
         <h5>Microbes Filter</h5>
         <query-builder [(ngModel)]='microbeQuery' [config]='microbeConfig' [formControl]='microbeQueryCtrl'>
@@ -210,8 +209,8 @@
         <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
         <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">Cultured Bacteria Filter</button>
         <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleQPCR()">qPCR Bacteria Filter</button>
-        <button style="margin-bottom: 10px; margin-left: 400px" class="btn btn-primary center" type="button" (click)="requestSamples('cfu')">Request Samples</button>
-        <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="selectAllSamples('cfu')"> {{!allCFUSelected ? 'Select All Cultured Bacteria' : 'Unselect All Cultured Bacteria'}} </button>
+        <button style="position: absolute; margin-bottom: 10px; margin-left: 315px" class="btn btn-primary center" type="button" (click)="requestSamples('cfu')">Request Samples</button>
+        <button style="position: absolute; margin-bottom: 10px; margin-left: 475px" class="btn btn-primary center" type="button" (click)="selectAllSamples('cfu')"> {{!allCFUSelected ? 'Select All Cultured Bacteria' : 'Unselect All Cultured Bacteria'}} </button>
       </div>
       <h5>Cultured Bacteria Filter</h5>
       <query-builder [(ngModel)]='cfuQuery' [config]='cfuConfig' [formControl]='cfuQueryCtrl'>
@@ -231,8 +230,8 @@
       <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleMicrobes()">Microbe Filter</button>
       <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="toggleCFU()">Cultured Bacteria Filter</button>
       <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button">qPCR Bacteria Filter</button>
-      <button style="margin-bottom: 10px; margin-left: 400px" class="btn btn-primary center" type="button" (click)="requestSamples('qpcr')">Request Samples</button>
-      <button style="margin-bottom: 10px; margin-left: 10px" class="btn btn-primary center" type="button" (click)="selectAllSamples('qpcr')"> {{!allQPCRSelected ? 'Select All qPCR Bacteria' : 'Unselect All qPCR Bacteria'}} </button>
+      <button style="position: absolute; margin-bottom: 10px; margin-left: 315px" class="btn btn-primary center" type="button" (click)="requestSamples('qpcr')">Request Samples</button>
+      <button style="position: absolute; margin-bottom: 10px; margin-left: 475px" class="btn btn-primary center" type="button" (click)="selectAllSamples('qpcr')"> {{!allQPCRSelected ? 'Select All qPCR Bacteria' : 'Unselect All qPCR Bacteria'}} </button>
     </div>
     <h5>qPCR Bacteria Filter</h5>
     <query-builder [(ngModel)]='qpcrQuery' [config]='qpcrConfig' [formControl]='qpcrQueryCtrl'>
@@ -489,3 +488,17 @@ wcr: "1980-01-01T00:00:00" -->
     </div>
   </div>
 </div>
+
+<ol>
+  <li>
+    <mat-form-field>
+      <input matInput [(ngModel)]="name" placeholder="What's your name?">
+    </mat-form-field>
+  </li>
+  <li>
+    <button mat-raised-button (click)="openDialog()">Pick one</button>
+  </li>
+  <li *ngIf="animal">
+    You chose: <i>{{animal}}</i>
+  </li>
+</ol>

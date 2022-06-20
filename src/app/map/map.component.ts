@@ -28,12 +28,21 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { FormControl } from '@angular/forms';
 import { QueryBuilderConfig } from 'angular2-query-builder';
 
+import { MatDialog } from '@angular/material';
+import { DialogOverviewExampleDialog } from '../dialog/dialog.component'
+
+
+export interface DialogData {
+  animal: string;
+  name: string;
+}
 
 @Component({
   selector: 'app-map',
   templateUrl: './map.component.html',
   styleUrls: ['./map.component.css'],
 })
+
 export class MapComponent implements OnInit, AfterViewInit {
 
   constructor(
@@ -41,9 +50,25 @@ export class MapComponent implements OnInit, AfterViewInit {
     private queryHandler: QueryHandlerService,
     private filters: FilterManagerService,
     private http: HttpClient,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    public dialog: MatDialog
   ) {
     //currentUser: localStorage.getItem('currentUser');
+  }
+
+  animal: string;
+  name: string;
+
+  openDialog(): void {
+    const dialogRef = this.dialog.open(DialogOverviewExampleDialog, {
+      width: '250px',
+      data: {name: this.name, animal: this.animal}
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      console.log('The dialog was closed');
+      this.animal = result;
+    });
   }
   
   sampleQueryCtrl = new FormControl('');

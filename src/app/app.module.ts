@@ -1,11 +1,13 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
 import { MapComponent } from './map/map.component';
+import { DialogOverviewExampleDialog } from './dialog/dialog.component'
 
 import { JwtInterceptor } from './_helpers/jwt.interceptor';
 import { ErrorInterceptor } from './_helpers/error.interceptor';
@@ -19,6 +21,10 @@ import { LeafletDrawModule } from '@asymmetrik/ngx-leaflet-draw';
 import { DataTablesModule } from "angular-datatables";
 import { QueryBuilderModule } from "angular2-query-builder";
 
+import { MatDialogModule } from '@angular/material';
+
+import { MatButtonModule, MatFormFieldModule, MatInputModule, MatRippleModule } from '@angular/material';
+
 export function initializeApp(appConfig: AppConfig) {
   return () => appConfig.load();
 }
@@ -29,8 +35,10 @@ export function initializeApp(appConfig: AppConfig) {
     AppComponent,
     LoginComponent,
     HomeComponent,
-    MapComponent
+    MapComponent,
+    DialogOverviewExampleDialog
   ],
+  entryComponents: [DialogOverviewExampleDialog],
   imports: [
     BrowserModule,
     ReactiveFormsModule,
@@ -41,6 +49,12 @@ export function initializeApp(appConfig: AppConfig) {
     DataTablesModule,
     FormsModule,
     QueryBuilderModule,
+    MatDialogModule,
+    BrowserAnimationsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatRippleModule
   ],
   providers: [
       AppConfig,
