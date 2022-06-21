@@ -10,7 +10,7 @@ import { MatDialogRef, MAT_DIALOG_DATA} from '@angular/material';
   constructor(
    public dialogRef: MatDialogRef<DialogOverviewExampleDialog>,
   @Inject(MAT_DIALOG_DATA) public data: any) { 
-    console.log(data, '?')
+
   }
   
   onNoClick(): void {

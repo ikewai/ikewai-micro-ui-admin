@@ -56,19 +56,18 @@ export class MapComponent implements OnInit, AfterViewInit {
     //currentUser: localStorage.getItem('currentUser');
   }
 
-  animal: string;
-  name: string;
-
   requestSamples(): void {
 
+    const data = this.metadata2.filter((item: any) => item.value.checked)
+
     const dialogRef = this.dialog.open(DialogOverviewExampleDialog, {
-      width: '250px',
-      data: this.metadata2.filter((item: any) => item.value.checked)
+      width: data.length ? '75%' : '20%',
+      data
     });
 
     dialogRef.afterClosed().subscribe(result => {
       console.log('The dialog was closed');
-      this.animal = result;
+      // this.animal = result;
     });
   }
   

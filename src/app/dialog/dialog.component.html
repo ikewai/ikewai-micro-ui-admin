@@ -1,18 +1,34 @@
-<h1 mat-dialog-title>Requested Samples</h1>
+<h1 mat-dialog-title style="width: 100%; display: flex; justify-content: center;">Sample Request Form</h1>
 <!-- <div *ngIf="data.length" mat-dialog-content>
   <p>What's your favorite animal?</p>
   <mat-form-field>
     <input matInput [(ngModel)]="data.animal">
   </mat-form-field>
 </div> -->
-<mat-dialog-content *ngIf="data.length" mat-dialog-actions>
-  <div *ngFor="let item of data">
-    <div>{{ item.value.id }}</div>
-  </div>
-  <button mat-button (click)="onNoClick()">No Thanks</button>
-  <button mat-button [mat-dialog-close]="data.animal" cdkFocusInitial>Ok</button>
-</mat-dialog-content>
-<div *ngIf="!data.length" mat-dialog-actions>
+<div *ngIf="data.length" style="display: flex; flex-direction: column; padding: 10px; margin-bottom: 10px">
+  <mat-dialog-content mat-dialog-action>
+    <mat-form-field style="width: 75%; margin-left: 100px">
+      <label>Full Name</label><input matInput type="text">
+    </mat-form-field>
+    <mat-form-field style="width: 75%; margin-left: 100px">
+      <label>Company/Affiliation</label><input matInput type="text">
+    </mat-form-field>
+    <mat-form-field style="width: 75%; margin-bottom: 40px; margin-left: 100px">
+      <label>Email</label><input matInput type="text">
+    </mat-form-field>
+    <h6 style="width: 100%; display: flex; justify-content: center; margin-bottom: 20px">Requesting Samples</h6>
+    <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr 1fr;">
+      <div *ngFor="let item of data">
+        <div><input type="checkbox" [checked]=true> {{ item.value.id }}</div>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-content style="margin-top: 20px; width: 100%; display: flex; justify-content: center; align-items: center" mat-dialog-actions>
+    <button mat-button (click)="onNoClick()">No Thanks</button>
+    <button mat-button [mat-dialog-close]="data.animal" cdkFocusInitial>Ok</button>
+  </mat-dialog-content>
+</div>
+<div *ngIf="!data.length" style="display: flex; flex-direction: column; padding: 10px; margin-bottom: 10px" mat-dialog-actions>
   <p>No Samples Selected</p>
   <button mat-button [mat-dialog-close]="data.animal" cdkFocusInitial>Ok</button>
 </div>
