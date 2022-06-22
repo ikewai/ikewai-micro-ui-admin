@@ -429,6 +429,13 @@ export class MapComponent implements OnInit, AfterViewInit {
     qpcr: L.FeatureGroup;
   };
 
+  resetSelected() {
+    this.allSamplesSelected = false;
+    this.allMicrobesSelected = false;
+    this.allCFUSelected = false;
+    this.allQPCRSelected = false;
+  }
+
   clearMapLayers() {
     this.dataGroups.MicroGPS.clearLayers();
     this.dataGroups.microbes.clearLayers();
@@ -1149,6 +1156,7 @@ export class MapComponent implements OnInit, AfterViewInit {
   }
 
   selectSample(e, metadata) {
+    console.log(metadata, 'I NOT USING THE RIGHT ID?')
     this.samplesMap[metadata.value.id].checked = e.target.checked
   }
 
@@ -1347,6 +1355,7 @@ export class MapComponent implements OnInit, AfterViewInit {
     /* cancel any previous queries END (see microbes line 705) */
 
     /* clear map layers */
+    this.resetSelected();
     this.clearMapLayers();
 
     this.globalLoading = true;

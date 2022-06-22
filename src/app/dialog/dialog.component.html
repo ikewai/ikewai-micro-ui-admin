@@ -6,20 +6,27 @@
   </mat-form-field>
 </div> -->
 <div *ngIf="data.length" style="display: flex; flex-direction: column; padding: 10px; margin-bottom: 10px">
-  <mat-dialog-content mat-dialog-action>
-    <mat-form-field style="width: 75%; margin-left: 100px">
+  <mat-dialog-content mat-dialog-action style="display: flex; align-items: center; flex-direction: column;">
+    <mat-form-field style="width: 75%">
       <label>Full Name</label><input matInput type="text">
     </mat-form-field>
-    <mat-form-field style="width: 75%; margin-left: 100px">
+    <mat-form-field style="width: 75%">
       <label>Company/Affiliation</label><input matInput type="text">
     </mat-form-field>
-    <mat-form-field style="width: 75%; margin-bottom: 40px; margin-left: 100px">
+    <mat-form-field style="width: 75%; margin-bottom: 35px">
       <label>Email</label><input matInput type="text">
     </mat-form-field>
-    <h6 style="width: 100%; display: flex; justify-content: center; margin-bottom: 20px">Requesting Samples</h6>
-    <div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr 1fr;">
+    <h6 style="width: 100%; display: flex; justify-content: center; margin-bottom: 20px">Sample Specifications</h6>
+    <div style="width: 50%; display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 60px; justify-items: center;">
+      <span><input type="checkbox" [checked]=true><label>&nbsp;&nbsp;16s</label></span>
+      <span><input type="checkbox" [checked]=true><label>&nbsp;&nbsp;WGS</label></span>
+      <span><input type="checkbox" [checked]=true><label>&nbsp;&nbsp;qPCR</label></span>
+      <span><input type="checkbox" [checked]=true><label>&nbsp;&nbsp;Cultured Data</label></span>
+    </div>
+    <h6 style="width: 100%; display: flex; justify-content: center; margin-bottom: 20px">All Requested Samples ({{ data.length }})</h6>
+    <div style="width: 100%; margin-left: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr;">
       <div *ngFor="let item of data">
-        <div><input type="checkbox" [checked]=true> {{ item.value.id }}</div>
+        <div><input type="checkbox" [checked]=true>&nbsp;&nbsp;{{ item.value.id }}</div>
       </div>
     </div>
   </mat-dialog-content>
