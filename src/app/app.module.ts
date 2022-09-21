@@ -7,6 +7,8 @@ import { AppComponent } from './app.component';
 import { LoginComponent } from './login/login.component';
 import { HomeComponent } from './home/home.component';
 import { MapComponent } from './map/map.component';
+import { SidenavComponent } from './sidenav/sidenav.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
 import { DialogOverviewExampleDialog } from './dialog/dialog.component'
 
 import { JwtInterceptor } from './_helpers/jwt.interceptor';
@@ -23,7 +25,37 @@ import { QueryBuilderModule } from "angular2-query-builder";
 
 import { MatDialogModule } from '@angular/material';
 
-import { MatButtonModule, MatFormFieldModule, MatInputModule, MatRippleModule } from '@angular/material';
+import { MatButtonModule, MatFormFieldModule, MatInputModule, MatRippleModule, MatSidenavModule,
+  MatAutocompleteModule,
+  MatBadgeModule,
+  MatBottomSheetModule,
+  MatButtonToggleModule,
+  MatCardModule,
+  MatCheckboxModule,
+  MatChipsModule,
+  MatDatepickerModule,
+  MatDividerModule,
+  MatExpansionModule,
+  MatGridListModule,
+  MatIconModule,
+  MatListModule,
+  MatMenuModule,
+  MatNativeDateModule,
+  MatPaginatorModule,
+  MatProgressBarModule,
+  MatProgressSpinnerModule,
+  MatRadioModule,
+  MatSelectModule,
+  MatSliderModule,
+  MatSlideToggleModule,
+  MatSnackBarModule,
+  MatSortModule,
+  MatStepperModule,
+  MatTableModule,
+  MatTabsModule,
+  MatToolbarModule,
+  MatTooltipModule,
+  MatTreeModule, } from '@angular/material';
 
 export function initializeApp(appConfig: AppConfig) {
   return () => appConfig.load();
@@ -34,11 +66,14 @@ export function initializeApp(appConfig: AppConfig) {
   declarations: [
     AppComponent,
     LoginComponent,
+    SidenavComponent,
     HomeComponent,
     MapComponent,
+    DashboardComponent,
     DialogOverviewExampleDialog
   ],
-  entryComponents: [DialogOverviewExampleDialog],
+  entryComponents: [DialogOverviewExampleDialog,
+    SidenavComponent],
   imports: [
     BrowserModule,
     ReactiveFormsModule,
@@ -54,7 +89,38 @@ export function initializeApp(appConfig: AppConfig) {
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatRippleModule
+    MatRippleModule,
+    MatSidenavModule,
+    MatAutocompleteModule,
+  MatBadgeModule,
+  MatBottomSheetModule,
+  MatButtonToggleModule,
+  MatCardModule,
+  MatCheckboxModule,
+  MatChipsModule,
+  MatDatepickerModule,
+  MatDividerModule,
+  MatExpansionModule,
+  MatGridListModule,
+  MatIconModule,
+  MatListModule,
+  MatMenuModule,
+  MatNativeDateModule,
+  MatPaginatorModule,
+  MatProgressBarModule,
+  MatProgressSpinnerModule,
+  MatRadioModule,
+  MatSelectModule,
+  MatSliderModule,
+  MatSlideToggleModule,
+  MatSnackBarModule,
+  MatSortModule,
+  MatStepperModule,
+  MatTableModule,
+  MatTabsModule,
+  MatToolbarModule,
+  MatTooltipModule,
+  MatTreeModule
   ],
   providers: [
       AppConfig,
@@ -66,4 +132,5 @@ export function initializeApp(appConfig: AppConfig) {
   ],
   bootstrap: [AppComponent]
 })
+
 export class AppModule { }

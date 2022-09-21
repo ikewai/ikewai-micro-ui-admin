@@ -1,0 +1,21 @@
+<ng-container>
+    <mat-toolbar class="example-header">Header</mat-toolbar>
+  
+    <mat-sidenav-container class="example-container">
+      <mat-sidenav #sidenav mode="side" opened class="example-sidenav"
+                   [fixedInViewport]=0 [fixedTopGap]=0
+                   [fixedBottomGap]=0>
+        {{options.value.fixed ? 'Fixed' : 'Non-fixed'}} Sidenav
+      </mat-sidenav>
+    
+    </mat-sidenav-container>
+    <mat-card>Example</mat-card>
+    <mat-toolbar class="example-footer">Footer</mat-toolbar>
+  </ng-container>
+  <mat-card>Example</mat-card>
+
+  
+  
+  <!-- Copyright 2019 Google Inc. All Rights Reserved.
+      Use of this source code is governed by an MIT-style license that
+      can be found in the LICENSE file at http://angular.io/license -->
