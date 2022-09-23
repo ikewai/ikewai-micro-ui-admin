@@ -1,0 +1,16 @@
+.header-left {
+    position: absolute;
+    left: 2%
+  }
+
+.header-right {
+    position: absolute;
+    right: 1%;
+    line-height: 0.8;
+    font-size: normal !important;
+    cursor: pointer
+  }
+
+.mat-toolbar {
+    background: transparent;
+}

@@ -335,6 +335,26 @@ export class QueryHandlerService {
 
   }
 
+  getAllRecords(): any {
+
+    // let res: QueryResults = {
+    //   handle: this.handleGen.getHandle(),
+    //   dataStream: new Observable<QueryResponse>()
+    // };
+    let subjects = [];
+    //need to do something to handle too long queries
+    let query = "{'$and':[{'name':{'$in':['TEST_Micro_Requests']}}]}";
+    
+    let stored: DataRange<Metadata> = <DataRange<Metadata>>this.cache.fetchData(query);
+    
+    if (stored) {
+      return stored;
+    } else {
+      subjects.push(this.handleQuery(query));
+      return new QueryController(subjects);
+    }
+  }
+
   
   // return the populated subjects array
   // divideQuery(arrayToDivide, subjects, queryStringStart, queryStringEnd) {

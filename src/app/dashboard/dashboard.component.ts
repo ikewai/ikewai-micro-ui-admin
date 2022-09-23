@@ -6,7 +6,6 @@ import { first } from 'rxjs/operators';
 import { AuthenticationService } from '../_services/authentication.service';
 
 import {SidenavComponent} from '../sidenav/sidenav.component';
-import { QueryHandlerService, QueryController } from '../_services/query-handler.service';
 
 //import { AuthenticationService } from '@/_services';
 
@@ -24,8 +23,8 @@ export class DashboardComponent implements OnInit {
     returnUrl: string;
     error = '';
 
+
     constructor(
-        private queryHandler: QueryHandlerService,
         private formBuilder: FormBuilder,
         private route: ActivatedRoute,
         private router: Router,
@@ -44,13 +43,6 @@ export class DashboardComponent implements OnInit {
         // get return url from route parameters or default to '/'
         this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home';
     }
-
-    ngAfterViewInit() {
-        let ahupuaaData: any = this.queryHandler.ahupuaaSearch();
-        ahupuaaData.getQueryObserver().subscribe((ahupuaaData: any) => {
-          console.log(ahupuaaData.data);
-        });
-      }
 
     // convenience getter for easy access to form fields
     get f() { return this.loginForm.controls; }

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-
+import { Router, ActivatedRoute } from '@angular/router';
 import { first } from 'rxjs/operators';
 
 import { User } from '../_models/user';
@@ -16,7 +16,8 @@ import { MapComponent } from '../map/map.component';
 export class HomeComponent {
     users: User[] = [];
 
-    constructor() { }
+    constructor(private route: ActivatedRoute,
+      private router: Router) { }
 
     removeAlert() {
       document.getElementById('alert').className = "d-flex justify-content-between alert alert-warning alert-dismissible fade position-absolute hide";
@@ -24,5 +25,11 @@ export class HomeComponent {
 
     ngOnInit() {
 
+    }
+
+    tempLogout() {
+      alert('bypass auth for development')
+      localStorage.removeItem('user');
+      return this.router.navigate(['/']);
     }
 }

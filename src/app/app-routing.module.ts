@@ -16,21 +16,18 @@ import {CdkTreeModule} from '@angular/cdk/tree';
 
 const appRoutes: Routes = [
     {
-        path: '',
+        path: 'map',
         component: HomeComponent,
         canActivate: [AuthGuard]
     },
     {
-        path: 'login',
+        path: '',
         component: LoginComponent
     },
     {
         path: 'dashboard',
         component: DashboardComponent,
-    },
-    {
-        path: 's',
-        component: SidenavComponent,
+        canActivate: [AuthGuard]
     },
     // otherwise redirect to home
     { path: '**', redirectTo: '' }

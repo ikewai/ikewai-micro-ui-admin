@@ -12,7 +12,7 @@
     "aad": {
     "requireAuth": true,
     "tenant": "https://ikeauth.its.hawaii.edu",
-    "loginURL": "https://ikewai-dev.its.hawaii.edu:8000/login",
+    "loginURL": "https://ikewai-dev.its.hawaii.edu:8888/login",
     "accessToken": "a448d5376b956dcc5589516ddefcf7bc"
     },
     "apiServer": {

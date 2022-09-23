@@ -1,18 +1,51 @@
 <ng-container>
-    <mat-toolbar class="example-header">Header</mat-toolbar>
-  
+    <mat-toolbar class="example-header" style="width: 100%; display: flex; flex-direction: row; justify-content: center; align-items: center;">
+      <div class="header-left">Admin Dashboard</div>
+      <div class="header-right" (click)="tempLogout()">Sign out</div>
+    </mat-toolbar>
+
     <mat-sidenav-container class="example-container">
       <mat-sidenav #sidenav mode="side" opened class="example-sidenav"
                    [fixedInViewport]=0 [fixedTopGap]=0
                    [fixedBottomGap]=0>
-        {{options.value.fixed ? 'Fixed' : 'Non-fixed'}} Sidenav
+
+        <div class="nav-link-container">
+          <a><h5 class="nav-links">Requests</h5></a>
+          <a><h5 class="nav-links">Request History</h5></a>
+          <a href="/map"><h5 class="nav-links">Map</h5></a>
+        </div>
       </mat-sidenav>
-    
+      <h3 class="p-3 text-center">Sample Requests</h3>
+      <div class="container">
+          <table class="table table-striped table-bordered">
+              <thead>
+                  <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Affiliation</th>
+                      <th>Reason</th>
+                      <th>Sample Specifications</th>
+                      <th>Sample Ids</th>
+                      <th>Approve</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  <tr *ngFor="let item of fakeData">
+                      <td>{{item.firstName}} {{item.lastName}}</td>
+                      <td>{{item.email}}</td>
+                      <td>{{item.affiliation}}</td>
+                      <td>{{item.reason}}</td>
+                      <td>{{item.sampleSpecifications}}</td>
+                      <td>{{item.sampleIds}}</td>
+                      <td>{{item.approved ? null : '✅ ❌'}}</td>
+                  </tr>
+              </tbody>
+          </table>
+      </div>
     </mat-sidenav-container>
-    <mat-card>Example</mat-card>
-    <mat-toolbar class="example-footer">Footer</mat-toolbar>
+    <mat-toolbar class="example-footer">Ike Wai - Microbial Samples</mat-toolbar>
   </ng-container>
-  <mat-card>Example</mat-card>
+
 
   
   
