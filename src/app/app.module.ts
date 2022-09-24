@@ -24,6 +24,7 @@ import { DataTablesModule } from "angular-datatables";
 import { QueryBuilderModule } from "angular2-query-builder";
 
 import { MatDialogModule } from '@angular/material';
+import { HashLocationStrategy, LocationStrategy } from '@angular/common'
 
 import { MatButtonModule, MatFormFieldModule, MatInputModule, MatRippleModule, MatSidenavModule,
   MatAutocompleteModule,
@@ -120,7 +121,7 @@ export function initializeApp(appConfig: AppConfig) {
   MatTabsModule,
   MatToolbarModule,
   MatTooltipModule,
-  MatTreeModule
+  MatTreeModule,
   ],
   providers: [
       AppConfig,
@@ -129,6 +130,7 @@ export function initializeApp(appConfig: AppConfig) {
          deps: [AppConfig], multi: true },
       { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
       { provide: HTTP_INTERCEPTORS, useClass: ErrorInterceptor, multi: true },
+      {provide: LocationStrategy, useClass: HashLocationStrategy}
   ],
   bootstrap: [AppComponent]
 })

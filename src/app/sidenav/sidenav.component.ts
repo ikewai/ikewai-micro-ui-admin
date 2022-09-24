@@ -1837,6 +1837,10 @@ export class SidenavComponent {
       localStorage.removeItem('user');
       return this.router.navigate(['/']);
     }
+
+    routeToMap() {
+      return this.router.navigate(['map']);
+  }
     
 }
     
