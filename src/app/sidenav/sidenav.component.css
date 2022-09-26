@@ -65,3 +65,19 @@
     align-items: left;
     width: 100%; height: 80%; margin-top: 40%;
   }
+
+  .moreInfo:hover {
+    text-decoration: underline;
+  }
+
+  .approved {
+    color: green
+  }
+
+  .rejected {
+    color: red
+  }
+
+  .pending {
+    color: blue
+  }

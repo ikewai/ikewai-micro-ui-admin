@@ -10,6 +10,7 @@ import { MapComponent } from './map/map.component';
 import { SidenavComponent } from './sidenav/sidenav.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DialogOverviewExampleDialog } from './dialog/dialog.component'
+import { AdminEditDialog } from './editDialog/editDialog.component'
 
 import { JwtInterceptor } from './_helpers/jwt.interceptor';
 import { ErrorInterceptor } from './_helpers/error.interceptor';
@@ -71,9 +72,11 @@ export function initializeApp(appConfig: AppConfig) {
     HomeComponent,
     MapComponent,
     DashboardComponent,
-    DialogOverviewExampleDialog
+    DialogOverviewExampleDialog,
+    AdminEditDialog
   ],
   entryComponents: [DialogOverviewExampleDialog,
+    AdminEditDialog,
     SidenavComponent],
   imports: [
     BrowserModule,

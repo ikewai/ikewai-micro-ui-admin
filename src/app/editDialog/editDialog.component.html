@@ -1,0 +1,47 @@
+<h1 mat-dialog-title style="width: 100%; display: flex; justify-content: center;">Sample Request Form</h1>
+<div style="display: flex; flex-direction: column; padding: 10px; margin-bottom: 10px">
+  <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+  <mat-dialog-content mat-dialog-action style="display: flex; align-items: center; flex-direction: column;">
+    <div style="width: 75%">
+      <label class="label-title" for="first-name">First Name </label>
+      <p id="first-name" style="margin-top: 5px"><b>{{selectedData.firstName}}</b></p>
+    </div>
+    <div style="width: 75%">
+      <label class="label-title" for="last-name">Last Name </label>
+      <p id="last-name" style="margin-top: 5px"><b>{{selectedData.lastName}}</b></p>
+    </div>
+    <div style="width: 75%">
+      <label class="label-title" for="affiliation">Company/Affiliation </label>
+      <p id="affiliation" type="text" style="margin-top: 5px"><b>{{selectedData.affiliation}}</b></p>
+    </div>
+    <div style="width: 75%">
+      <label class="label-title" for="email">Email </label>
+      <p id="email" type="text" style="margin-top: 5px"><b>{{selectedData.email}}</b></p>
+    </div>
+    <div style="width: 75%">
+      <label class="label-title" for="reason">Reason for Sample Request/Description of Request </label>
+      <p id="reason" type="text" style="margin-top: 5px"><b>{{selectedData.reason}}</b></p>
+    </div>
+    <h6 style="width: 100%; display: flex; justify-content: center; margin-top: 20px; margin-bottom: 20px">Sample Specifications</h6>
+    <div style="width: 50%; display: grid; grid-template-columns: 1fr 1fr; margin-bottom: 60px; justify-items: center;" formGroupName="sampleSpecifications">
+      <span><input formControlName="16s" id="16s" type="checkbox" (click)="toggleSpecs($event, '16s')" [checked]="sampleSpecifications['16s']"><label for="16s">&nbsp;&nbsp;16s</label></span>
+      <span><input formControlName="WGS" id="WGS" type="checkbox" (click)="toggleSpecs($event, 'WGS')" [checked]="sampleSpecifications['WGS']"><label for="WGS">&nbsp;&nbsp;WGS</label></span>
+      <span><input formControlName="qPCR" id="qPCR" type="checkbox" (click)="toggleSpecs($event, 'qPCR')" [checked]="sampleSpecifications['qPCR']"><label for="qPCR">&nbsp;&nbsp;qPCR</label></span>
+      <span><input formControlName="Cultured Data" id="cultured-data" type="checkbox" (click)="toggleSpecs($event, 'Cultured Data')" [checked]="sampleSpecifications['Cultured Data']"><label for="cultured-data">&nbsp;&nbsp;Cultured Data</label></span>
+    </div>
+    <h6 style="width: 100%; display: flex; justify-content: center; margin-bottom: 20px">All Requested Samples ({{ selectedData.selectedData?.length }})</h6>
+    <div style="width: 100%; margin-left: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr;">
+      <div *ngFor="let item of selectedData.selectedData">
+        <div><input type="checkbox" [checked]="dataMap[item]" (click)="selectSample($event, item)">&nbsp;&nbsp;{{ item }}</div>
+      </div>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-content style="margin-top: 20px; width: 100%; display: flex; justify-content: center; align-items: center" mat-dialog-actions>
+    <button mat-button (click)="onNoClick()">Cancel</button>
+    <button mat-button (click)="reject()" type="submit">Reject</button>
+    <button mat-button type="submit" (click)="approve()" [disabled]="!profileForm.valid" cdkFocusInitial>Approve</button>
+    <!-- <button mat-button [mat-dialog-close]="checkTheData()" cdkFocusInitial>Ok</button> -->
+  </mat-dialog-content>
+</form>
+</div>
+
