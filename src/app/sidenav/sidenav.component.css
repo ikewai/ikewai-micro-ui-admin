@@ -81,3 +81,11 @@
   .pending {
     color: blue
   }
+
+  .mat-table {
+    background: #fafafa
+  }
+
+  .mat-paginator-container {
+    background: #fafafa
+  }

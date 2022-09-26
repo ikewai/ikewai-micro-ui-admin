@@ -14,7 +14,13 @@ import { FormArray } from '@angular/forms';
   export class AdminEditDialog {
 
     selectedData = {
-      status: null
+      status: null,
+      selectedData: null,
+      firstName: null,
+      lastName:null,
+      affiliation:null,
+      email:null,
+      reason:null,
     }
     dataMap = {};
     sampleSpecifications = {

@@ -28139,7 +28139,7 @@ export class SidenavComponent {
 
     dataSource = new MatTableDataSource(this.fakeData);
     length = this.fakeData.length; // the size of the data array
-    pageSize = 10;
+    pageSize = 15;
     pageEvent: PageEvent;
     
     constructor(fb: FormBuilder, private queryHandler: QueryHandlerService, private route: ActivatedRoute, public dialog: MatDialog,
@@ -28152,7 +28152,6 @@ export class SidenavComponent {
     }
 
     parseSpecs(item: any): String {
-      console.log(item, 'WAT?')
       item = item[0];
       let result = "";
       if (item['16s']) result += '16s, '
